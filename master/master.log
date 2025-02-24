@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024/Arch Linux) (preloaded format=pdflatex 2025.1.15)  24 FEB 2025 10:36
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024/Arch Linux) (preloaded format=pdflatex 2025.1.15)  24 FEB 2025 13:14
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1232,8 +1232,7 @@ LaTeX Font Info:    Trying to load font information for T1+ppl on input line 22
 
 (/usr/share/texmf-dist/tex/latex/psnfss/t1ppl.fd
 File: t1ppl.fd 2001/06/04 font definitions for T1/ppl.
-)
-No file master.aux.
+) (./master.aux)
 \openout1 = `master.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 225.
@@ -1254,6 +1253,7 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 225.
 LaTeX Font Info:    ... okay on input line 225.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 225.
 LaTeX Font Info:    ... okay on input line 225.
+
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
@@ -1304,8 +1304,10 @@ Package gensymb Info: Using \Omega for \ohm on input line 225.
 Package gensymb Warning: Not defining \micro.
 
 Package hyperref Info: Link coloring OFF on input line 225.
+(./master.out) (./master.out)
 \@outlinefile=\write5
 \openout5 = `master.out'.
+
 
 (/usr/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -1352,10 +1354,98 @@ LaTeX Font Info:    Font shape `T1/phv/m/n' will be
 (Font)              scaled to size 13.67995pt on input line 227.
 LaTeX Font Info:    Font shape `T1/phv/b/n' will be
 (Font)              scaled to size 13.67995pt on input line 227.
-) [1
+LaTeX Font Info:    Font shape `T1/phv/m/n' will be
+(Font)              scaled to size 11.39996pt on input line 234.
+LaTeX Font Info:    Font shape `T1/phv/b/n' will be
+(Font)              scaled to size 11.39996pt on input line 234.
+LaTeX Font Info:    Trying to load font information for TS1+ppl on input line 2
+51.
+
+(/usr/share/texmf-dist/tex/latex/psnfss/ts1ppl.fd
+File: ts1ppl.fd 2001/06/04 font definitions for TS1/ppl.
+)
+LaTeX Font Info:    Font shape `T1/phv/b/n' will be
+(Font)              scaled to size 10.40245pt on input line 271.
+
+Overfull \hbox (2.91911pt too wide) in paragraph at lines 272--275
+\T1/ppl/b/n/10.95 execute\T1/ppl/m/n/10.95 . L'i-stru-zio-ne suc-ces-si-va al-l
+a cor-ren-te, il cui in-di-riz-zo vie-ne scrit-to nell'\T1/ppl/b/n/10.95 instru
+ction
+ []
+
+[1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf-dist/fonts
-/enc/dvips/base/8r.enc}] (./master.aux)
+/enc/dvips/base/8r.enc}]
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 2
+95.
+ (/usr/share/texmf-dist/tex/latex/lm/t1lmtt.fd
+File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <9> not available
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 295.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 3
+08.
+
+(/usr/share/texmf-dist/tex/latex/lm/ot1lmr.fd
+File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 3
+08.
+
+(/usr/share/texmf-dist/tex/latex/lm/omllmm.fd
+File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
+308.
+
+(/usr/share/texmf-dist/tex/latex/lm/omslmsy.fd
+File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
+308.
+
+(/usr/share/texmf-dist/tex/latex/lm/omxlmex.fd
+File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10.95> on input line 308.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <8> on input line 308.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <6> on input line 308.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 308
+.
+
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 308
+.
+
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[2{/usr/share/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}])
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[3{/usr/share/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/usr/share/texmf-dist/fo
+nts/enc/dvips/lm/lm-mathit.enc}{/usr/share/texmf-dist/fonts/enc/dvips/lm/lm-mat
+hsy.enc}] (./master.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
@@ -1367,23 +1457,29 @@ Package rerunfilecheck Warning: File `master.out' has changed.
 (rerunfilecheck)                or use package `bookmark'.
 
 Package rerunfilecheck Info: Checksums for `master.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  DC56B35ED270A29F7C16FFDCFE681262;149.
+(rerunfilecheck)             Before: DC56B35ED270A29F7C16FFDCFE681262;149
+(rerunfilecheck)             After:  EB5F41959A1DD6FC580F613B4556BC15;1045.
  ) 
 Here is how much of TeX's memory you used:
- 65271 strings out of 476040
- 1662772 string characters out of 5792327
- 2408878 words of memory out of 5000000
- 86612 multiletter control sequences out of 15000+600000
- 573627 words of font info for 48 fonts, out of 8000000 for 9000
+ 66096 strings out of 476040
+ 1671758 string characters out of 5792327
+ 2423878 words of memory out of 5000000
+ 87367 multiletter control sequences out of 15000+600000
+ 599420 words of font info for 80 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 125i,5n,121p,1582b,609s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/texmf-
-dist/fonts/type1/urw/helvetic/uhvr8a.pfb>
-Output written on master.pdf (1 page, 14901 bytes).
+ 125i,12n,121p,1582b,1627s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/share/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/share/texmf-dis
+t/fonts/type1/public/lm/lmmi8.pfb></usr/share/texmf-dist/fonts/type1/public/lm/
+lmr10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/share/t
+exmf-dist/fonts/type1/public/lm/lmtk10.pfb></usr/share/texmf-dist/fonts/type1/p
+ublic/lm/lmtt9.pfb></usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb><
+/usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/share/texmf-dis
+t/fonts/type1/urw/palatino/uplb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/pa
+latino/uplr8a.pfb></usr/share/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
+Output written on master.pdf (3 pages, 149586 bytes).
 PDF statistics:
- 28 PDF objects out of 1000 (max. 8388607)
- 20 compressed objects within 1 object stream
- 3 named destinations out of 1000 (max. 500000)
- 13 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 98 PDF objects out of 1000 (max. 8388607)
+ 70 compressed objects within 1 object stream
+ 12 named destinations out of 1000 (max. 500000)
+ 21 words of extra memory for PDF output out of 10000 (max. 10000000)
 
