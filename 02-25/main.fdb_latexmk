@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1740416058.71793 "main.tex" "main.pdf" "main" 1740416059.91745 0
+["pdflatex"] 1740506738.471 "main.tex" "main.pdf" "main" 1740506739.79337 0
   "/usr/share/texmf-dist/fonts/enc/dvips/base/8r.enc" 1736268207 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/share/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc" 1736268207 2375 baa924870cfb487815765f9094cf3728 ""
   "/usr/share/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc" 1736268207 2405 5dcf2c1b967ee25cc46c58cd52244aed ""
@@ -39,6 +39,7 @@
   "/usr/share/texmf-dist/fonts/type1/public/lm/lmmi10.pfb" 1736268207 30388 702fae6a5f0e6e9c48a1d872b442ffcf ""
   "/usr/share/texmf-dist/fonts/type1/public/lm/lmmi8.pfb" 1736268207 30635 833ec815d446ec453a4913fc26d24cbc ""
   "/usr/share/texmf-dist/fonts/type1/public/lm/lmr10.pfb" 1736268207 119235 f35b44530a1d90eb90fe15d9cba67ea0 ""
+  "/usr/share/texmf-dist/fonts/type1/public/lm/lmr8.pfb" 1736268207 122174 a7a08406857c9530a0320a2517f60370 ""
   "/usr/share/texmf-dist/fonts/type1/public/lm/lmsy10.pfb" 1736268207 27863 09ce3735688ffde955e72da27c95b61a ""
   "/usr/share/texmf-dist/fonts/type1/public/lm/lmtk10.pfb" 1736268207 117319 7f8361f845845ce6d5b36cbd9f9cf377 ""
   "/usr/share/texmf-dist/fonts/type1/public/lm/lmtt9.pfb" 1736268207 108480 ee1de99df36ee0a16b36023b9c9d8a58 ""
@@ -321,9 +322,9 @@
   "/usr/share/texmf-dist/web2c/texmf.cnf" 1736268207 41588 b43d3e860a4f94167ee1e725ff526a72 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1736897103.56583 325557 c718939b0b67641d1164f4eb93828f7e ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1736897102 7121168 a78ede9461187705058ae37208fc8184 ""
-  "main.aux" 1740416059.81457 1376 a9b8208ca6b33809cc0c6bc98e8ac3e3 "pdflatex"
-  "main.out" 1740416059.81457 1045 eb5f41959a1dd6fc580f613b4556bc15 "pdflatex"
-  "main.tex" 1740416058.52791 14980 600ae26e0a744317a7da301fcee1963e ""
+  "main.aux" 1740506739.68437 1150 d76c11e5f11cadcb30f4f7e9361a7d41 "pdflatex"
+  "main.out" 1740506739.68437 929 a3ee78fc5309628091016ee586b45f66 "pdflatex"
+  "main.tex" 1740506737.03102 16254 ac61b60d7732179b0d2ed7738b763c65 ""
   (generated)
   "main.aux"
   "main.log"
