@@ -315,16 +315,18 @@ Le periferiche, nello specifico saranno:
 
 \subsubsection{Tastiera}
 Dal punto di vista funzionale, la tastiera deve solo scoprire quali tasti sono premuti e comunicarlo al calcolatore.
+In particolare, noi studieremo tastiere IBM che trasmettono secondo lo standard PS/2.
 
 Nei PC IBM il tasto non restituisce il carattere ASCII del carattere premuto, ma un codice associato ad ogni tasto che va convertito in software.
 Questo codice viene ottenuto per \textit{scansione} dell'intero piano della tastiera.
 Dal punto di vista meccanico, ci sono \textbf{tracce} orizzontali e verticali disposte, rispettivamente, su ogni riga o colonna di tasti.
 La pressione di un tasto comporta una deformazione delle tracce che chiude un circuito fra la riga e la colonna del tasto corrispondente.
-Un \textbf{microcontrollore} collegato sia alle tracce orizzontali che alle tracce verticali scansiona ciclicamente, con impulsi, o le righe leggendo le colonne, o le colonne leggendo rige, cercando un circuito chiuso.
+Un \textbf{microcontrollore} (originariamente un Intel 8042) collegato sia alle tracce orizzontali che alle tracce verticali scansiona ciclicamente, con impulsi, o le righe leggendo le colonne, o le colonne leggendo rige, cercando un circuito chiuso.
 Un cortocircuito viene quindi rilevato dal microcontrollore, che aggiorna una (piccola) memoria interna con il tasto premuto.
 Di conseguenza, invia al calcolatore un segnale che codifica quali tasti sono stati premuti rispetto al precedente istante temporale, e quali tasti sono stati rilasciati rispetto al precedente istante temporale. 
 
 La tastiera non restituisce solo pressioni di tasti, ma anche i loro rilasci, cosa che può essere utile per ottenere combinazioni di tasti, pressioni estese nel tempo, ecc...
+I codici di pressione si dicono \textbf{make code}, mentre i codici di rilascio si dicono \textbf{break code} 
 La stessa pressione ripetuta di un tasto quando l'utente lo tiene premuto per un certo istante temporale era, nei PC IBM, realizzata direttamente nella tastiera (tecnologia \textit{type-matic}), tra l'altro con periodo configurabile.
 Tramite il \textit{type-matic}, su appositi tasti abilitati, si ha infatti una ripetizione dell'evento di \textit{pressione} (non rilascio) di un tasto a frequenza costante dopo un intervallo di pressione continua.
 
@@ -336,10 +338,25 @@ Lato calcolatore, il segnale prodotto dal microcontrollore della tastiera viene 
 	\item \textbf{CMR}, \textit{Command register}
 \end{itemize}
 
-Il RBR potrà limitarsi ad aggiornarsi in base alle informazioni ottenute dalla tastiera, aggiornando l'STR.
+RBR e TBR, come STR e CMR, condividono gli indirizzi, rispettivamente \lstinline|0x60| e \lstinline|0x64|.
+Il RBR conterrà i make e break code, mentre l'STR conterrà i flag di stato sia per RBR che per TBR (rispettivamente ai bit 0 e 1).
 
 Potremmo chiederci il significato di un registro di trasmissione TBR.
-Questo serve, ad esempio, a governare i led di stato per funzioni speciali quali Caps-Lock, Num-Lock, Scroll-Lock ecc...
+Questo serve, ad esempio, a governare i led di stato per funzioni speciali quali Caps-Lock, Num-Lock, Scroll-Lock ecc... nonché a modificare le impostazioni del \text{type-matic} e, in maniera completamente slegata alla tastiera, a provocare il reset del PC, scrivendo \lstinline|0xFE| in CMR.
 
+Vediamo quindi del codice C++ per l'interazione con l'interfaccia di tastiera:
+\begin{lstlisting}[language=C++, style=codestyle]	
+const ioaddr iSTR = 0x64; // indirizzo di STR e CMR
+const ioaddr iRBR = 0x60; // indirizzo di RBR e TBR
+
+natb get_code() {
+	natb c;
+	do {
+		c = inputb(iSTR); // inputb e' una funzione che sfrutta la IN dell'asm
+	}
+	while (!(c & 0x01)); // controlla il LSB di STR
+	return inputb(iRBR);
+}
+\end{lstlisting}
 
 \end{document}
