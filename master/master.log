@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024/Arch Linux) (preloaded format=pdflatex 2025.1.15)  27 FEB 2025 14:33
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024/Arch Linux) (preloaded format=pdflatex 2025.3.1)  3 MAR 2025 12:18
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1157,7 +1157,23 @@ LaTeX Font Info:    Font shape `T1/phv/m/n' will be
 (Font)              scaled to size 8.54997pt on input line 349.
 LaTeX Font Info:    Font shape `T1/phv/m/n' will be
 (Font)              scaled to size 5.69998pt on input line 349.
-)
+) (../03-03/main.tex
+../03-03/main.tex:240: You can't use `macro parameter character #' in horizontal mode.
+l.240 Lo standard #
+                    appunti lett prevede che l'adattatore sia configurabile ...
+Sorry, but I'm not programmed to handle this case;
+I'll just pretend that you didn't ask for it.
+If you're in the wrong mode, you might be able to
+return to the right one by typing `I}' or `I$' or `I\par'.
+
+../03-03/main.tex:244: You can't use `macro parameter character #' in horizontal mode.
+l.244 ... dell'adattatore e' quello di leggere i #
+                                                   quanti KB di memoria, e c...
+Sorry, but I'm not programmed to handle this case;
+I'll just pretend that you didn't ask for it.
+If you're in the wrong mode, you might be able to
+return to the right one by typing `I}' or `I$' or `I\par'.
+
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1165,27 +1181,58 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller to compensate:
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[6] (./master.aux)
+[6]
+../03-03/main.tex:277: You can't use `macro parameter character #' in horizontal mode.
+l.277 ...em \textbf{Contatore 0:} e' collegata a #
+                                                   mistero
+Sorry, but I'm not programmed to handle this case;
+I'll just pretend that you didn't ask for it.
+If you're in the wrong mode, you might be able to
+return to the right one by typing `I}' or `I$' or `I\par'.
+
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[7])
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[8] (./master.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
  ***********
-Package rerunfilecheck Info: File `master.out' has not changed.
-(rerunfilecheck)             Checksum: A1C58003D5BE617EBDC7823DC7CB0229;1979.
+
+
+Package rerunfilecheck Warning: File `master.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `master.out':
+(rerunfilecheck)             Before: 19D927CCC2F2BB5F6F01D365ECBEF298;2610
+(rerunfilecheck)             After:  92FCF0663527F9AC34150C300E6CACF3;2708.
  ) 
 Here is how much of TeX's memory you used:
- 66317 strings out of 476040
- 1674770 string characters out of 5792327
- 2653708 words of memory out of 5000000
- 87556 multiletter control sequences out of 15000+600000
+ 66334 strings out of 476040
+ 1675030 string characters out of 5792328
+ 2656813 words of memory out of 5000000
+ 87563 multiletter control sequences out of 15000+600000
  604977 words of font info for 84 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  125i,12n,121p,1582b,1627s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr8.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmtt9.pfb></usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/share/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></usr/share/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on master.pdf (6 pages, 211356 bytes).
+Output written on master.pdf (8 pages, 218403 bytes).
 PDF statistics:
- 177 PDF objects out of 1000 (max. 8388607)
- 143 compressed objects within 2 object streams
- 33 named destinations out of 1000 (max. 500000)
- 125 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 207 PDF objects out of 1000 (max. 8388607)
+ 171 compressed objects within 2 object streams
+ 40 named destinations out of 1000 (max. 500000)
+ 157 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -223,13 +223,67 @@
 \makeatother
 
 \begin{document}
+% sezione (data)
+\section{Lezione del 03-03-25}
 
-\pagestyle{fancy}
+% stili pagina
 \thispagestyle{empty}
-\renewcommand{\thispagestyle}[1]{}
+\pagestyle{fancy}
 
-\maketitle
-\input{../02-24/main.tex}
-\input{../02-25/main.tex}
-\input{../03-03/main.tex}
+% testo
+\subsection{Video}
+Il supporto principale al video e' la \textbf{memoria video}, che lato software si comporta perlopiu' come una normale memoria ad accesso casuale.
+
+Questo e' quindi il primo esempio di un oggetto che si trova nello spazio di memoria, senza necessariamente \textit{essere} memoria: cio' che vi viene scritto non viene memorizzato, ma visualizzato sullo schermo.
+
+Inoltre, la memoria video supporta un accesso \textit{bidirezionale}: cioe' vi si puo' accedere sia lato CPU che lato \textbf{adattatore video}, cioe' la rete che si occupa di gestire tale memoria e visualizzarla sul \textit{display}.
+Lo standard # appunti lett prevede che l'adattatore sia configurabile e utilizzabile in due modalita':
+\begin{itemize}
+	\item \textbf{Modalita' testo:} ogni locazione viene associata ad un carattere ASCII da visualizzare sullo schermo, diviso in 80 colonne $\times$ 25 righe. E' questa la modalita' di default in cui si avvia l'adattatore.
+
+		In questo caso il compito dell'adattatore e' quello di leggere i # quanti KB di memoria, e convertire ogni codice nel carattere principale.
+		Questo viene fatto consultando una ROM di caratteri che contiene quello che e' effettivamente il \textit{font} dell'adattatore.
+		Solitamente si puo' anche redirezionare la lettura in ROM ad una certa regione della RAM, modificando cosi' il font.
+
+		La faccenda e' veramente piu' complicata: si dedicano non 1 ma 2 byte ad ogni carattere, dove il byte piu' significativo rappresenta informazioni riguardo al \textbf{colore} del carattere:
+		\begin{itemize}
+			\item I 4 bit meno significativi rappresentano il colore del \textit{foreground};
+			\item I 3 bit successivi rappresentano il colore del \textit{background}<
+				\item Il bit piu' significativo rappresenta il \textit{blinking}, cioe' indica all'adattatore di far \textit{lampeggiare} quel carattere nel tempo.
+		\end{itemize}
+
+		La modalita' testo non ha idea della posizione del cursore sullo scherm: attraverso registri si puo' indicare la posizione del cursore, e modificando la regione di memoria interessata si possono cambiare i caratteri in qualsiasi zona dello schermo.
+		Il comportamento del cursore (spostamento, ritorno a capo, ritorno carrello, ecc...) e' quindi gestito interamente lato software.
+	\item \textbf{Modalita' grafica:} programmando i registri dell'adattatore si possono ottenere diverse modalita' grafiche, che permettono al progammatore di colorare singoli pixel sul display.
+	Nella macchina virtuale usata incapsuliamo tale operazione di conversione in un apposita libreria, e scriviamo pixel con colori su 8 bit (per 256 colori diversi).
+	Nei sistemi moderni la memoria video non viene scritta dalla CPU, ma da un \textit{coprocessore grafico} che esegue un suo programma, mentre la CPU puo' dedicarsi ad altro.	
+\end{itemize}
+
+\subsubsection{Indirizzamento dei registri dell'adattatore video}
+Vediamo nel dettaglio come si possono indirizzare i registri interni dell'adattatore video.
+Questo dispone infatti di una vasta gamma di registri, ma una sola linea di ingresso da un byte per indirizzamento e scrittura.
+Le scritture vengono quindi eseguite inserie:
+\begin{itemize}
+	\item Prima specificando l'\textbf{indirizzo} del registro da aggiornare;
+	\item Poi inserendo i \textbf{dati} da scrivere a tale indirizzo.
+\end{itemize}
+
+\subsection{Timer}
+Il timer e' realizzato come un interfaccia ad eventi, che riceve in ingresso un clock e aggiorna ciclicamente un registro contatore.
+Al raggiungimento di 0 da parte del contatore, si resetta e si invia un certo evento (un impulso).
+
+Nel PC IBM in particolare troviamo 3 contatori:
+\begin{itemize}
+	\item \textbf{Contatore 0:} e' collegata a # mistero
+	\item \textbf{Contatore 1:} era storicamente usato per il refreseh della RAM, oggi non viene piu' usato;
+	\item \textbf{Contatore 2:} era collegato all'unico dispositivo audio presente sull'IBM, cioe' il beeper speaker.
+\end{itemize}
+
+\subsubsection{Sonoro}
+Vediamo in parrticolare il lato sonoro del PC IBM.
+Essendo stato questo un calcolatore pensato per l'uso da ufficio, le capabilita' audio erano molto limitata: si disponeva di un beeper speeker a frequenza modulabile dal timer (contatore 2).
+Inoltre, un particolare registro in memoria era collegato direttamente in AND con l'uscita del contatore 2, permettendo la modulazione on/off del segnale allo speaker.
+
+Qesto tipo di modulazione permetteva effettivamente di sfruttare, in maniera non prevista dalla IBM, per riprodurre segnali generici.
+
 \end{document}

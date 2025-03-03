@@ -579,6 +579,9 @@ INPUT /usr/share/texmf-dist/tex/latex/listings/lstmisc.sty
 INPUT /usr/share/texmf-dist/fonts/tfm/adobe/palatino/pplr8t.tfm
 INPUT /usr/share/texmf-dist/fonts/tfm/adobe/helvetic/phvr8t.tfm
 INPUT /usr/share/texmf-dist/fonts/tfm/adobe/helvetic/phvr8t.tfm
+INPUT ../03-03/main.tex
+INPUT ../03-03/main.tex
+INPUT ../03-03/main.tex
 INPUT /usr/share/texmf-dist/fonts/vf/adobe/helvetic/phvr8t.vf
 INPUT /usr/share/texmf-dist/fonts/tfm/adobe/helvetic/phvr8r.tfm
 INPUT master.aux
