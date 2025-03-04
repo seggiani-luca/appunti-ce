@@ -1,8 +1,9 @@
 # Fdb version 4
-["pdflatex"] 1741000704.97314 "master.tex" "master.pdf" "master" 1741000706.42167 2
+["pdflatex"] 1741091046.35888 "master.tex" "master.pdf" "master" 1741091047.79343 2
   "../02-24/main.tex" 1740849942.12835 14980 600ae26e0a744317a7da301fcee1963e ""
   "../02-25/main.tex" 1740996052.1054 17219 8cb92270b61fa6f6e5df9b283ef1b0d8 ""
-  "../03-03/main.tex" 1741000704.84523 11375 04cc2577a831f741ca5035039d0b4490 ""
+  "../03-03/main.tex" 1741001134.93487 11375 04cc2577a831f741ca5035039d0b4490 ""
+  "../03-04/main.tex" 1741091044.41088 15790 1037c985cd90e2cff37d3ce5eab457bb ""
   "/usr/share/texmf-dist/fonts/enc/dvips/base/8r.enc" 1736268207 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/share/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc" 1736268207 2375 baa924870cfb487815765f9094cf3728 ""
   "/usr/share/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc" 1736268207 2405 5dcf2c1b967ee25cc46c58cd52244aed ""
@@ -326,9 +327,9 @@
   "/usr/share/texmf-dist/web2c/texmf.cnf" 1736268207 41588 b43d3e860a4f94167ee1e725ff526a72 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1740849353.95311 325557 c718939b0b67641d1164f4eb93828f7e ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1740849353 7121121 c950307e9f8f5542b79a5274d565f8ac ""
-  "master.aux" 1741000706.28856 2765 074de8be969c8f9d8f3efa1171d1b8e6 "pdflatex"
-  "master.out" 1741000706.29189 2708 92fcf0663527f9ac34150c300e6cacf3 "pdflatex"
-  "master.tex" 1740996199.01528 6928 b8c1abc55ec7de14e8808a7bda04d495 ""
+  "master.aux" 1741091047.6412 3534 e9aa82e1eb9d05d5996ce301626f9769 "pdflatex"
+  "master.out" 1741091047.6412 3619 4fff2bab2cb9fea50254b32900ae1102 "pdflatex"
+  "master.tex" 1741084726.58109 6954 ff0b6b58ad1f9808a50cdfc16efedf81 ""
   (generated)
   "master.aux"
   "master.log"
