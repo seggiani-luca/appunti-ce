@@ -352,7 +352,7 @@ const ioaddr iRBR = 0x60; // indirizzo di RBR e TBR
 natb get_code() {
 	natb c;
 	do {
-		c = inputb(iSTR); // inputb e' una funzione che sfrutta la IN dell'asm
+		c = inputb(iSTR); // inputb è una funzione che sfrutta la IN dell'asm
 	}
 	while (!(c & 0x01)); // controlla il LSB di STR
 	return inputb(iRBR);
