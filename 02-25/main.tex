@@ -344,19 +344,14 @@ Il RBR conterrà i make e break code, mentre l'STR conterrà i flag di stato sia
 Potremmo chiederci il significato di un registro di trasmissione TBR.
 Questo serve, ad esempio, a governare i led di stato per funzioni speciali quali Caps-Lock, Num-Lock, Scroll-Lock ecc... nonché a modificare le impostazioni del \text{type-matic} e, in maniera completamente slegata alla tastiera, a provocare il reset del PC, scrivendo \lstinline|0xFE| in CMR.
 
-Vediamo quindi del codice C++ per l'interazione con l'interfaccia di tastiera:
-\begin{lstlisting}[language=C++, style=codestyle]	
-const ioaddr iSTR = 0x64; // indirizzo di STR e CMR
-const ioaddr iRBR = 0x60; // indirizzo di RBR e TBR
+Vediamo quindi un programma C++ per l'interazione con l'interfaccia di tastiera.
+Notiamo che la libreria all'header \lstinline|libce.h| definisce alcuni tipi (qui \lstinline|natb|, un naturale su 8 bit, e \lstinline|ioaddr|, un indirizzo nello spazio di I/O) e funzioni (qui \lstinline|inputb|, ottieni byte dallo spazio di I/O, e \lstinline|vi::char_write()|, stampa un carattere a schermo).
 
-natb get_code() {
-	natb c;
-	do {
-		c = inputb(iSTR); // inputb è una funzione che sfrutta la IN dell'asm
-	}
-	while (!(c & 0x01)); // controlla il LSB di STR
-	return inputb(iRBR);
-}
-\end{lstlisting}
+\lstset{language=C++}
+\lstinputlisting{../code/interfaces/keyboard/keyboard.cpp}
+
+Dal programma si evincono subito gli indirizzi dei registri di Receive Buffer (RBR) e di stato (STR), a cui i registri trasmettitore e comando (TBR e CMR) sono sovrapposti.
+Il funzionamento è quindi ottenuto attraverso una lettura ciclica dei make code dall'interfaccia, e una scansione per il rilevamento del carattere selezionato a partire dal make code stesso.
+Altro codice è usato per gestire il tasto shift, e il termine dell'esecuzione alla pressione del tasto ESC.
 
 \end{document}

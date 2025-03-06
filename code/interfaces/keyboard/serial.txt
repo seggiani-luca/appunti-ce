@@ -1,0 +1,19 @@
+INF	-	Boot loader di Calcolatori Elettronici, v1.0
+INF	-	Memoria totale: 16 MiB, heap: 636 KiB
+INF	-	Argomenti: /home/luca/CE/lib/ce/boot.bin 
+INF	-	Il boot loader precedente ha caricato 1 modulo:
+INF	-	- mod[0]: start=10d000 end=1115a0 file=boot/0-a.out
+INF	-	  . seg[1]: off      0 vaddr           200000 size   2c93 memsize   2c93
+INF	-	  . seg[2]: off   3000 vaddr           203000 size    f9c memsize    f9c
+INF	-	  . seg[3]: off   4000 vaddr           204000 size    1a8 memsize   52e4
+INF	-	Copio mod[0] agli indirizzi specificati nel file ELF:
+INF	-	- copiati   2c93 byte da   10d000 a   200000
+INF	-	- copiati    f9c byte da   110000 a   203000
+INF	-	- copiati    1a8 byte da   111000 a   204000
+INF	-	- azzerati ulteriori 513c byte
+INF	-	- entry point 200484
+INF	-	Creata finestra sulla memoria centrale:  [            1000,          1000000)
+INF	-	Creata finestra per memory-mapped-IO:    [         1000000,        100000000)
+INF	-	Inizializzo l'APIC
+INF	-	Inizializzo video e tastiera
+INF	-	Attivo la modalita' a 64 bit e cedo il controllo a mod[0]...

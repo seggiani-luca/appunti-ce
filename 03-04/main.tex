@@ -235,7 +235,7 @@
 Gli \textbf{hard disk} (\textit{dischi rigidi}) sono effettivamente, seppur memorie, \textbf{periferiche}, collegate al bus attraverso la loro interfaccia.
 La CPU non puo' eseguire programmi direttamente dall'hard disk, ma deve prima caricarli in memoria principale (memoria RAM).
 
-	Questo perche' letture e scritture in hard disk vengono effettuate per \textbf{blocchi} (storicamente di 512 byte), e richiedono molto piu' tempo di quanto sia possibile aspettare al prelievo di istruzioni o operandi.
+	Questo perchè letture e scritture in hard disk vengono effettuate per \textbf{blocchi} (storicamente di 512 byte), e richiedono molto più tempo di quanto sia possibile aspettare al prelievo di istruzioni o operandi.
 
 Nello standard PC AT gli hard disk usano interfacce \textbf{SATA}.
 
@@ -245,16 +245,16 @@ Il complesso di dischi e testine viene detto \textbf{drive}.
 L'informazione viene disposta su ogni disco in \textbf{settori} e \textbf{tracce}.
 Le tracce sono concentriche e i settori formano degli "spicchi" di ogni faccia.
 Notiamo che entrambe le facce di ogni disco possono memorizzare informazione.
-Un \textbf{blocco} e' quindi formato dalla regione di una traccia compresa in un certo sensore.
+Un \textbf{blocco} è quindi formato dalla regione di una traccia compresa in un certo sensore.
 
 I dischi vengono tenuti continuamente in rotazione (negli ordini delle centinaia/migliaia di RPM).
-Il tempo che la testina impiega a raggiungere una tracca viene detto \textbf{tempo di seek}, $t_{seek}$, il tempo che alla velocita' di rotazione del disco l'informazione si trovi sotto la testina \textbf{latenza} $t_{latency}$ e il tempo necessario ad effettuare l'operazione vera e propria \textbf{tempo di lettura/scrittura} $t_{r/w}$, per cui il tempo di lettura/scrittura complessivo risulta:
+Il tempo che la testina impiega a raggiungere una tracca viene detto \textbf{tempo di seek}, $t_{seek}$, il tempo che alla velocità di rotazione del disco l'informazione si trovi sotto la testina \textbf{latenza} $t_{latency}$ e il tempo necessario ad effettuare l'operazione vera e propria \textbf{tempo di lettura/scrittura} $t_{r/w}$, per cui il tempo di lettura/scrittura complessivo risulta:
 $$
 t_{seek} + t_{latency} + t_{r/w} \sim 1 \, \mathrm{ms}
 $$
-nell'ordine del millisecondo, per la CPU estremamente (milioni di volte) piu' lento della RAM.
+nell'ordine del millisecondo, per la CPU estremamente (milioni di volte) più lento della RAM.
 
-Quello che accade al tempo di lettura e' che il blocco viene copiato in un buffer di memoria nell'interfaccia che viene poi reso disponibile alla CPU.
+Quello che accade al tempo di lettura è che il blocco viene copiato in un buffer di memoria nell'interfaccia che viene poi reso disponibile alla CPU.
 Viceversa, al tempo di scrittura il buffer viene riempito dalla CPU, e l'interfaccia si occupa poi di copiarlo all'interno del settore giusto.
 
 Per effettuare un operazione dobbiamo quindi sapere:
@@ -263,12 +263,12 @@ Per effettuare un operazione dobbiamo quindi sapere:
 	\item Quale \textit{traccia} individuare;
 	\item Quale \textit{regione} (quindi quale \textit{blocco}) individuare.
 \end{itemize}
-Storicamente queste informazioni erano gestite lato software, concedendo la possibilita' di alterare la \textit{formattazione} del disco.
-Oggi la formattazione e' definita in fabbrica, e l'interfaccia offre una sua astrazione.
-In questa astrazione ogni blocco e' quindi indirizzato da un indirizzo logico, il \textbf{Logical Block Address}, \textbf{LBA}.
+Storicamente queste informazioni erano gestite lato software, concedendo la possibilità di alterare la \textit{formattazione} del disco.
+Oggi la formattazione è definita in fabbrica, e l'interfaccia offre una sua astrazione.
+In questa astrazione ogni blocco è quindi indirizzato da un indirizzo logico, il \textbf{Logical Block Address}, \textbf{LBA}.
 
 \subsubsection{Interfaccia SATA}
-L'interfaccia del PC IBM e' dotata di diversi registri a 8 bit e uno a 16 bit:
+L'interfaccia del PC IBM è dotata di diversi registri a 8 bit e uno a 16 bit:
 \begin{itemize}
 	\item \textbf{Registri di selezione} del blocco:
 		\begin{itemize}
@@ -276,65 +276,81 @@ L'interfaccia del PC IBM e' dotata di diversi registri a 8 bit e uno a 16 bit:
 			\item \textbf{CNL} (Cylinder Number Low);
 			\item \textbf{CNH} (Cylinder Number High);
 			\item \textbf{HND} (Head And Drive): solo gli ultimi 4 bit di questo registro formano l'informazione sulla testina da utilizzare.
-				Gli altri bit vengono usati diversamente, ad esempio per selezionare quale drive usare in configurazioni master/slave, o per abilitare il LBA, usando quindi i registri di selezione per specificare un indirizzo logico (su $3 \cdot 8 = 4 = 28$ bit) anziche' un informazione geometrica sulla posizione del blocco desiderato.
+				Gli altri bit vengono usati diversamente, ad esempio per selezionare quale drive usare in configurazioni master/slave, o per abilitare il LBA, usando quindi i registri di selezione per specificare un indirizzo logico (su $3 \cdot 8 = 4 = 28$ bit) anzichè un informazione geometrica sulla posizione del blocco desiderato.
 		\end{itemize}
 
 		Vediamo che dalla dimensione dell'LBA (assumiamo che per indirizzamento geometrico si trova la stessa cosa) si ha una dimensione del disco:
 		$$
 		2^{28} \cdot 2^9 = 2^{37} = 128 \, \mathrm{GB}
 		$$
-		Per questo si puo' abilitare la modalita' \textbf{LBA48} (che non e' un gruppo di idol giapponesi), dove ci si aspetta il LBA venga specificato in due passate, una da 24 bit e una da 20 bit sugli stessi registri.
+		Per questo si puo' abilitare la modalità \textbf{LBA48} (che non è un gruppo di idol giapponesi), dove ci si aspetta il LBA venga specificato in due passate, una da 24 bit e una da 20 bit sugli stessi registri.
 	\item \textbf{SCR} (Section Counter): permette di specificare su quanti settori contigui a partire da quello specificato prima eseguire l'operazione;
 	\item \textbf{BR} (Buffer Register): l'unico registro a 16 bit, permette di accedere al buffer 2 byte alla volta;
-	\item \textbf{STS} (Status Register): il classico registro di stato che ci notifica se un'operazione e' conclusa o si puo' effettuare;
+	\item \textbf{STS} (Status Register): il classico registro di stato che ci notifica se un'operazione è conclusa o si puo' effettuare;
 	\item \textbf{CMD} (Command): serve a specificare l'operazione da effettuare (lettura, scrittura, ecc...).
 \end{itemize}
 
 \subsection{Caching}
-Abbiamo detto che la memoria RAM e' molto piu' veloce dei dischi rigidi.
-Questo e' vero, ma non significa che non ci sia comunque un certo dislivello tra la velocita' della CPU e la velocita' della RAM: un operazione puo' comunque richiedere nel'ordine dei $\sim 100$ circa cicli di clock.
+Abbiamo detto che la memoria RAM è molto più veloce dei dischi rigidi.
+Questo è vero, ma non significa che non ci sia comunque un certo dislivello tra la velocità della CPU e la velocità della RAM: un operazione puo' comunque richiedere nel'ordine dei $\sim 100$ circa cicli di clock.
 
-Per questo motivo si inframezzano fra la CPU e la RAM piu' memorie, relativamente piccole ma veloci, dette \textbf{memorie di cache}.
+Per questo motivo si inframezzano fra la CPU e la RAM più memorie, relativamente piccole ma veloci, dette \textbf{memorie di cache}.
 
-L'idea e' che la RAM in se' e' costituita da memoria dinamica (DRAM), quindi a condensatori, relativamente lenta e con tempo di refresh, mentre le memorie di cache vengono implementate con memorie statiche, piu' veloci ma piu' costose da realizzare su larga scala (per cui le dimensioni ridotte).
+L'idea è che la RAM in sè è costituita da memoria dinamica (DRAM), quindi a condensatori, relativamente lenta e con tempo di refresh, mentre le memorie di cache vengono implementate con memorie statiche, più veloci ma più costose da realizzare su larga scala (per cui le dimensioni ridotte).
 
-\subsubsection{Principi di localita'}
-Le piccole dimensioni delle memorie vengono aiutate dalla \textbf{localita'} del codice in memoria: istruzioni che compongono le stesse funzioni avranno istruzioni vicine fra di loro, le strutture definite dal programmatore conterranno dati locali, ecc...
-In particolare, potremo distinguere fra due \textbf{principi di localita'}:
+\subsubsection{Principi di località}
+Le piccole dimensioni delle memorie vengono aiutate dalla \textbf{località} del codice in memoria: istruzioni che compongono le stesse funzioni avranno istruzioni vicine fra di loro, le strutture definite dal programmatore conterranno dati locali, ecc...
+In particolare, potremo distinguere fra due \textbf{principi di località}:
 \begin{itemize}
-	\item \textbf{Localita' temporale:} una volta visto un indirizzo, e' probabile che questo o indirizzi ad esso vicini siano visti di nuovo;
-	\item \textbf{Localita' spaziale:} solitamente si accede ad indirizzi vicini fra di loro.
+	\item \textbf{Località temporale:} una volta visto un indirizzo, è probabile che questo o indirizzi ad esso vicini siano visti di nuovo;
+	\item \textbf{Località spaziale:} solitamente si accede ad indirizzi vicini fra di loro.
 \end{itemize}
 
 \par\smallskip
 
-La cache avra' quindi il compito di memoizzare i valori prelevati con frequenza dalla DRAM.
-Possiamo immaginare che la prima lettura di un dato richiedera' il tempo completo di accesso, ma la lettura successiva, ammesso che quel dato sia stato salvato nella cache, richiedera' un tempo di accesso significativamente minore.
+La cache avrà quindi il compito di memoizzare i valori prelevati con frequenza dalla DRAM.
+Possiamo immaginare che la prima lettura di un dato richiederà il tempo completo di accesso, ma la lettura successiva, ammesso che quel dato sia stato salvato nella cache, richiederà un tempo di accesso significativamente minore.
 
-L'importante e' che questo processo sia \textbf{trasparente} per la CPU, cioe' che questa non si debba preoccupare di quali indirizzi sono stati visti dalla cache e memoizzati e quali no.
-Il risultato finale e' la velocizzazione di un qualsiasi programma senza dover agire in nessun modo sul programma stesso.
-Di contro, non e' detto che il programmatore non possa sfruttare la presenza della memoria cache, cercando di sviluppare algoritmi e strutture dati che rispettano il piu' possibile i principi di localita' (tecniche \textit{data driven}).
+L'importante è che questo processo sia \textbf{trasparente} per la CPU, cioè che questa non si debba preoccupare di quali indirizzi sono stati visti dalla cache e memoizzati e quali no.
+Il risultato finale è la velocizzazione di un qualsiasi programma senza dover agire in nessun modo sul programma stesso.
+Di contro, non è detto che il programmatore non possa sfruttare la presenza della memoria cache, cercando di sviluppare algoritmi e strutture dati che rispettano il più possibile i principi di località (tecniche \textit{data driven}).
 
 \subsubsection{Cache ad indirizzamento diretto}
 Vediamo un primo esempio di memoria cache.
 Abbiamo che lato processore ci arriveranno le linee di byte enable (BE) e le linee di indirizzo (A).
 Inoltre avremo a disposizione un bus dati (D) di un certo numero di linee.
 
-Vorremo porre fra CPU e DRAM una cache, connessa a quest'ultima da una \textbf{cacheline} da 64 byte.
+Vorremo porre fra CPU e DRAM una cache, connessa a quest'ultima dalle linee di indirizzo A.
+La memoria interna della cache, di dimensione complessiva 64 KB, sarà rappresentata da una serie di blocchi, o \textbf{cacheline} da 64 byte.
 
-In fase di lettura, invece di leggere l'unica riga richiesta dal processore, si procedera' alla lettura di un certo numero di righe (poniamo 8).
-Questo significa che per un tempo di lettura di riga di $t$, ci vorra' un tempo $\sim 8t$ (solitamente meno).
-La speranza e' che queste righe verranno lette successivamente dal processore.
+In fase di lettura, invece di leggere l'unica riga richiesta dal processore, si procederà alla lettura di un certo numero di righe (poniamo 8).
+Questo significa che per un tempo di lettura di riga di $t$, ci vorrà un tempo $\sim 8t$ (solitamente meno).
+La speranza è che queste righe verranno lette successivamente dal processore.
 
-Inoltre, ad ogni "blocco" di memoria letto dalla cache si dovra' associare dell'informazione riguardo alla posizione in memoria (informazione che viene contenuta nella \textbf{memoria delle etichette}).
-E' quindi piu' conveniente leggere regioni relativamente piu' grandi di memoria, in modo da non sprecare \textit{overhead} per piccole quantita' di dati.
+Inoltre, ad ogni blocco di memoria letto dalla cache si dovrà associare dell'informazione riguardo alla posizione in memoria: questa viene contenuta in un altra memoria, dette \textbf{memoria delle etichette}.
+E' quindi più conveniente leggere regioni relativamente più grandi di memoria, in modo da non sprecare \textit{overhead} per piccole quantità di dati.
 
-La divisione della DRAM in cacheline e' quindi realizzata giocando sulle scomposizioni degli indirizzi.
-Per ottenere la regione corrispondente ad un indirizzo (il numero di cacheline) si realizza una sorta di \textit{funzione di hash}, prendonendo gli $n$ bit piu' significativi della linea di indirizzo A e usandoli come chiave per la regione di dati corrispondente.
-Inoltre, alla regione selezionata si associa un singolo bit di validita'.
-Un comparatore fra etichetta e gli $n$ bit piu significativi messo in AND a questo bit di validita' ci assicurera' quindi la presenza nella cacheline del dato richiesto, detta \textbf{hit/miss}.
-A questo punto bastera' ricavare una linea di offset dai bit meno significativi di A, e leggere dalla memoria cache a tale offset, all'indice indicato dall'etichetta. # riguarda bene
+\subsubsection{Principio di funzionamento}
+La divisione della DRAM sulle cacheline è quindi realizzata giocando sulle scomposizioni degli indirizzi.
+Si divide ogni indirizzo in tre parti:
+\begin{itemize}
+	\item L'\textbf{etichetta}, formata dai bit più significativi del bus;
+	\item L'\textbf{indice}, formato dai 10 bit centrali (per indirizzare la totalità dei 64 KB di cache);
+	\item L'\textbf{offset}, formato dai 3 bit meno significativi di A (per ottenere cache line da 64 byte, cioe $8 = 2^3$ parole quadruple da $8 byte$.). 
+\end{itemize}
 
-Notiamo che questa cache soffre di problemi di \textbf{collisione}: infatti ci sara' un numero di regioni con lo stesso indice (# etichetta ?) pari alla dimensione della RAM fratto la dimensione della cache.
+Per ottenere la regione corrispondente ad un indirizzo (il numero di cacheline) si realizza una sorta di \textit{funzione di hash}, prendonendo l'etichetta e usandola come chiave per la regione di dati di indice corrispondente.
+Inoltre, alla regione selezionata si associa solitamente un singolo bit di validità.
+Un comparatore fra etichetta e gli $n$ bit piu significativi messo in AND a questo bit di validità ci assicurerà quindi la presenza nella cacheline del dato richiesto, detta \textbf{hit/miss}.
+
+A questo punto, in fase di lettura, nel caso di hit basterà ricavare una linea di offset dai bit meno significativi di A, e leggere dalla memoria cache a tale offset, all'indice indicato dall'etichetta.
+Nel caso di miss si dovrà invece svolgere la lettura in memoria RAM, e poi riportare l'informazione nella cacheline di indice giusto della cache aggiornando l'etichetta.
+
+Per quanto riguarda le scritture invece, potremo muoverci in maniera simile nel caso di hit.
+Nel caso di miss, invece, potremmo pensare di svolgere la scrittura in RAM e poi ricopiare il valore aggiornato in cache con un procedimento simile a quello usato per i miss in lettura (regola \textit{write-through}).
+Una tecnica più intelligente può invece essere quella di aggiornare il solo dato in cache, e rimandare la scrittura in RAM alla rimozione del dato dalla cache (per l'introduzione di un nuovo dato allo stesso indice) (regola \textit{write-back}).
+La difficoltà principale di questo metodo è l'avere un agente che non è la CPU che scrive in RAM, e come vedremo richiede soluzioni tecniche particolari.
+
+Notiamo che questa cache soffre di problemi di \textbf{collisione}: infatti ci sarà un numero di regioni con lo stesso indice ed etichetta diversa, pari alla dimensione della RAM fratto la dimensione della cache.
 
 \end{document}

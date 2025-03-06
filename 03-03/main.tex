@@ -237,11 +237,11 @@ Il supporto principale al video è la \textbf{memoria video}, che lato software 
 Questo è quindi il primo esempio di un oggetto che si trova nello spazio di memoria, senza necessariamente \textit{essere} memoria: ciò che vi viene scritto non viene memorizzato, ma visualizzato sullo schermo.
 
 Inoltre, la memoria video supporta un accesso \textit{bidirezionale}: cioè vi si può accedere sia lato CPU che lato \textbf{adattatore video}, cioè la rete che si occupa di gestire tale memoria e visualizzarla sul \textit{display}.
-Lo standard # appunti lett prevede che l'adattatore sia configurabile e utilizzabile in due modalità:
+Lo standard VGA usato dal PC IBM prevede che l'adattatore sia configurabile e utilizzabile in due modalità:
 \begin{itemize}
 	\item \textbf{Modalità testo:} ogni locazione viene associata ad un carattere ASCII da visualizzare sullo schermo, diviso in 80 colonne $\times$ 25 righe. E' questa la modalità di default in cui si avvia l'adattatore.
 
-		In questo caso il compito dell'adattatore è quello di leggere i # quanti KB di memoria, e convertire ogni codice nel carattere principale.
+		In questo caso il compito dell'adattatore è quello di leggere i 2 KB di memoria, e convertire ogni codice nel carattere principale.
 		Questo viene fatto consultando una ROM di caratteri che contiene quello che è effettivamente il \textit{font} dell'adattatore.
 		Solitamente si può anche redirezionare la lettura in ROM ad una certa regione della RAM, modificando così il font.
 
@@ -274,7 +274,7 @@ Al raggiungimento di 0 da parte del contatore, si resetta e si invia un certo ev
 
 Nel PC IBM in particolare troviamo 3 contatori:
 \begin{itemize}
-	\item \textbf{Contatore 0:} è collegata a # mistero
+	\item \textbf{Contatore 0:} è collegata al controllore delle interruzioni;
 	\item \textbf{Contatore 1:} era storicamente usato per il refreseh della RAM, oggi non viene più usato;
 	\item \textbf{Contatore 2:} era collegato all'unico dispositivo audio presente sull'IBM, cioè il beeper speaker.
 \end{itemize}
