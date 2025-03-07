@@ -336,20 +336,42 @@ Si divide ogni indirizzo in tre parti:
 \begin{itemize}
 	\item L'\textbf{etichetta}, formata dai bit più significativi del bus;
 	\item L'\textbf{indice}, formato dai 10 bit centrali (per indirizzare la totalità dei 64 KB di cache);
-	\item L'\textbf{offset}, formato dai 3 bit meno significativi di A (per ottenere cache line da 64 byte, cioe $8 = 2^3$ parole quadruple da $8 byte$.). 
+	\item L'\textbf{offset}, formato dai 3 bit meno significativi di A (per ottenere cache line da 64 byte, cioe $8 = 2^3$ parole quadruple da 8 byte.). 
 \end{itemize}
+
+Noto l'offset, l'\textbf{indice} verrà calcolato per indirizzare la totalità delle cacheline come stante su un numero di linee tali a:
+$$
+\mathrm{bit}_{\mathrm{indice}} = \frac{\text{dimensione cache}}{\text{dimensione cacheline}}
+$$
 
 Per ottenere la regione corrispondente ad un indirizzo (il numero di cacheline) si realizza una sorta di \textit{funzione di hash}, prendonendo l'etichetta e usandola come chiave per la regione di dati di indice corrispondente.
 Inoltre, alla regione selezionata si associa solitamente un singolo bit di validità.
 Un comparatore fra etichetta e gli $n$ bit piu significativi messo in AND a questo bit di validità ci assicurerà quindi la presenza nella cacheline del dato richiesto, detta \textbf{hit/miss}.
 
+\subsubsection{Lettura}
 A questo punto, in fase di lettura, nel caso di hit basterà ricavare una linea di offset dai bit meno significativi di A, e leggere dalla memoria cache a tale offset, all'indice indicato dall'etichetta.
 Nel caso di miss si dovrà invece svolgere la lettura in memoria RAM, e poi riportare l'informazione nella cacheline di indice giusto della cache aggiornando l'etichetta.
 
-Per quanto riguarda le scritture invece, potremo muoverci in maniera simile nel caso di hit.
-Nel caso di miss, invece, potremmo pensare di svolgere la scrittura in RAM e poi ricopiare il valore aggiornato in cache con un procedimento simile a quello usato per i miss in lettura (regola \textit{write-through}).
+\subsubsection{Scrittura}
+Per quanto riguarda le scritture invece, potremo muoverci in due strade: \textbf{write allocate} e \textbf{write no allocate}
+
+\begin{itemize}
+	\item \textbf{Write allocate:}
+ci comportiamo in maniera simile alla lettura nel caso di hit.
+Nel caso di miss, invece, riportiamo il dato in cache.
+
+A questo punto potremmo pensare di svolgere la scrittura in RAM e in cache contemporaneamente (regola \textit{write-through}), mantenendo entrambe aggiornate.
+
 Una tecnica più intelligente può invece essere quella di aggiornare il solo dato in cache, e rimandare la scrittura in RAM alla rimozione del dato dalla cache (per l'introduzione di un nuovo dato allo stesso indice) (regola \textit{write-back}).
+In questo caso dovremo dotarci di un nuovo bit nella memoria delle etichette, il bit \textit{dirty}, che segnalerà il bisogno di ricopiare il dato in cache nella RAM in occasione del suo deallocamento dalla cache.
 La difficoltà principale di questo metodo è l'avere un agente che non è la CPU che scrive in RAM, e come vedremo richiede soluzioni tecniche particolari.
+
+\item \textbf{Write no allocate:}
+in questo caso ignoriamo le scritture in cache e la sfruttiamo solamente per le letture.
+
+\end{itemize}
+
+\par\smallskip
 
 Notiamo che questa cache soffre di problemi di \textbf{collisione}: infatti ci sarà un numero di regioni con lo stesso indice ed etichetta diversa, pari alla dimensione della RAM fratto la dimensione della cache.
 
