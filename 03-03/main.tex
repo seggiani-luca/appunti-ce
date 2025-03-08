@@ -239,22 +239,23 @@ Questo è quindi il primo esempio di un oggetto che si trova nello spazio di mem
 Inoltre, la memoria video supporta un accesso \textit{bidirezionale}: cioè vi si può accedere sia lato CPU che lato \textbf{adattatore video}, cioè la rete che si occupa di gestire tale memoria e visualizzarla sul \textit{display}.
 Lo standard VGA usato dal PC IBM prevede che l'adattatore sia configurabile e utilizzabile in due modalità:
 \begin{itemize}
-	\item \textbf{Modalità testo:} ogni locazione viene associata ad un carattere ASCII da visualizzare sullo schermo, diviso in 80 colonne $\times$ 25 righe. E' questa la modalità di default in cui si avvia l'adattatore.
+	\item \textbf{Modalità testo:} ogni locazione viene associata ad un carattere ASCII da visualizzare sullo schermo, diviso in 80 colonne $\times$ 25 righe (con un carattere di 9 $\times$ 16 pixel, per una risoluzione totale di 720 $\times$ 400 pixel a 70 Hz). È questa la modalità di default in cui si avvia l'adattatore.
 
 		In questo caso il compito dell'adattatore è quello di leggere i 2 KB di memoria, e convertire ogni codice nel carattere principale.
-		Questo viene fatto consultando una ROM di caratteri che contiene quello che è effettivamente il \textit{font} dell'adattatore.
+		Questo viene fatto consultando una ROM di caratteri che contiene quello che è effettivamente il carattere (\textit{font}) dell'adattatore.
 		Solitamente si può anche redirezionare la lettura in ROM ad una certa regione della RAM, modificando così il font.
 
 		La faccenda è veramente più complicata: si dedicano non 1 ma 2 byte ad ogni carattere, dove il byte più significativo rappresenta informazioni riguardo al \textbf{colore} del carattere:
 		\begin{itemize}
 			\item I 4 bit meno significativi rappresentano il colore del \textit{foreground};
-			\item I 3 bit successivi rappresentano il colore del \textit{background}<
+			\item I 3 bit successivi rappresentano il colore del \textit{background};
 				\item Il bit più significativo rappresenta il \textit{blinking}, cioè indica all'adattatore di far \textit{lampeggiare} quel carattere nel tempo.
 		\end{itemize}
 
 		La modalità testo non ha idea della posizione del cursore sullo scherm: attraverso registri si può indicare la posizione del cursore, e modificando la regione di memoria interessata si possono cambiare i caratteri in qualsiasi zona dello schermo.
 		Il comportamento del cursore (spostamento, ritorno a capo, ritorno carrello, ecc...) è quindi gestito interamente lato software.
 	\item \textbf{Modalità grafica:} programmando i registri dell'adattatore si possono ottenere diverse modalità grafiche, che permettono al progammatore di colorare singoli pixel sul display.
+		Le modalità più popolari di questo tipo su schede VGA erano o a 640 $\times$ 400 pixel a 70 Hz (fase di boot grafica), o a 640 $\times$ 480 pixel a 60 Hz non interlacciati (la modalità di default di Microsoft Windows). 
 	Nella macchina virtuale usata incapsuliamo tale operazione di conversione in un apposita libreria, e scriviamo pixel con colori su 8 bit (per 256 colori diversi).
 	Nei sistemi moderni la memoria video non viene scritta dalla CPU, ma da un \textit{coprocessore grafico} che esegue un suo programma, mentre la CPU può dedicarsi ad altro.	
 \end{itemize}
@@ -266,7 +267,16 @@ Le scritture vengono quindi eseguite inserie:
 \begin{itemize}
 	\item Prima specificando l'\textbf{indirizzo} del registro da aggiornare;
 	\item Poi inserendo i \textbf{dati} da scrivere a tale indirizzo.
-\end{itemize}
+\end{itemize}inpulso
+
+\par\smallskip
+
+Vediamo quindi un programma di esempio che sfrutta l'adattatore grafico in modalita testo a 25 $\times$ 80 caratteri.
+Dalla libreria \lstinline|libce| si è importata la variabile \lstinline|video|, che rappresnta l'intero buffer da 2 KB di memoria video (2 byte per cella) a disposizione dall'adattotore.
+Le scritture vengono fatte, come avevamo detto, sovrascrivendo dati in tale buffer, mantenendo \textit{lato software} un cursore che ci indica la posizione sullo schermo.
+
+\lstset{style=codestyle, language=c++}
+\lstinputlisting{../code/interfaces/video/video.cpp}
 
 \subsection{Timer}
 Il timer è realizzato come un interfaccia ad eventi, che riceve in ingresso un clock e aggiorna ciclicamente un registro contatore.
@@ -279,11 +289,30 @@ Nel PC IBM in particolare troviamo 3 contatori:
 	\item \textbf{Contatore 2:} era collegato all'unico dispositivo audio presente sull'IBM, cioè il beeper speaker.
 \end{itemize}
 
+Il timer dispone di una vasta gamma di parametri e di solo 2 piedini di indirizzo, quindi 4 locazioni nello spazio di I/O, che sono \textbf{CWR}, un registro comune di configurazione delle interfacce, più 4 registri per timer collegati ad ognuna delle 3 porte rimanenti.
+L'accesso ai registri di un singolo timer va quindi fatto, cosa interessante del chip, in serie, modificando la stessa porta 1 o 2 volte consecutivamente.
+
+
 \subsubsection{Sonoro}
-Vediamo in parrticolare il lato sonoro del PC IBM.
+Vediamo in particolare il lato sonoro del PC IBM.
 Essendo stato questo un calcolatore pensato per l'uso da ufficio, le capabilità audio erano molto limitata: si disponeva di un beeper speeker a frequenza modulabile dal timer (contatore 2).
 Inoltre, un particolare registro in memoria era collegato direttamente in AND con l'uscita del contatore 2, permettendo la modulazione on/off del segnale allo speaker.
+La modulazione in volume del pc speaker, in particolare, viene fatta attraverso un ulteriore registro detto \textbf{SPR}.
 
-Qesto tipo di modulazione permetteva effettivamente di sfruttare, in maniera non prevista dalla IBM, per riprodurre segnali generici.
+Questo tipo di modulazione permetteva effettivamente di sfruttare, in maniera non prevista dalla IBM, per riprodurre segnali generici.
+
+Mostriamo un esempio di un programma per la riproduzione di un brano musicale monofonico, inteso come una sequenza di note:
+
+\lstinputlisting{../code/interfaces/timer/clean/clean_timer.cpp}
+
+In particolare, il programma si basa sullo scorrimento di un array di strutture \lstinline|song_frame| (definite in \lstinline|song.h|, la cui struttura non ci interessa) ad intervalli regolari.
+Questi intervalli vengono ottenuti configurando il timer 0 per oscillare in modalità 2 (oscillazione a onda quadra) con un divisore di 65536, che per un clock a 1.19 MHz fa:
+$$
+\frac{1.19 \, \mathrm{MHz}}{65536} \approx 17.158 \, \mathrm{Hz}
+$$
+
+Lato software, si aspettano 3 di queste oscillazioni, per ottenere una frequenza di $\approx \, 6 \mathrm{Hz}$ (abbastanza vicina a quella delle crome a 120 BPM).
+
+Una volta ottenuto il frame, quindi, si aggiorna il timer 2 di conseguenza, sfruttando il registro SPR per il volume della nota (qui solo on/off) e il suo registro di scrittura per la nota stessa.
 
 \end{document}

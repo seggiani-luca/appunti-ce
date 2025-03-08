@@ -237,8 +237,6 @@ La CPU non puo' eseguire programmi direttamente dall'hard disk, ma deve prima ca
 
 	Questo perchè letture e scritture in hard disk vengono effettuate per \textbf{blocchi} (storicamente di 512 byte), e richiedono molto più tempo di quanto sia possibile aspettare al prelievo di istruzioni o operandi.
 
-Nello standard PC AT gli hard disk usano interfacce \textbf{SATA}.
-
 Dal punto di vista elettromeccanico venivano realizzati attraverso dischi di materiale ferromagnetico imperniati ad un asse centrale, con testine mobili che scandivano il raggio dei dischi, rilevando o modificando la loro magnetizzazione per accedere all'informazione.
 Il complesso di dischi e testine viene detto \textbf{drive}.
 
@@ -267,8 +265,9 @@ Storicamente queste informazioni erano gestite lato software, concedendo la poss
 Oggi la formattazione è definita in fabbrica, e l'interfaccia offre una sua astrazione.
 In questa astrazione ogni blocco è quindi indirizzato da un indirizzo logico, il \textbf{Logical Block Address}, \textbf{LBA}.
 
-\subsubsection{Interfaccia SATA}
-L'interfaccia del PC IBM è dotata di diversi registri a 8 bit e uno a 16 bit:
+\subsubsection{Interfaccia ATA}
+Nello standard PC AT gli hard disk usano interfacce \textbf{ATA} (capaci di gestire 2 drive, in configurazione \textit{master}/\textit{slave}).
+L'interfaccia ATA è dotata di diversi registri a 8 bit e uno a 16 bit:
 \begin{itemize}
 	\item \textbf{Registri di selezione} del blocco:
 		\begin{itemize}
@@ -289,6 +288,22 @@ L'interfaccia del PC IBM è dotata di diversi registri a 8 bit e uno a 16 bit:
 	\item \textbf{STS} (Status Register): il classico registro di stato che ci notifica se un'operazione è conclusa o si puo' effettuare;
 	\item \textbf{CMD} (Command): serve a specificare l'operazione da effettuare (lettura, scrittura, ecc...).
 \end{itemize}
+
+\par\smallskip
+
+Vediamo quindi un ultimo programma di esempio delle periferiche, che permette di scrivere un buffer di caratteri da 512 byte, stampandolo a schermo, e scriverlo/leggerlo su un settore di memoria ad un indirizzo LBA (prendiamo 1).
+
+\lstset{style=codestyle, language=C++}
+\lstinputlisting{../code/interfaces/disk/disk.cpp}
+
+Gli header \lstinline|keyboard.h| e \lstinline|video.h| contengono funzioni simili a quelle viste negli esempi precedenti per l'interfacciamento con tastiera e video (ci sono due funzioni video non viste, \lstinline|prt_screen()| per la scrittura di tutto il buffer video, e \lstinline|set_cursor()|, che imposta la posizione del cursore hardware agendo su registri specifici).
+
+La scrittura viene effettuata alla pressione del tasto \lstinline|"1"|, e la lettura alla pressione del tasto \lstinline|"2"|.
+Entrambe le operazioni si riassumono fondamentalmente nell'invio di un comando (\lstinline|give_command()|), che include la scrittura dell'indirizzo LBA (\lstinline|give_lba()|), e nella successiva scrittura o lettura di un settore (\lstinline|write_sector()| o \lstinline|read_sector()|), che comprende di aspettare un certo bit di stato del disco (\lstinline|wait_for_disk()|).
+Il bit particolare si può verificare consultando i manuali appositi.
+
+Le funzioni viste finora su periferiche di I/O sono disponibili nella cartella \lstinline|/code| degli appunti del corso, assieme a vari esperimenti e la definizione completa di tutti gli header usati.
+Si noti che questi non sempre corrispondono con \lstinline|libce|, ma spesso riprendono, ridefiniscono o usano (probabilmente in maniera erronea) funzioni e oggetti ivi definiti.
 
 \subsection{Caching}
 Abbiamo detto che la memoria RAM è molto più veloce dei dischi rigidi.
