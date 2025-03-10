@@ -23,7 +23,7 @@ void give_lba(natl lba) {
 	natb lba2 = lba << 16;
 	natb lba3 = lba << 24;
 
-	// il byte più significativo deve attivare l'LBA,
+	// il byte piu' significativo deve attivare l'LBA,
 	// lba stava comunque su 28 bit
 	lba3 = (lba3 & 0x0F) | 0xE0; // 1110-LBA-
 

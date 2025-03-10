@@ -301,7 +301,7 @@ Le cache di livello più basso saranno quindi più veloci ma più piccole, mentr
 Il controllore di cache provvederà a gestire i livelli di cache, effettuando gli accessi controllando a partire dal livello più basso (più veloce) per arrivare al livello più basso, fino alla RAM.
 
 \subsection{Interruzioni}
-La limitazione principale del processore studiato finora è che il flusso di controllo è completamente determinato dal progamma in esecuzione.
+La limitazione principale del processore studiato finora è che il flusso di controllo è completamente determinato dal programma in esecuzione.
 Attraverso il meccanismo dell'interruzione, il sistema definisce $e_1, ..., e_n$ \textbf{eventi}, e il programmatore $r_1, ..., r_n$ \textbf{routine} per la gestione di tali eventi.
 Da qui in poi il processore continua ad eseguire il suo normale flusso di controllo, ma monitorando in qualche modo lo stato di questi eventi.
 Nel caso uno degli eventi $e_i$ effettivamente si verifichi, la CPU provvederà a sospendere il flusso di controllo attuale e ad eseguire la routine $r_i$.

@@ -87,8 +87,8 @@ void main() {
 	while (true) {
 		natl current_value = read_timer(timer0_addr);
 
-		// se il valore corrente è maggiore del valore precedente 
-		// si è fatto un salto
+		// se il valore corrente e' maggiore del valore precedente 
+		// si e' fatto un salto
 		if (current_value > last_value) {
 			tick++;
 		}
