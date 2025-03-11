@@ -223,17 +223,48 @@
 \makeatother
 
 \begin{document}
+% sezione (data)
+\section{Lezione del 11-03-25}
 
-\pagestyle{fancy}
+% stili pagina
 \thispagestyle{empty}
-\renewcommand{\thispagestyle}[1]{}
+\pagestyle{fancy}
 
-\maketitle
-\input{../02-24/main.tex}
-\input{../02-25/main.tex}
-\input{../03-03/main.tex}
-\input{../03-04/main.tex}
-\input{../03-07/main.tex}
-\input{../03-10/main.tex}
-\input{../03-11/main.tex}
+% testo
+\subsubsection{Interruzione di livello o di fronte}
+Vediamo un dettaglio sul comportamento dell'APIC: questo può rilevare, in base alla sua configurazione, i \textbf{livelli} o i \textbf{fronti} delle variabili in ingresso.
+
+Questo può avere delle implicazioni diverse a seconda dell'interfaccia.
+Ad esempio, avevamo detto che il timer in modalità 2 genera un onda quadra.
+Se si usa una routine lanciata dal timer a interruzione di programma, e si configura l'APIC per rilevare il livello, potrebbe essere che a routine concluse il livello del timer è sempre alto, e quindi l'interruzione viene lanciata nuovamente.
+
+Questo è chiaramente diverso dal comportamento desiderato, ed è quindi opportuno configurare l'APIC per rilevare i soltanto fronti di salita.
+
+\subsection{Altri tipi di interruzioni}
+Abbiamo visto finora le \textbf{interruzioni esterne mascherabili}.
+Vediamo in verità che esistono altri tipi di interruzione, fra cui:
+\begin{itemize}
+	\item \textbf{Interruzioni esterne non mascherabili:} cioè che non possono essere mascherate, solitamente rappresentano eventi particolarmente gravi o comunque la cui gestione ha alta importanza;
+	\item \textbf{Eccezioni:} eventi che non arrivano dall'esterno, ma si generano all'interno del processore stesso.
+		Questi sono particolari errori logici che potrebbe incontrare il processore, come ad esempio la divisione per 0, il tentativo di eseguire un istruzione non riconosciuta, ecc...
+
+		Un interruzione particolare è quella rappresentata da \lstinline|INT3|, l'interruzione di \textit{debug}.
+		Attraverso questa, un \textit{debugger} è capace di interrompere l'esecuzione di un programma ad un certo indirizzo del suo codice macchina.
+
+		Un'altra interruzione di debug è data dalla single step, che viene lanciata ad ogni istruzione quando è attivo un certo flag (appunto, il flag single step). Questo permette al debugger di eseguire il programma in modalità \textit{passo singolo}, cioè eseguendo un istruzione e interrompendo, permettendo al programmatore di osservare il suo andamento passo per passo.
+
+		Una differenza fra le interruzioni esterne e le eccezioni è che le eccezioni possono essere sollevate \textit{durante} la lettura e esecuzione di un istruzione, quindi ad esempio mentre si stava interpetando un codice operativo (si pensi all'interruzione di operazione non riconosciuta).
+		In verità, per assicurare l'atomicità dei cicli di esecuzione, la CPU ripristina automaticamente il suo stato a prima del lancio dell'interruzione.
+		In particolare, possiamo distinguere 3 tipi di eccezione:
+		\begin{itemize}
+			\item \textbf{Fault:} l'esecuzione non viene ancora eseguita, lo stato IP prima della sua esecuzione viene salvato (quindi si rimane alla stessa istruzione), e si può riprovare ad eseguirla dopo aver risolto l'errore;
+			\item \textbf{Trap:} l'esecuzione ormai è stata eseguita, e si salva l'IP successivo.
+			\item \textbf{Abort:} raggruppa degli eventi particolarmente disastrosi in cui l'esecuzione si arresta completamente (ad esempio la tripla eccezione).
+		\end{itemize}
+
+		Quando viene lanciata una \textit{fault} o una \textit{trap}, il processore cerca nella IDT se esiste un handler corrispondente (segnalato attraverso un bit nell'IDT stessa, alla riga della tabella corrispondente all'eccezione considerata).
+		Nel caso questo non esista, si riprova con la fault di \textit{doppia eccezione}, che quindi rappresenta una fault a sé.
+		Nel caso nemmeno questo handler esista, viene lanciata una fault di \textit{tripla eccezione}, che è di tipo \textit{abort} e comporta quindi l'arresto del programma.
+\end{itemize}
+
 \end{document}
