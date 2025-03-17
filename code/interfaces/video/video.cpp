@@ -1,6 +1,6 @@
 #include <libce.h>
 // dimensioni memoria video (2K)
-#define SIZE 2000
+#define SIZE 4000
 
 namespace vid {
 	// dichiara l'array video di libce

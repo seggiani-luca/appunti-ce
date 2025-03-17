@@ -241,7 +241,7 @@ Lo standard VGA usato dal PC IBM prevede che l'adattatore sia configurabile e ut
 \begin{itemize}
 	\item \textbf{Modalità testo:} ogni locazione viene associata ad un carattere ASCII da visualizzare sullo schermo, diviso in 80 colonne $\times$ 25 righe (con un carattere di 9 $\times$ 16 pixel, per una risoluzione totale di 720 $\times$ 400 pixel a 70 Hz). È questa la modalità di default in cui si avvia l'adattatore.
 
-		In questo caso il compito dell'adattatore è quello di leggere i 2 KB di memoria, e convertire ogni codice nel carattere principale.
+		In questo caso il compito dell'adattatore è quello di leggere i 4 KB di memoria, e convertire ogni codice nel carattere principale.
 		Questo viene fatto consultando una ROM di caratteri che contiene quello che è effettivamente il carattere (\textit{font}) dell'adattatore.
 		Solitamente si può anche redirezionare la lettura in ROM ad una certa regione della RAM, modificando così il font.
 
@@ -272,7 +272,7 @@ Le scritture vengono quindi eseguite inserie:
 \par\smallskip
 
 Vediamo quindi un programma di esempio che sfrutta l'adattatore grafico in modalita testo a 25 $\times$ 80 caratteri.
-Dalla libreria \lstinline|libce| si è importata la variabile \lstinline|video|, che rappresnta l'intero buffer da 2 KB di memoria video (2 byte per cella) a disposizione dall'adattotore.
+Dalla libreria \lstinline|libce| si è importata la variabile \lstinline|video|, che rappresenta l'intero buffer da 4 KB di memoria video (2 byte per cella) a disposizione dall'adattotore.
 Le scritture vengono fatte, come avevamo detto, sovrascrivendo dati in tale buffer, mantenendo \textit{lato software} un cursore che ci indica la posizione sullo schermo.
 
 \lstset{style=codestyle, language=c++}
