@@ -316,7 +316,7 @@ La struttura a livello di memoria contiene le seguenti informazioni:
 \begin{itemize}
 	\item L'offset della routine di gestione dell'interruzione, in alcune modalità comprendente dell'indice di segmento, ecc...;
 	\item \textbf{P:} un flag di \textbf{presenza}, indica se il descrittore è effettivamente abilitato;
-	\item \textbf{L:} il livello di protezione (contesto sistema o utente) a cui deve essere eseguito il gestore;
+	\item \textbf{L:} il livello di protezione (contesto sistema o utente) a cui deve essere eseguito il gestore. Notiamo che questa sembra essere una semplificazione del corso (il professore si è rivelato ombroso a riguardo). In verità, l'IDT mantiene un riferimento al CS dell'istruzione, che anche se ora abbiamo assunto come un semplice flag sistema/utente, rappresenta invece un riferimento al \textit{segmento} vero e proprio all'interno del cui è allocata la routine. Informazioni riguardo al livello di ring di ogni segmento sono contenute in altre tabelle specifiche, dette \textbf{GDT} (\textit{Global Descriptor Table}) e \textbf{LDT} (\textit{Local Descriptor Table}). Il salto al livello L viene quindi fatto automaticamente in base al livello del segmento in cui è allocato il gestore (vediamo che con considerazioni simili si capisce come mai viene allocato, oltre a RIP, anche il CS corrente in fase di chiamata);
 	\item \textbf{I/T:} il tipo di interruzione fra quelli sopra definiti.
 \end{itemize}		
 

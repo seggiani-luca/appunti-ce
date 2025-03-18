@@ -240,12 +240,15 @@ Se si usa una routine lanciata dal timer a interruzione di programma, e si confi
 
 Questo è chiaramente diverso dal comportamento desiderato, ed è quindi opportuno configurare l'APIC per rilevare i soltanto fronti di salita.
 
-\subsection{Altri tipi di interruzioni}
+\subsection{Riassunto sui tipi di interruzioni}
 Abbiamo visto finora le \textbf{interruzioni esterne mascherabili}.
-Vediamo in verità che esistono altri tipi di interruzione, fra cui:
+Vediamo in verità che esistono altri tipi di interruzione, da cui la lista completa:
 \begin{itemize}
+	\item \textbf{Interruzioni esterne:} il tipo che abbiamo visto finora, di cui notiamo le:
+		\begin{itemize}
 	\item \textbf{Interruzioni esterne non mascherabili:} cioè che non possono essere mascherate, solitamente rappresentano eventi particolarmente gravi o comunque la cui gestione ha alta importanza;
-	\item \textbf{Eccezioni:} eventi che non arrivano dall'esterno, ma si generano all'interno del processore stesso.
+		\end{itemize}
+	\item \textbf{Interruzioni interne} (\textit{Eccezioni}): eventi che non arrivano dall'esterno, ma si generano all'interno del processore stesso.
 		Questi sono particolari errori logici che potrebbe incontrare il processore, come ad esempio la divisione per 0, il tentativo di eseguire un istruzione non riconosciuta, ecc...
 
 		Un interruzione particolare è quella rappresentata da \lstinline|INT3|, l'interruzione di \textit{debug}.
@@ -265,6 +268,7 @@ Vediamo in verità che esistono altri tipi di interruzione, fra cui:
 		Quando viene lanciata una \textit{fault} o una \textit{trap}, il processore cerca nella IDT se esiste un handler corrispondente (segnalato attraverso un bit nell'IDT stessa, alla riga della tabella corrispondente all'eccezione considerata).
 		Nel caso questo non esista, si riprova con la fault di \textit{doppia eccezione}, che quindi rappresenta una fault a sé.
 		Nel caso nemmeno questo handler esista, viene lanciata una fault di \textit{tripla eccezione}, che è di tipo \textit{abort} e comporta quindi l'arresto del programma.
+	\item \textbf{Interruzioni software:} interruzioni che vengono lanciate direttamente dal programma attraverso l'istruzione \lstinline|INT|, la cui utilità verrà vista studiando il meccanismo della \textit{protezione}.
 \end{itemize}
 
 \end{document}
