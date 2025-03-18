@@ -318,6 +318,8 @@ La struttura a livello di memoria contiene le seguenti informazioni:
 	\item \textbf{P:} un flag di \textbf{presenza}, indica se il descrittore è effettivamente abilitato;
 	\item \textbf{L:} il livello di protezione (contesto sistema o utente) a cui deve essere eseguito il gestore. Notiamo che questa sembra essere una semplificazione del corso (il professore si è rivelato ombroso a riguardo). In verità, l'IDT mantiene un riferimento al CS dell'istruzione, che anche se ora abbiamo assunto come un semplice flag sistema/utente, rappresenta invece un riferimento al \textit{segmento} vero e proprio all'interno del cui è allocata la routine. Informazioni riguardo al livello di ring di ogni segmento sono contenute in altre tabelle specifiche, dette \textbf{GDT} (\textit{Global Descriptor Table}) e \textbf{LDT} (\textit{Local Descriptor Table}). Il salto al livello L viene quindi fatto automaticamente in base al livello del segmento in cui è allocato il gestore (vediamo che con considerazioni simili si capisce come mai viene allocato, oltre a RIP, anche il CS corrente in fase di chiamata);
 	\item \textbf{I/T:} il tipo di interruzione fra quelli sopra definiti.
+	\item \textbf{DPL:} il livello minimo da cui si può accedere al gestore come interruzione interna (attraverso una \lstinline|INT|).
+		Questo non significa che tale gestore non possa essere lanciato da un eccezione. 
 \end{itemize}		
 
 \subsubsection{Gestione dell'interruzione software}
@@ -341,12 +343,12 @@ In questo caso si preleva dalla pila sistema (utente se eravamo in un interruzio
 Anche qui vi sono delle particolarità, che verranno spiegato, assieme a quelle annunciate in precedenza, nel paragrafo seguente.
 
 \subsubsection{Particolarità della gestione delle interruzioni software}
-Notiamo una particolarità riguardo alla transizione di contesto in fase di chiamata dell'interruzione (nota osservando il contesto attuale e il DPL dell'interruzione lanciata), e riguardo alla transizione di contesto in fase di ritorno dall'interruzione (nota osservando il contesto attuale e il contesto salvato in pila).
+Notiamo una particolarità riguardo alla transizione di contesto in fase di chiamata dell'interruzione (nota osservando il contesto attuale e l'L dell'interruzione lanciata), e riguardo alla transizione di contesto in fase di ritorno dall'interruzione (nota osservando il contesto attuale e il contesto salvato in pila).
 
-Infatti, in fase di chiamata (quando si usa la \lstinline|INT|), se il DPL è minore del contesto corrente, viene lanciato un errore.
+Infatti, in fase di chiamata (quando si usa la \lstinline|INT|), se L è minore del contesto corrente, viene lanciato un errore.
 La motivazione è principalmente una questione di simmetria nel meccanismo di chiamata delle interruzioni, piuttosto che una ragione di sicurezza: si vuole che le interruzioni ci portino in contesti maggiori o uguali del livello presente in CS.
 
 Viceversa, se si prova a passare ad un livello superiore in fase di ritorno dall'interuzione (cioè quando si usa la \lstinline|IRETQ|), viene lanciato un altro errore.
-La motivazione è che, visto che prevediamo nell'IDT il flag \textbf{L}, livello di destinazione, che permette di chiamare interruzioni in contesto utente, l'utente potrebbe impostare un frame di pila dove si richiede effettivamente l'accesso ad un livello di protezione superiore, e poi usare \lstinline|IRETQ| per ritornare da tale frame di pila e passare quindi a tale livello di accesso.
+La motivazione è che, visto che prevediamo nell'IDT il flag L, livello di destinazione, che permette di chiamare interruzioni in contesto utente, l'utente potrebbe impostare un frame di pila dove si richiede effettivamente l'accesso ad un livello di protezione superiore, e poi usare \lstinline|IRETQ| per ritornare da tale frame di pila e passare quindi a tale livello di accesso.
 
 \end{document} 
