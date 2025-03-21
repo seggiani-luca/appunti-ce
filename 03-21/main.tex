@@ -270,7 +270,7 @@ A questo punto il gestore fa una copia dei registri generali, e si ha a quel pun
 In questo, sfrutteremo delle routine (\lstinline|salva_stato| e \lstinline|carica_stato|) all'avvio e al termine di ogni gestore, che si occupano di salvare e caricare il contesto del processo attualmente in esecuzione.
 Per conoscere quale questo processo sia, si mantiene una variabile globale nel sistema, \lstinline|esecuzione|, che punta al descrittore del processo (che è dove vogliamo mettere il contesto stesso).
 
-I processi pronti staranno in una certa struttura dati, ordinata per la \textbf{priorità} (un altro valore che manteniamo nel descrittore di processo) di ogni processo.
+I processi pronti staranno in una certa struttura dati (nel nucleo una linked list), ordinata per la \textbf{priorità} (un altro valore che manteniamo nel descrittore di processo) di ogni processo.
 Un gestore di interruzione di base, quindi, si potrebbe magari occupare di passare al contesto e all'esecuzione del processo di priorità più alta a intervalli regolari, magari regolato da un timer (cosiddetto \textit{timeslicing}).
 
 Altre situazioni, più vicine a noi, sono quelle del termine di una gestione di un interruzione esterna, o bloccaggio automatico di un processo, dove il kernel deve selezionare il prossimo processo da eseguire, scegliendo chiaramente quello a priorità più alta.
@@ -294,7 +294,7 @@ Alla creazione del processo, quindi, vogliamo svolgere le seguenti azioni in mod
 		\begin{itemize}
 			\item Un puntatore alla pila sistema appena definita;
 			\item Il contesto del processo;
-			\item L'\textbf{argomento} di chiamata del processo;
+			\item L'\textbf{argomento} di chiamata del processo, utile al debug;
 			\item L'\textbf{IOPL}, \textit{IO Privilege Level}, che specifica la possibilità o meno del processo di accedere all'IO. # approfondisci
 		\end{itemize}
 \end{itemize}
