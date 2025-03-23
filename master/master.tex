@@ -223,81 +223,20 @@
 \makeatother
 
 \begin{document}
-% sezione (data)
-\section{Lezione del 21-03-25}
 
-% stili pagina
-\thispagestyle{empty}
 \pagestyle{fancy}
+\thispagestyle{empty}
+\renewcommand{\thispagestyle}[1]{}
 
-% testo
-Andiamo a definire più nei dettagli la struttura di un processo e le modalità secondo le quali questi si possono creare e distruggere.
-
-\subsection{Descrittori di processo}
-Un processo è descritto fondalmente da un astrazione, detta \textbf{descrittore di processo}, idealmente contenuta in una qualche locazione contigua, assieme ad altri descrittori, in memoria.
-\begin{itemize}
-	\item Il primo campo del descrittore sarà un \textbf{indice} numerico unico ad ogni processo;
-	\item Dovremo poi tenere conto del \textbf{contesto} del processo, inteso come la copia di tutti i registri del processore. 
-\end{itemize}
-
-Ogni processo ha un ciclo di vita che rispetta l'andamento del seguente grafico:
-
-\begin{center}
-	\includegraphics[scale=0.3]{../figures/schema_proc.png}
-\end{center}
-
-Vediamo nel dettaglio il significato delle diverse fasi.
-In fase di creazione del proesso, il suo descrittore viene posto in una struttura dati che ne consente \textbf{schedulazione} e \textbf{dispatch}:
-\begin{itemize}
-	\item \textbf{Schedulazione:} effettivamente la scelta che il kernel fa, assunto il controllo, su qual'è il prossimo processo da portare in esecuzione (passaggio da processo \textbf{pronto} a processo in \textbf{esecuzione});
-	\item \textbf{Dispatch:} l'esecuzione effettiva di una serie di operazioni di tale processo. 
-\end{itemize}
-
-I processi possono anche \textbf{bloccarsi}, cioè mettersi in attesa di qualche evento. 
-
-Infine, un processo può \textbf{terminare}, cioè sparire dal sistema (lui e il suo descrittore).
-Anche in questo caso il processo deve essere attualmente in esecuzione.
-
-Una transizione che non è prevista da tutti i sistemi è quella di \textbf{preemption}, cioè di ritorno allo stato \textbf{pronto} a controllo dello scheduler.
-La maggior parte dei sistemi operativi supporta tale funzionalità, il nucleo che vedremo solo parzialmente.
-
-\subsection{Prima vista dell'esecuzione del kernel}
-Dopo il boot della macchina, il kernel si impadronisce della macchina e lancia il primo processo (il processo utente).
-Da qui in poi il kernel avrà il controllo solo fra un processo e l'altro, in caso di interruzioni (interne, esterne o eccezioni), e potrà restituirlo solo attraverso il ritorno da gestore con \lstinline|IRETQ|.
-
-Come abbiamo visto, ad ogni chiamata di gestore di interruzione lascia RIP, CS, RFLAGS e RSP al tempo di chiamata dell'interruzione (facendo le opportune distinzioni fra \textit{fault} e \textit{trap}) in pila.
-A questo punto il gestore fa una copia dei registri generali, e si ha a quel punto una \textit{"foto"} del processore al momento di attraversamento del gate, che rappresenterà quindi il \textit{contesto} del processo stesso al momento della chiamata dell'interruzione.
-
-In questo, sfrutteremo delle routine (\lstinline|salva_stato| e \lstinline|carica_stato|) all'avvio e al termine di ogni gestore, che si occupano di salvare e caricare il contesto del processo attualmente in esecuzione.
-Per conoscere quale questo processo sia, si mantiene una variabile globale nel sistema, \lstinline|esecuzione|, che punta al descrittore del processo (che è dove vogliamo mettere il contesto stesso).
-
-I processi pronti staranno in una certa struttura dati (nel nucleo una linked list), ordinata per la \textbf{priorità} (un altro valore che manteniamo nel descrittore di processo) di ogni processo.
-Un gestore di interruzione di base, quindi, si potrebbe magari occupare di passare al contesto e all'esecuzione del processo di priorità più alta a intervalli regolari, magari regolato da un timer (cosiddetto \textit{timeslicing}).
-
-Altre situazioni, più vicine a noi, sono quelle del termine di una gestione di un interruzione esterna, o bloccaggio automatico di un processo, dove il kernel deve selezionare il prossimo processo da eseguire, scegliendo chiaramente quello a priorità più alta.
-
-Inseriamo un processo fittizio, \textit{dummy}, nella lista dei processi pronti con la priorità più bassa possibile.
-Questo ci assicurerà di non trovarci mai una situazione dove nessun processo è pronto all'esecuzione, e quindi avere sempre qualcosa a cui il kernel può passare (idealmente il processo dummy effettua solo un ciclo a vuoto).
-
-Un ulteriore dettaglio è quello dello stato del processo alla sua creazione.
-Non è infatti realistico pensare di controllare se quel processo richiede inizializzazione ogni volta che si ritorna da un interruzione gestita a livello sistema.
-Alla creazione del processo, quindi, vogliamo svolgere le seguenti azioni in modo che il processo venga eseguito per la prima volta già in uno stato completo:
-\begin{itemize}
-	\item Allocare una \textbf{pila sistema} dedicata al processo;
-	\item Inizializzare la pila sistema. Questo consisterà nell'inizializzare a loro volta: 
-		\begin{itemize}
-			\item IP alla prima istruzione del processo;
-			\item CS al segmento livello utente dove si trova il processo;
-			\item FLAG a quanto viene richiesto dallo standard C++ al momento di avvio (solitamente tutto a 0), con l'eccezione di IF a 1.
-		\end{itemize}
-	\item Allocare il \textbf{descrittore} di processo, e mettere quel processo fra i processi pronti;
-	\item Inizializzare il descrittore. Questo consiste nell'inizializzare a loro volta:
-		\begin{itemize}
-			\item Un puntatore alla pila sistema appena definita;
-			\item Il contesto del processo;
-			\item L'\textbf{argomento} di chiamata del processo, utile al debug;
-			\item L'\textbf{IOPL}, \textit{IO Privilege Level}, che specifica la possibilità o meno del processo di accedere all'IO.
-		\end{itemize}
-\end{itemize}
-
+\maketitle
+\input{../02-24/main.tex}
+\input{../02-25/main.tex}
+\input{../03-03/main.tex}
+\input{../03-04/main.tex}
+\input{../03-07/main.tex}
+\input{../03-10/main.tex}
+\input{../03-11/main.tex}
+\input{../03-17/main.tex}
+\input{../03-18/main.tex}
+\input{../03-21/main.tex}
 \end{document}
