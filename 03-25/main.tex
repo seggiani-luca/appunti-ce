@@ -223,22 +223,69 @@
 \makeatother
 
 \begin{document}
+% sezione (data)
+\section{Lezione del 25-03-25}
 
-\pagestyle{fancy}
+% stili pagina
 \thispagestyle{empty}
-\renewcommand{\thispagestyle}[1]{}
+\pagestyle{fancy}
 
-\maketitle
-\input{../02-24/main.tex}
-\input{../02-25/main.tex}
-\input{../03-03/main.tex}
-\input{../03-04/main.tex}
-\input{../03-07/main.tex}
-\input{../03-10/main.tex}
-\input{../03-11/main.tex}
-\input{../03-17/main.tex}
-\input{../03-18/main.tex}
-\input{../03-21/main.tex}
-\input{../03-24/main.tex}
-\input{../03-25/main.tex}
+% testo
+\subsection{Attesa}
+Esiste un altra primitiva, la \lstinline|delay|, che viene usata per sospendere un processo per un certo istante temporale.
+
+Il kernel sfrutta di per sé il timer 1 per generare interruzioni periodiche, che lo assistano anche solamente a tenere traccia del tempo trascorso durante l'esecuzione.
+A questo punto la \lstinline|delay(natl n)| si limita ad aspettare \lstinline|n| clicli del timer.
+Un'implementazione naive del timer è quindi quella di una lista di strutture, che rappresentano \textbf{richieste}, che tengono conto del loro conteggio attuale e del processo che le ha invocate.
+Un processo crea una richiesta sfruttando la primitiva \lstinline|delay|, che risulta nella creazione di una richiesta e dello spostamento del processo nella lista bloccati.
+Il kernel dovrà quindi limitarsi ad aggiornare ad ogni ciclo di timer le richieste, decrementandole, e quindi ad riportare il processo in esecuzione una volta che il conteggio raggiunge 0.
+
+Un modo più efficiente di fare la stessa cosa è quello di memorizzare non il conteggio di ogni richiesta, ma il conteggio \textit{successivo} alla richiesta precedente nella lista d'attesa.
+Questo, chiaramente, implicherà un possibile riordinamento della lista in fase di inserzione (chi arriva prima sta in testa).
+In questo caso basterà decrementare solo il primo elemento della lista, e in occasione di raggiungimento di 0 eliminare quel processo e i successivi con conteggio aggiuntivo pari a 0.
+
+\subsection{Memoria dinamica}
+\lstset{language=C++}
+Vediamo alla gestione della memoria dinamica, in particolare alla parola chiave \lstinline|new| fornita dal linguaggio.
+Per noi le \lstinline|new| non si tradurranno in altro che chiamate di funzione, che cercano una zona di memoria libera dove allocare il dato desiderato.
+Di contro, la \lstinline|delete| si occuperà di deallocare lo stesso dato.
+
+Una domanda che potremmo porci è dove si trova questa memoria.
+Per quanto riguarda il \textbf{sistema}, una porzione dedicata viene inizializzta all'avvio e resta tale durante l'esecuzione dello stesso.
+Per quanto riguarda l'\textbf{utente}, invece, si dedica un altra porzione di memoria, condivisa fra i processi.
+Questa condivisione implica che più processi non possono fornire le loro versioni della funzione \lstinline|new| e \lstinline|delete|, in quanto se queste venissero interrotte (le funzioni utente non sono mai atomiche), lascerebbero la memoria dinamica in uno stato inconsistente per altri processi intenzionati a modificarla.
+
+Si usa quindi un semaforo che tiene conto di chi sta scrivendo in memoria.
+
+\subsection{Memoria virtuale}
+Veniamo quindi all'ultimo argomento chiave del corso.
+Abbiamo detto che la memoria di sistema è divisa fra sistema e utente.
+In ogni momento ci aspettiamo che la memoria utente occupata da due porzioni: una \textbf{parte pubblica}, che rappresenta l'heap condiviso fra processi, e  la \textbf{parte privata}, che rappresenta la memoria relativa ad un \textit{singolo} processo, quello attualmente in esecuzione.
+La memoria privata degli altri processi è stata quindi intesa finora come memorizzata separatamente, magari nel disco rigido, con conseguente scaricamento del processo corrente e caricamento del successivo in memoria in fase di cambio di contesto fra processi.
+
+Per i nostri scopi, possiamo assumere anche l'heap come parte della memoria privata. Il problema principale sarà infatti quello di poter memorizzare le immagini della memoria di \textit{più} processi contemporaneamente.
+Infatti, storicamente, per \textit{sistema multiprogrammato} si intendeva proprio il sistema in grado di mantenere più processi \textit{in memoria} (il sistema visto finora sarebbe stato detto \textit{multiprocesso}).
+
+Decidiamo quindi di dividere la porzione di memoria utente in più sezioni, associate ad ogni processo.
+Potremmo intanto chiederci qual'è la memoria da dedicare ad ogni processo.
+La porzione dati e il codice di un programma sono infatti fissi in dimensioni, mentre pila e heap non lo sono.
+Storicamente, la memoria richiesta veniva specificata dal programmatore in fase di scrittura del programma.
+Quali metodologie si usino oggi non ci è immediatamente di interesse.
+
+Si crea quindi per ogni processo una struttura di questo tipo:
+\begin{table}[h!]
+	\center 
+	\begin{tabular} { | c | }
+		\sffamily Code \\ 
+		\hline
+		\sffamily Data \\
+		\hline
+		\sffamily Heap \\ 
+		$\downarrow$ \\
+		$\uparrow$ \\
+		\sffamily Stack
+	\end{tabular}
+\end{table}
+Dove lo stack e l'heap si espandono in una sola regione, da parti opposte.
+
 \end{document}
