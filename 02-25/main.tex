@@ -271,6 +271,12 @@ Pensiamo di fare questo attraverso più banchi di memoria con locazioni da 64 bi
 In questo caso avremo bisogno di montaggio in \textbf{serie}, e quindi di generare un segnale di select a partire non solo dalle line di byte enable, ma anche da una \textbf{maschera} generata a partire dal numero di riga.
 Questo si potrà fare agevolemnte mettendo il segnale di uscita della maschera in OR (ricordiamo segnali attivi bassi, quindi si applica De Morgan) con il byte enable di ogni modulo di RAM compreso nel banco di memoria associato a tale maschera.
 
+La struttura complessiva della RAM sarà quindi la seguente:
+\begin{center}
+	\includegraphics[scale=0.6]{../figures/ram.png}
+\end{center}
+dove la rete $M_r$ è quella che si occupa di generare la maschera, prendendo banchi di dimensione $2^k$ righe.
+
 \subsubsection{Allineamento e RAM}
 Quanto discusso finora rende più chiaro l'importanza del corretto allineamento degli oggetti in memoria.
 Leggere un oggetto da 8 byte non allineato nel montaggio di RAM descritto, infatti, richiederà necessariamente 2 accessi, contro il singolo accesso necessario per un oggetto allineato.
@@ -331,11 +337,20 @@ La stessa pressione ripetuta di un tasto quando l'utente lo tiene premuto per un
 Tramite il \textit{type-matic}, su appositi tasti abilitati, si ha infatti una ripetizione dell'evento di \textit{pressione} (non rilascio) di un tasto a frequenza costante dopo un intervallo di pressione continua.
 
 Lato calcolatore, il segnale prodotto dal microcontrollore della tastiera viene letto da un interfaccia provvista dei seguenti registri:
+\begin{table}[H]
+	\center 
+	\begin{tabular} { c | p{7cm} }
+		\lstinline|0x60| & \textbf{RBR}, \textit{Receive Buffer Register} \\ 
+		& \textbf{TBR}, \textit{Transmit Buffer Register} \\ 
+		\hline
+		... & \\
+		\hline
+		\lstinline|0x64| & \textbf{STR}, \textit{Status Register} \\
+		& \textbf{CMR}, \textit{Command register}
+	\end{tabular}
+\end{table}
+
 \begin{itemize}
-	\item \textbf{RBR}, \textit{Receive Buffer Register};
-	\item \textbf{TBR}, \textit{Transmit Buffer Register};
-	\item \textbf{STR}, \textit{Status Register};
-	\item \textbf{CMR}, \textit{Command register}
 \end{itemize}
 
 RBR e TBR, come STR e CMR, condividono gli indirizzi, rispettivamente \lstinline|0x60| e \lstinline|0x64|.

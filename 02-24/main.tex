@@ -237,7 +237,11 @@ Questi 3 strumenti ci permetterano di realizzare il paradigma della \textbf{mult
 Non si pensi questo significhi avere più processori, in quanto il corso riguarda esclusivamente processori \textit{single-threading}.
 
 \subsection{Architettura}
-L'archittettura di riferimento è quella classica, composta da \textbf{CPU}, \textbf{memoria} e \textbf{I/O} interconnessi da un \textbf{bus}.
+L'archittettura di riferimento è quella classica, composta da \textbf{CPU}, \textbf{memoria} e \textbf{I/O} interconnessi da un \textbf{bus}:
+
+\begin{center}
+	\includegraphics[scale=0.35]{../figures/struttura_calc.png}
+\end{center}
 
 Durante lo studio di un archiettura è oppurtuno porsi la domanda \textit{"chi fa cosa?"}, che fornisce determinati \textit{chi} ai determinati \textit{cosa} forniti da un opportuno livello di astrazione (transistor, porte logiche, diagrammi funzionali, ecc...).
 
@@ -271,7 +275,9 @@ Ogni componente vede ciò che viene scritto sul bus in qualsiasi momento, e l'in
 \subsubsection{Flusso di controllo}
 Abbiamo visto come la CPU si limita a prelevare ed eseguire istruzioni nel ciclo di \textbf{fetch-execute}.
 L'istruzione successiva alla corrente, il cui indirizzo viene scritto nell'\textbf{instruction pointer}, viene decisa dall'istruzione corrente stessa (si pensi alle istruzioni di salto).
-Il \textbf{flusso di controllo} è quindi deciso dall istruzioni stesse, cioè dal programma.
+Il \textbf{flusso di controllo} è quindi deciso dall'istruzioni stesse, cioè dal programma.
+
+Vedremo che mentre la struttura del calcolatore va a complicarsi, il flusso di controllo smette di essere completamente sequenziale (anche oltre alle istruzioni di salto), sopratutto grazie al meccanismo che introdurremo di \textit{interruzione}. 
 
 \subsubsection{Bootstrap}
 Il \textbf{bootstrap} è un processo secondo il quale si porta il sistema in un certo stato di esecuzione, apparentemente impossibile, o comunque molto difficile, da raggiungere.
@@ -294,12 +300,32 @@ Storicamente, la memoria era indirizzata a \textit{parole}, cioè insiemi di bit
 Una parola poteva essere di più byte, mentre oggi le memorie sono accessibili ai singoli byte.
 Ad esempio, le memorie usate nell'architettura Intel x86 sono accessibili ad 1 byte (\lstinline|MOVB|), 2 byte (\lstinline|MOVW|), 4 byte (\lstinline|MOVL|), e 8 byte (\lstinline|MOVQ|).
 
+Il fatto che la memoria dell'architettura x86 sia organizzata a \textit{parole} da 8 byte (in particolare è cosi nella versione a 64 bit, x86\_64, che chiameremo semplicemente x86) comporta che cambi il modo stesso in cui vediamo la memoria.
+Invece di vedere solo byte contigui, infatti, possiamo immaginare la memoria come organizzata in \textbf{righe}, a loro volta divise in 8 byte:
+
+\begin{table}[h!]
+	\center 
+	\begin{tabular} { c || c | c | c | c | c | c | c | c || c }
+		\bfseries Numero di riga & +7 & +6 & +5 & +4 & +3 & +2 & +1 & +0 & \bfseries Indirizzo di riga \\
+		\hline
+		0 & & & & & & & & & 0 \\
+		\hline
+		1 & & & & & & & & & 8 \\ 
+		\hline
+		2 & & & & & & & & & 16 \\ 
+		\hline
+		... & & & & & & & & & ...
+	\end{tabular}
+\end{table}
+
 \subsubsection{Endianess}
 Notiamo che la posizione in memoria del byte più significativo di una parola (in questo caso consideriamo una "parola" da 8 byte, da cui si ricavano tutte le altre misure) determina l'\textit{endianess} dell'architettura.
 In particolare, se l'ultimo byte sta in fondo nella memoria, si dice \textbf{big-endian}, mentre se viceversa l'ultimo byte viene per primo nella memoria, si dice \textbf{little-endian}.
 
 L'architettura Intel x86 che andiamo a considerare è little-endian, come lo sono la maggior parte delle architetture moderne.
 Un esempio di utilizzo del big-endian e nella trasmissione di dati attraverso il protocollo IP, usato nelle comunicazioni Internet.
+
+Il formalismo introdotto nel paragrafo precedente si dimostra utile anche da questo punto di vista: scrivendo le parole da destra verso sinistra, cioè a offset nella parola crescenti verso sinistra, si ha che il MSB finisce a sinistra, come suggerirebbe il senso di scrittura naturalsd.
 
 \subsubsection{Allineamento}
 Indicheremo con \textbf{offset} la distanza in byte fra due locazioni di memoria, inteso come il numero di locazioni che vanno saltate per raggiungere un indirizzo a partire dall'altro.

@@ -289,6 +289,24 @@ L'interfaccia ATA è dotata di diversi registri a 8 bit e uno a 16 bit:
 	\item \textbf{CMD} (Command): serve a specificare l'operazione da effettuare (lettura, scrittura, ecc...).
 \end{itemize}
 
+Questi registri sono disposti in memoria come segue:
+\begin{table}[h!]
+	\center 
+	\begin{tabular} { c | p{7cm} }
+		\lstinline|0x01f0| & \textbf{BR}, \textit{Buffer Register} \\
+		\lstinline|0x01f1| & \textbf{ERR}, \textit{Error Register} \\
+		\lstinline|0x01f2| & \textbf{SCR}, \textit{Section Counter} \\
+		\hline
+		\lstinline|0x01f3| & \textbf{SNR}, \textit{Sector Number} \\
+		\lstinline|0x01f4| & \textbf{CNL}, \textit{Cylinder Number Low} \\
+		\lstinline|0x01f5| & \textbf{CNH}, \textit{Cylinder Number High} \\
+		\lstinline|0x01f6| & \textbf{HND}, \textit{Head And Drive} \\
+		\hline
+		\lstinline|0x01f7| & \textbf{CMD}, \textit{Command Register} \\
+		\lstinline|0x01f8| & \textbf{STS}, \textit{Status Register} \\
+	\end{tabular}
+\end{table}
+
 \par\smallskip
 
 Vediamo quindi un ultimo programma di esempio delle periferiche, che permette di scrivere un buffer di caratteri da 512 byte, stampandolo a schermo, e scriverlo/leggerlo su un settore di memoria ad un indirizzo LBA (prendiamo 1).
@@ -362,6 +380,11 @@ $$
 Per ottenere la regione corrispondente ad un indirizzo (il numero di cacheline) si realizza una sorta di \textit{funzione di hash}, prendonendo l'etichetta e usandola come chiave per la regione di dati di indice corrispondente.
 Inoltre, alla regione selezionata si associa solitamente un singolo bit di validità.
 Un comparatore fra etichetta e gli $n$ bit piu significativi messo in AND a questo bit di validità ci assicurerà quindi la presenza nella cacheline del dato richiesto, detta \textbf{hit/miss}.
+
+La struttura complessiva è quindi la seguente:
+\begin{center}
+	\includegraphics[scale = 0.5]{../figures/cache_diretta.png}
+\end{center}
 
 \subsubsection{Lettura}
 A questo punto, in fase di lettura, nel caso di hit basterà ricavare una linea di offset dai bit meno significativi di A, e leggere dalla memoria cache a tale offset, all'indice indicato dall'etichetta.

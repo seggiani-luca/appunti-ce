@@ -289,9 +289,23 @@ Nel PC IBM in particolare troviamo 3 contatori:
 	\item \textbf{Contatore 2:} era collegato all'unico dispositivo audio presente sull'IBM, cioè il beeper speaker.
 \end{itemize}
 
-Il timer dispone di una vasta gamma di parametri e di solo 2 piedini di indirizzo, quindi 4 locazioni nello spazio di I/O, che sono \textbf{CWR}, un registro comune di configurazione delle interfacce, più 4 registri per timer collegati ad ognuna delle 3 porte rimanenti.
-L'accesso ai registri di un singolo timer va quindi fatto, cosa interessante del chip, in serie, modificando la stessa porta 1 o 2 volte consecutivamente.
+Le porte del timer sono i seguenti:
+\begin{table}[h!]
+	\center
+	\begin{tabular} { c | p{7cm} }
+		\lstinline|0x40| & Timer 0 (registro contatore) \\
+		\lstinline|0x41| & Timer 1 \hspace{1.2cm} // \\
+		\lstinline|0x42| & Timer 2 \hspace{1.2cm} // \\
+		\lstinline|0x43| & \textbf{CWR}, \textit{Command Word Register} \\
+		\hline
+		... & \\
+		\hline
+		\lstinline|0x61| & \textbf{SPR}, \textit{Speaker Register} \\
+	\end{tabular}
+\end{table}
 
+Il timer dispone di una vasta gamma di parametri e di solo 2 piedini di indirizzo, quindi 4 locazioni nello spazio di I/O (il controllo speaker si considera a parte), che sono \textbf{CWR}, un registro comune di configurazione delle interfacce, più 4 registri per timer collegati ad ognuna delle 3 porte rimanenti.
+L'accesso ai registri di un singolo timer va quindi fatto, cosa interessante del chip, in serie, modificando la stessa porta 1 o 2 volte consecutivamente.
 
 \subsubsection{Sonoro}
 Vediamo in particolare il lato sonoro del PC IBM.

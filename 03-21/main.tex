@@ -235,13 +235,37 @@ Andiamo a definire più nei dettagli la struttura di un processo e le modalità 
 
 \subsection{Descrittori di processo}
 Un processo è descritto fondalmente da un astrazione, detta \textbf{descrittore di processo}, idealmente contenuta in una qualche locazione contigua, assieme ad altri descrittori, in memoria.
+Questo può essere schematizzato come una struttura C++ del tipo:
+\begin{lstlisting}[language=C++, style=codestyle]	
+struct des_proc {
+	// identificatore numerico del processo
+	natw id;
+	// livello di privilegio (LIV_UTENTE o LIV_SISTEMA)
+	natw livello;
+	// precedenza nelle code dei processi
+	natl precedenza;
+	// indirizzo della base della pila sistema
+	vaddr punt_nucleo;
+	// copia dei registri generali del processore
+	natq contesto[N_REG];
+
+	// prossimo processo in coda
+	des_proc* puntatore;
+
+	// informazioni di debug
+};
+\end{lstlisting}
+dove quindi si tiene conto di:
 \begin{itemize}
-	\item Il primo campo del descrittore sarà un \textbf{indice} numerico unico ad ogni processo;
-	\item Dovremo poi tenere conto del \textbf{contesto} del processo, inteso come la copia di tutti i registri del processore. 
+	\item Un \textbf{indice} numerico unico ad ogni processo;
+	\item Il \textbf{livello di privilegio} di un processo, che può essere \textit{utente} o \textit{sistema} (non è altro che la distinzione che avevamo fatto trattando la protezione di \textit{processi utente} e \textit{processi sistema});
+	\item La \textbf{precedenza} del processo, la cui motivazione ci sarà chiara fra poco;
+	\item Un puntatore alla \textbf{pila sistema} del processo;
+	\item Il \textbf{contesto} del processo, inteso come la copia di tutti i registri del processore. 
+	\item Infine, un puntatore al \textbf{prossimo processo}, in quanto intendiamo organizzare questi processi in linked liste ordinate per precedenza decrescente.
 \end{itemize}
 
-Ogni processo ha un ciclo di vita che rispetta l'andamento del seguente grafico:
-
+Ogni processo ha quindi un ciclo di vita che rispetta l'andamento del seguente grafico:
 \begin{center}
 	\includegraphics[scale=0.3]{../figures/schema_proc.png}
 \end{center}
@@ -261,6 +285,75 @@ Anche in questo caso il processo deve essere attualmente in esecuzione.
 Una transizione che non è prevista da tutti i sistemi è quella di \textbf{preemption}, cioè di ritorno allo stato \textbf{pronto} a controllo dello scheduler.
 La maggior parte dei sistemi operativi supporta tale funzionalità, il nucleo che vedremo solo parzialmente.
 
+\subsubsection{Code di processi}
+L'esistenza di processi bloccati e pronti richiede l'esistenza di una struttura dati che ne tenga conto.
+Questa struttura dati, come abbiamo accennata, è rappresentata nel kernel studiato da linked list ordinate per precedenza decrescente.
+Una lista viene definita per i processi pronti:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// i processi pronti
+des_proc* pronti;
+\end{lstlisting}
+mentre vedremo i processi bloccati lo sono in relazione a particolari oggetti, detti \textit{semafori}.
+
+Notiamo quindi l'esistenza della variabile \lstinline|esecuzione|, che tiene conto del processo correntemente in esecuzione:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// il processo in esecuzione (sempre 1)
+des_proc* esecuzione;
+\end{lstlisting}
+
+Visto che bisognerà lavorare con liste di processi, si definiscono funzioni per la loro manipolazione:
+\begin{itemize}
+	\item \textbf{Inserimento di processo:} prende la forma di un semplice inserimento ordinato in lista.
+\begin{lstlisting}[language=C++, style=codestyle]	
+void inserimento_lista(des_proc*& p_lista, des_proc* p_elem)
+{
+// inserimento in una lista semplice ordinata
+//   (tecnica dei due puntatori)
+	des_proc *pp, *prevp;
+
+	pp = p_lista;
+	prevp = nullptr;
+	while (pp && pp->precedenza >= p_elem->precedenza) {
+		prevp = pp;
+		pp = pp->puntatore;
+	}
+
+	p_elem->puntatore = pp;
+
+	if (prevp)
+		prevp->puntatore = p_elem;
+	else
+		p_lista = p_elem;
+
+}
+\end{lstlisting}
+	\item \textbf{Rimozione di un processo:} prende la forma dell'estrazione della testa (cioè del processo a priorità più alta).
+\begin{lstlisting}[language=C++, style=codestyle]	
+des_proc* rimozione_lista(des_proc*& p_lista)
+{
+// estrazione dalla testa
+	des_proc* p_elem = p_lista;  	// nullptr se la lista è vuota
+
+	if (p_lista)
+		p_lista = p_lista->puntatore;
+
+	if (p_elem)
+		p_elem->puntatore = nullptr;
+
+	return p_elem;
+}
+\end{lstlisting}
+\item \textbf{Inserzione forzata:} è usata in casi particolari, inserisce il processo corrente in testa alla lista ignorando il suo livello di precedenza.
+	La motivazione di tale comportamento è quella di non "svantaggiare" inutilmente il processo corrente se, ad esempio, ne si è interrotta l'esecuzione con preemption per la gestione di un interruzinoe esterna.
+\begin{lstlisting}[language=C++, style=codestyle]	
+extern "C" void inspronti()
+{
+	esecuzione->puntatore = pronti;
+	pronti = esecuzione;
+}
+\end{lstlisting}
+\end{itemize}
+
 \subsection{Prima vista dell'esecuzione del kernel}
 Dopo il boot della macchina, il kernel si impadronisce della macchina e lancia il primo processo (il processo utente).
 Da qui in poi il kernel avrà il controllo solo fra un processo e l'altro, in caso di interruzioni (interne, esterne o eccezioni), e potrà restituirlo solo attraverso il ritorno da gestore con \lstinline|IRETQ|.
@@ -269,16 +362,17 @@ Come abbiamo visto, ad ogni chiamata di gestore di interruzione lascia RIP, CS, 
 A questo punto il gestore fa una copia dei registri generali, e si ha a quel punto una \textit{"foto"} del processore al momento di attraversamento del gate, che rappresenterà quindi il \textit{contesto} del processo stesso al momento della chiamata dell'interruzione.
 
 In questo, sfrutteremo delle routine (\lstinline|salva_stato| e \lstinline|carica_stato|) all'avvio e al termine di ogni gestore, che si occupano di salvare e caricare il contesto del processo attualmente in esecuzione.
-Per conoscere quale questo processo sia, si mantiene una variabile globale nel sistema, \lstinline|esecuzione|, che punta al descrittore del processo (che è dove vogliamo mettere il contesto stesso).
+Per conoscere quale questo processo sia, sfruttiamo la variabile globale nel sistema introdotta prima, \lstinline|esecuzione|, che punta al descrittore del processo (che è dove vogliamo mettere il contesto stesso).
 
-I processi pronti staranno in una certa struttura dati (nel nucleo una linked list), ordinata per la \textbf{priorità} (un altro valore che manteniamo nel descrittore di processo) di ogni processo.
 Un gestore di interruzione di base, quindi, si potrebbe magari occupare di passare al contesto e all'esecuzione del processo di priorità più alta a intervalli regolari, magari regolato da un timer (cosiddetto \textit{timeslicing}).
 
 Altre situazioni, più vicine a noi, sono quelle del termine di una gestione di un interruzione esterna, o bloccaggio automatico di un processo, dove il kernel deve selezionare il prossimo processo da eseguire, scegliendo chiaramente quello a priorità più alta.
 
+\subsubsection{Processo dummy}
 Inseriamo un processo fittizio, \textit{dummy}, nella lista dei processi pronti con la priorità più bassa possibile.
 Questo ci assicurerà di non trovarci mai una situazione dove nessun processo è pronto all'esecuzione, e quindi avere sempre qualcosa a cui il kernel può passare (idealmente il processo dummy effettua solo un ciclo a vuoto).
 
+\subsubsection{Inizializzazione di un processo}
 Un ulteriore dettaglio è quello dello stato del processo alla sua creazione.
 Non è infatti realistico pensare di controllare se quel processo richiede inizializzazione ogni volta che si ritorna da un interruzione gestita a livello sistema.
 Alla creazione del processo, quindi, vogliamo svolgere le seguenti azioni in modo che il processo venga eseguito per la prima volta già in uno stato completo:
@@ -286,9 +380,9 @@ Alla creazione del processo, quindi, vogliamo svolgere le seguenti azioni in mod
 	\item Allocare una \textbf{pila sistema} dedicata al processo;
 	\item Inizializzare la pila sistema. Questo consisterà nell'inizializzare a loro volta: 
 		\begin{itemize}
-			\item IP alla prima istruzione del processo;
+			\item RIP alla prima istruzione del processo;
 			\item CS al segmento livello utente dove si trova il processo;
-			\item FLAG a quanto viene richiesto dallo standard C++ al momento di avvio (solitamente tutto a 0), con l'eccezione di IF a 1.
+			\item RFLAG a quanto viene richiesto dallo standard C++ al momento di avvio (solitamente tutto a 0), con l'eccezione di IF a 1.
 		\end{itemize}
 	\item Allocare il \textbf{descrittore} di processo, e mettere quel processo fra i processi pronti;
 	\item Inizializzare il descrittore. Questo consiste nell'inizializzare a loro volta:

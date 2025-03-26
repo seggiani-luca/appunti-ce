@@ -249,7 +249,12 @@ Questa facoltà verra realizzata dalla cache attraverso, probabilmente, \textit{
 Avevamo visto come il difetto principale della cache ad indirizzamento diretta è quello delle \textit{collisioni}.
 Presentiamo un metodo, quello delle \textbf{cache associative ad insiemi}, che risolve il problema permettendo di allocare più cacheline allo stesso indirizzo.
 
-Duplichiamo quindi la struttura vista per la cache ad indirizzamento diretto (qui 2 volte), e sruttiamo le uscite hit/miss delle singole memorie delle etichette per pilotare un multiplexer con in ingresso le linee dati delle memorie di cache corrispondenti.
+Duplichiamo quindi la struttura vista per la cache ad indirizzamento diretto (qui 2 volte), e sfruttiamo le uscite hit/miss delle singole memorie delle etichette per pilotare un multiplexer con in ingresso le linee dati delle memorie di cache corrispondenti.
+
+La struttura così modificata sarà la seguente:
+\begin{center}
+	\includegraphics[scale = 0.455]{../figures/cache_associativa.png}
+\end{center}
 
 In questo caso a letture allo stesso indice le cache potranno rispondere diversamente (magari la prima in miss e la seconda in hit), e il processore vedrà ritornarsi il dato corretto (in questo caso quello della seconda).
 
@@ -310,18 +315,69 @@ Un esempio classico dell'utilità di un meccanismo di questo tipo è dato dalle 
 Questo occupa la CPU con operazioni inutili, che potrebbe saltare se fosse la stampante stessa ad avvertirla di quando è pronta a ricevere un nuovo dato.
 
 L'idea di base è quella di avere una nuova operazione da svolgere in fase di esecuzione di un instruzione da parte della CPU, dopo l'esecuzione dell'istruzione stessa.
-Ad esempio, potremmo riportarci un bit di valdiità, \lstinline|READY|, da parte della stampante, e controllarlo ad ogni istruzione per la chiamata di una routine di stampa.
+Ad esempio, potremmo riportarci un bit di valdiità, \lstinline|READY|, da parte della stampante, e controllarlo ad ogni istruzione per la chiamata di una routine di stampa, cioè aggiungere la seguente circuiteria:
+\begin{center}
+	\includegraphics[scale = 0.4]{../figures/int_1.png}
+\end{center}
+
 La chiamata sarà semplicemente un aggiornamento condizionato a RIP, con scrittura del contenuto attuale di RIP in pila (che è compatibile con le regole di chiamata dei sottoprogrammi a cui siamo abituati).
 
 Un problema di questo approccio potrebbe essere che, se il bit che segnala l'evento non si aggiorna immediatamente, la CPU andrà in un ciclo continuo di arresto dell'esecuzione e inizio di una routine.
-Una soluzione potrebbe essere dotare della CPU di una \textit{rete di accettazione} della richiesta: il bit di segnalazione dell'evento va in un generatore di impulsi che setta un SR flip-flop. 
-A questo punto la CPU risponde (livello hardware, nella nuova fase di esecuzione appena descritta) con un segnale di reset nel momento in cui riesce a rilevare l'evento e spostarsi nella routine. 
+Una soluzione potrebbe essere dotare della CPU di una \textit{rete di accettazione} della richiesta: il bit di segnalazione dell'evento va in un generatore di impulsi che setta un SR flip-flop, cioè aggiungere la seguente circuiteria:
+\begin{center}
+	\includegraphics[scale = 0.35]{../figures/int_2.png}
+\end{center}
+
+A questo punto la CPU può rispondere (livello hardware, nella nuova fase di esecuzione appena descritta) con un segnale di reset nel momento in cui riesce a rilevare l'evento e spostarsi nella routine. 
 
 In verità la situazione è più complicata: ad esempio potremmo voler ignorare nuovi eventi quando stiamo già cercando di soddisfarne uno.
 Per questo i processori x86 prevedono un apposito flag, il flag \textbf{IF} (\textit{Interruption Flag}), che determina se le nuove interruzioni dovranno essere soddisfatte o meno.
 Il processore può essere quindi configurato per attivare automaticamente il flag IF in fase di risposta ad una richiesta di interruzione.
 Per effettuare il corretto ritorno, si usa la funzione \lstinline|IRETQ|, che ripristina, oltre ad altre cose, lo stato dei flag (che era stato salvato in pila).
 
+Inoltre, probabilmente vorremo gestire più di un interruzione.
+Per fare ciò, il processore supporta più tipi di interruzioni, codificati su 8 bit (per un totale di 256 tipi di interruzione).
+Vedremo che i primi 32 di questi sono riservati alle cosiddette \textit{eccezioni}, mentre i successivi 224 sono disponibili al programmatore.
+Il codice da mandare in esecuzione (nel caso più banale, il semplice valore di RIP da inserire) per ogni interruzione viene mantenuto in una certa struttura dati in memoria, che viene detta \textbf{IVT}, \textit{Interrupt Vector Table}, in modalità reale, e \textbf{IDT}, \textit{Interrupt Descriptor Table}, in modalità protetta.
 
+Abbiamo quindi che il meccanismo delle interruzioni, per citare Dijkstra, \textit{"apre un vaso di pandora"} all'interno dell'architettura dei calcolatori.
+Infatti, la loro utilità ha fatto sì che esse non venissero usate solo per l'I/O, ma anche per altre applicazioni.
+Possiamo infatti distinguere i tipi di interruzione:
+\begin{itemize}
+	\item \textbf{Esterne}, che come vedremo si dividono a loro volta in \textit{mascherabili} e \textit{non mascherabili};
+	\item \textbf{Software}, lanciate dal processore stesso attraverso l'istruzione \lstinline|INT|;
+	\item \textbf{Interne} (\textit{eccezioni}), lanciate in caso di errori interni al processore.
+\end{itemize}
+
+Vediamo l'esempio basilare di un'interruzione software (per noi analoga, almeno per adesso, alle altre 2 in funzionamento), per osservare il funzionamento del meccanismo di interruzione sopratutto riguardo alla pila.
+Scriviamo un breve programma misto C++/assembly, di cui la parte C++:
+\lstset{language=C++}
+\lstinputlisting{../code/interrupts/sw_basic/main.cpp}
+e la parte assembly:
+\lstset{language=assembler}
+\lstinputlisting{../code/interrupts/sw_basic/main.s}
+
+Questo tipo di programmazione mista si rende necessario in quanto la gestione dell'interruzione richiede meccanismi accessibili solo all'assembly (in particolare la \lstinline|iretq|, che serve per ritornare dal gestore di interruzione).
+
+Ignoriamo quindi per adesso la riga 11 della funzione \lstinline|main()|, che ha il solo compito di impostare il gestore di interruzioni per l'interruzione \lstinline|0x40|, e vediamo cosa accade alla riga \lstinline|14|, dove si solleva effettivamente l'interruzione.
+In questo caso, il processore sospende l'esecuzione del programma e salta alla funzione \lstinline|a_handler()|, che provvede a salvare i registri, stampare un messaggio, ricaricare i registri e ritornare.
+Il contenuto della pila al momento della chiamata di \lstinline|a_handler()| sarà il seguente:
+\begin{table}[h!]
+	\center
+	\begin{tabular} { c | p{9cm} }
+		\lstinline|0x20a208| & RIP (main alla riga 15) \\
+		\lstinline|0x20a210| & Riservato (CS, per adesso non significativo) \\
+		\lstinline|0x20a218| & RFLAGS 
+	\end{tabular}
+\end{table}
+
+Quindi, come avevamo introdotto, si salva il registro dei flag, un valore per adesso non significativo, e il puntatore corrente (in particolare, quello all'istruzione successiva alla \lstinline|INT|, vedremo significa che si trattava di un interruzione di tipo \textit{trap}).
+
+L'esecuzione del programma dà quindi complessivamente il seguente output:
+\begin{lstlisting}[style=shellstyle]
+>> sto gestendo l'interruzione                                                                         
+>> Premere ESC per proseguire
+\end{lstlisting}
+cioè siamo riusciti ad interrompere il normale flusso di controllo della funzione \lstinline|main()|, interrompendola a metà esecuzione per eseguire un operazione secondaria, e restituendogli in seguito il normale controllo.
 
 \end{document}

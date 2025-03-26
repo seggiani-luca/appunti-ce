@@ -322,16 +322,44 @@ La struttura a livello di memoria contiene le seguenti informazioni:
 		Questo non significa che tale gestore non possa essere lanciato da un eccezione. 
 \end{itemize}		
 
+Sorvolando su alcuni dettagli non immediatamente rilevanti (il valore del \textit{Segment Selector} SS è piuttosto complesso, ma è quello che va a definire quello che noi intediamo con L), la struttura generale di un'entrata dell'IDT è quindi la seguente:
+\begin{center}
+	\includegraphics[scale=0.45]{../figures/entrata_idt.png}
+\end{center}
+come riportato su \url{https://wiki.osdev.org/Interrupt_Descriptor_Table}.
+
 \subsubsection{Gestione dell'interruzione software}
-A questo punto la chiamata di interrupt sta effettivamente nella transizione fra due \textbf{pile}: la separazione fra contesto utente e contesto sistema viene infatti resa possibile anche dalla presenza di due pile separate, di cui l'ultima chiaramente sta in memoria protetta.
-Il programma è normalmente in esecuzione nella pila utente: al momento del sollevamento di un interruzione software, si passa all'esecuzione (se alcune condizioni che vedremo fra poco sono rispettate) della routine di gestione definita dal sistema operativo.
-Questa imposta un nuovo frame sulla pila con i seguenti dati:
+Avevamo visto come il meccanismo dell'interruzione, definito un gate nella IDT, si riduceva al caricamento in RIP dell'indirizzo del gestore e dell'immissione in pila dei seguenti dati:
+\begin{table}[H]
+	\center
+	\begin{tabular} { c | p{5cm} }
+		\lstinline|0| & RIP \\
+		\lstinline|+1| & CS \\
+		\lstinline|+2| & RFLAGS 
+	\end{tabular}
+\end{table}
+Cioè si impostava un nuovo frame sulla pila con i seguenti dati:
 \begin{itemize}
 	\item L'instruction pointer \textbf{RIP}, da dove si vorrà ripartire nell'esecuzione una volta gestita l'interruzione.
 		Notiamo che in verità questo indirizzo, che è fra l'altro in memoria virtuale, è corredato a seconda del tipo di gate dall'\textbf{SS} (\textit{Stack Segment}) o dal \textbf{TSS} (\textit{Task State Segment}), utili alla memoria segmentata che come abbiamo visto non ci è di interesse. La caratteristica importante è che si conserva un riferimento a dove ripartire, in memoria, nell'esecuzione una volta gestita l'interruzione;
 	\item Il contenuto attuale di \textbf{CS}, cioè il contesto al momento della chiamata, che chiaramente vorremo ristabilire in seguito;
-	\item Come abbiamo visto, anche \textbf{EFLAGS} viene memorizzato, in quanto gli interrupt mascherabili vengono mascherati in fase di gestione di un interrupt sistema (attraverso il flag \textbf{IF}), e vogliamo resettare questo comportamente al termine della gestione.
+	\item Come abbiamo visto, anche \textbf{RFLAGS} viene memorizzato, in quanto gli interrupt mascherabili vengono mascherati in fase di gestione di un interrupt sistema (attraverso il flag \textbf{IF}), e vogliamo resettare questo comportamente al termine della gestione.
 \end{itemize}
+
+A questo punto l'unica differenza nella chiamata di interrupt in caso di cambio di contesto sta effettivamente nella transizione fra due \textbf{pile}: la separazione fra contesto utente e contesto sistema viene infatti resa possibile anche dalla presenza di due pile separate, di cui l'ultima chiaramente sta in memoria protetta.
+Il programma è normalmente in esecuzione nella pila utente: al momento del sollevamento di un interruzione software, si passa all'esecuzione (se alcune condizioni che vedremo fra poco sono rispettate) della routine di gestione definita dal sistema operativo.
+Questo richiede un modo per preservare la posizione della pila utente, da cui ci spostiamo quando passiamo alla pila sistema.
+Facciamo ciò conservando il vecchio \textbf{RSP}, immettendolo in pila prima dei registri visti prima, cioè creando un frame del tipo:
+\begin{table}[H]
+	\center
+	\begin{tabular} { c | p{7cm} }
+		\lstinline|0| & RIP \\
+		\lstinline|+1| & CS \\
+		\lstinline|+2| & RFLAGS \\ 
+		\lstinline|+3| & RSP (Pila utente)
+	\end{tabular}
+\end{table}
+Il vecchio valore di RSP permetterà, fra l'altro, di accedere e modificare il contesto del \textit{processo} in esecuzione con la sua pila utente.
 
 Un caso particolare ma permesso è rappresentato dalla situazione dove \textbf{L}, il livello di destinazione, corrisponde allo stato attuale (ad esempio, sono permesse chiamate di interruzioni da contesto utente a contesto utente, o da contesto sistema a contesto sistema).
 In questo caso, chiaramente, tutta questa operazione verrà svolta su un unica pila (sia questa la pila utente o la pila sistema).

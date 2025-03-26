@@ -250,12 +250,12 @@ Ognuna di queste interfacce può trarre beneficio dalla presenza di interruzioni
 Questo comportamento, delle cosiddette \textbf{interruzioni esterne}, è definito nella macchina studiata dal \textbf{controllore delle interruzioni}, che è l'Intel \textbf{APIC} (\textit{Advanced Progammable Interruption Controller}).
 Questo scansiona periodicamente tutte le linee generatrici di interruzione ottenute dalle varie interfacce, e invia le interruzioni corrispondenti, una per volta, alla CPU. 
 
-Chiaramente, si rende necessario specificare un \textbf{tipo di interruzione}, su 8 bit (per 256 tipi) per ogni interruzione lanciata.
-A questo punto, l'APIC fornirà semplicemente la possibilità di assegnare un tipo di interruzione diverso ad ogni piedino di ingresso dall interfacce, in modo che si possa assegnare ad ogni interruzione la routine di gestione più adatta.
+Avevamo già reputato necessario specificare un \textbf{tipo di interruzione}, su 8 bit (per 256 tipi) per ogni interruzione lanciata.
+L'APIC, allora, fornirà semplicemente la possibilità di assegnare un tipo di interruzione diverso ad ogni piedino di ingresso dall interfacce, in modo che si possa assegnare ad ogni interruzione la routine di gestione più adatta.
 
 La comunicazione fra CPU e APIC viene effettuata attraverso un \textit{handshake} su due linee, \textbf{INTR} (\textit{Interrupt Request}) e \textbf{INTA} (\textit{Interrupt Acknowledge}), che comporta anche una lettura da parte della CPU di quanto l'APIC metterà sul bus (cioè il tipo di interruzione).
 
-A questo punto, le routine vere e proprie verrano definite in una \textbf{IDT}, (\textit{Interrupt Descriptor Table}), contenente in sequenza gli indirizzi delle prime istruzioni di ogni routine per ogni tipo di interruzione, e specificata a partire da un certo indirizzo indicato nel registro \textbf{IDTR}.
+A questo punto, le routine vere e proprie verrano definite nell'\textbf{IDT}, (\textit{Interrupt Descriptor Table}), contenente in sequenza gli indirizzi delle prime istruzioni di ogni routine per ogni tipo di interruzione, e specificata a partire da un certo indirizzo indicato nel registro \textbf{IDTR}.
 
 Come abbiamo visto, la reazione o meno della CPU ad una interuzione è data dall'attivazione del flag IF.
 Nel caso si passi effettivamente ad eseguire l'interruzione, ricordiamo che sia l'IP che lo stato dei flags verrà salvato in pila, e ripristinato a fine routine attraverso l'istruzione \lstinline|IRET|.
@@ -269,18 +269,34 @@ Questo può essere effettuato dotando l'APIC di un opportuno registro (\textbf{E
 Altri 2 registri di interesse sono i seguenti, entrambi su 256 bit (un bit per ogni tipo di interruzione):
 \begin{itemize}
 	\item \textbf{IRR} (\textit{Interrupt Request Register}): indica con bit alti quali interruzioni sono state inviate dalle interfacce attualmente;
-	\item \textbf{ISR} (\textit{Interrupt Service Register}): indica con bit alti a quali interruzioni sta rispondendo il processore attualmente. In un processore single-threaded come quello che studiamo al più uno solo dei suoi bit sarà alto in un dato momento.
+	\item \textbf{ISR} (\textit{Interrupt Service Register}): indica con bit alti a quali interruzioni sta rispondendo il processore attualmente. In un processore single-threaded come quello che studiamo al più uno solo dei suoi bit sarà alto in un dato momento (escluso il caso della \textit{gestione annidata}).
 \end{itemize}
 
-\subsubsection{Priorità delle interruzioni}
+Si avrà quindi la seguente organizzazione:
+\begin{table}[h!]
+	\center 
+	\begin{tabular} { c | c  }
+		\textbf{IRR}, \textit{Interrupt Request Register} & 256 bit \\
+		\textbf{ISR}, \textit{Interrupt Service Register} & 256 bit
+	\end{tabular}
+\end{table}
+
+Un interruzione generata lato hardware si tradurrà nell'innalzamento (se non era già alto) di un bit nell'IRR, e l'inizio (o schedulazione dell'inizio) di un handshake con la CPU.
+Al termine dell'handshake (quindi all'abbassamento di INTA successivo ad un suo innalzamento per acknowledge) i lbit passa dall'IRR all'ISR.
+Infine, la transizione dal bit presente nell'ISR all'interruzione gestita (bit nuovamente basso) si ha con il segnale EOI da parte della CPU.
+
+\subsubsection{Priorità delle interruzioni e gestione annidata}
 Possiamo chiederci come l'APIC si comporta in caso di più richieste concorrenti.
 Un idea potrebbe essere di assegnare una priorità ad ogni richiesta, e rispondere prima alle richieste di priorità più alta.
 
-Ci rendiamo quindi conto che alcune richieste sono più importanti di altre: ad esempio, la pressione di un tasto su tastiera può essere ignorata, se ad esempio nel frattempo ci arriva la richiesta di interruzione da parte di un timer.
+Ci rendiamo quindi conto che alcune richieste sono più importanti di altre: ad esempio, la pressione di un tasto su tastiera può essere ignorata, se ad esempio nel frattempo arriva una richiesta di interruzione da parte di un timer.
 La pressione del tasto non si ripeterà infatti in tempo utile, mentre il timer potrebbe inviarci nuove richieste mentre ancora non siamo pronti a riceverle, e continuerà a farlo a scadenze regolari (potremmo finire per gestire solo un sottoinsieme delle richieste che ci vengono effettivamente inviate).
 
 Vediamo quindi nel dettaglio di come i codici delle interruzioni sono definiti.
 I primi 4 bit rappresentano la \textbf{classe di precedenza} dell'interruzione: a classi di precedenza maggiore abbiamo gestione prioritaria delle richieste di interruzione.
 Il trasferimento da IRR a ISR avverrà quindi prima per richieste di classe di precedenza più alta, e poi per quelle di classe di precedenza più bassa.
+
+La precedenza delle interruzioni è quindi necessaria all'implementazione corretta della \textbf{gestione annidata} delle interruzioni, dove un interruzione di precedenza più altra può interrompere (a patto che IF sia alto) un gestore di interruzione in esecuzione. 
+Questo è il caso a cui accennavamo prima, dove più bit di ISR possono essere alti contemporaneamente (a patto che si dispongano nel tempo, da destra verso sinistra, cioè da minore priorità a maggiore priorità).
 
 \end{document}
