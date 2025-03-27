@@ -23,3 +23,6 @@
 *.vbox
 *.vbox-prev
 *.log.*
+
+#ignora file relativi a xournal++
+*.autosave.*
