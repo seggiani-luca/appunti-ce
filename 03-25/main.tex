@@ -268,7 +268,7 @@ A questo punto serviranno due primitive, la \lstinline|delay()| vera e propria, 
 // primitiva di delay
 extern "C" void c_delay(natl n)
 {
-	// caso particolare: se n è 0 non facciamo niente
+	// caso particolare: se n e' 0 non facciamo niente
 	if (!n)
 		return;
 
@@ -311,12 +311,41 @@ Di contro, la \lstinline|delete| si occuperà di deallocare lo stesso dato.
 
 Una domanda che potremmo porci è dove si trova questa memoria.
 Per quanto riguarda il \textbf{sistema}, una porzione dedicata viene inizializzta all'avvio e resta tale durante l'esecuzione dello stesso.
+Le allocazioni e deallocazioni si fanno quindi con le \lstinline|alloc()| e \lstinline|dealloc()| (che ridefiniscono gli operatori corrispondenti, \lstinline|new| e \lstinline|delete|), definite all'interno di \lstinline|libce.h|.
+
 Per quanto riguarda l'\textbf{utente}, invece, si dedica un altra porzione di memoria, condivisa fra i processi.
 Questa condivisione implica che più processi non possono fornire le loro versioni della funzione \lstinline|new| e \lstinline|delete|, in quanto se queste venissero interrotte (le funzioni utente non sono mai atomiche), lascerebbero la memoria dinamica in uno stato inconsistente per altri processi intenzionati a modificarla.
 
 Si usa quindi un semaforo che tiene conto di chi sta scrivendo in memoria.
+In particolare, vediamo le:
+\begin{itemize}
+	\item \lstinline|new|: implementata per l'utente come:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// alloca un oggetto nello heap utente
+void* operator new(size_t s)
+{
+	void* p;
 
-# scrivi qui o aspetta che spieghi
+	sem_wait(userheap_mutex);
+	p = alloc(s);
+	sem_signal(userheap_mutex);
+
+	return p;
+}
+\end{lstlisting}
+	\item \lstinline|delete|: implementata per l'utente come:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// dealloca un oggetto dallo heap utente
+void operator delete(void* p)
+{
+	sem_wait(userheap_mutex);
+	dealloc(p);
+	sem_signal(userheap_mutex);
+}
+\end{lstlisting}
+\end{itemize}
+
+Queste vengono semplicemente fornite in un apposita libreria (\lstinline|lib.h|) al programma utente, che può servirsene per scrivere, assieme agli altri processi, nell'heap utente. 
 
 \subsection{Memoria virtuale}
 Veniamo quindi all'ultimo argomento chiave del corso.

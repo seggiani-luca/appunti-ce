@@ -289,12 +289,14 @@ Abbiamo quindi l'immagine completa del meccanismo della protezione, che avevamo 
 
 \subsubsection{Transizione da contesto utente a contesto sistema}
 Vediamo nel dettaglio come si passa dal contesto utente al contesto sistema.
-Per questo sfrutteremo l'istruzione x86 \lstinline|INT|, che permette di generare un interruzione software sulla base del tipo fornito come operando 
-Si potrà quindi avere una chiamata a sistema del tipo:
+Per questo sfrutteremo l'istruzione x86 \lstinline|INT|, che permette di generare un interruzione software sulla base del tipo fornito come operando.
+Si potrà quindi implementare il meccanismo della \textit{chiamata a sistemo}, secondo una modalità del tipo:
 \begin{lstlisting}[language=assembler, style=codestyle]	
 mov $0x00, %eax # tipo chiamata
 int $0x80       # chiamata sistema (per x86, in x96-64 esiste syscall)
 \end{lstlisting}
+Notiamo che questo è l'approccio normalmente supportato dai moderni sistemi operativi x86 (specialmente Linux, anche se oggi si usa l'istruzione apposita \lstinline|syscall|).
+Vedremo che il passaggio del tipo chiamata nel registro \lstinline|%EAX| non si verifica nel kernel che studieremo, dove invece ognuno dei 224 tipi di interruzioni liberi potrà rappresentare una chiamata a sistema diversa.
 
 Questo si tradurrà a livello processore nel salvataggio dello stato corrente di esecuzione, la transizione al contesto sistema e lo spostamento in IP della prima istruzione di un apposito sottoprograma di servizio atto a gestire l'eccezione (e quindi soddisfare, se possibile, la richiesta del programma per cui questo ha sollevato in primo luogo l'interruzione).
 
