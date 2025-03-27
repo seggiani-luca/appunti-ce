@@ -325,11 +325,13 @@ Si noti che questi non sempre corrispondono con \lstinline|libce|, ma spesso rip
 
 \subsection{Caching}
 Abbiamo detto che la memoria RAM è molto più veloce dei dischi rigidi.
-Questo è vero, ma non significa che non ci sia comunque un certo dislivello tra la velocità della CPU e la velocità della RAM: un operazione puo' comunque richiedere nel'ordine dei $\sim 100$ circa cicli di clock.
+Questo è vero, ma non significa che non ci sia comunque un certo dislivello tra la velocità della CPU e la velocità della RAM: un operazione puo' comunque richiedere un tempo nell'ordine dei $\sim 100$ circa cicli di clock.
 
 Per questo motivo si inframezzano fra la CPU e la RAM più memorie, relativamente piccole ma veloci, dette \textbf{memorie di cache}.
-
 L'idea è che la RAM in sè è costituita da memoria dinamica (DRAM), quindi a condensatori, relativamente lenta e con tempo di refresh, mentre le memorie di cache vengono implementate con memorie statiche, più veloci ma più costose da realizzare su larga scala (per cui le dimensioni ridotte).
+
+Vediamo che ci sono due modi principali di organizzare queste memorie: in \textit{grandezza} delle singole memorie di cache, o in \textit{distanza} dal processore, implementando una gerarchia di memorie sempre più grandi allontanandosi dal processore e avvicinandosi alla RAM.
+Vedremo nel dettaglio solo il primo metodo, introducendo le \textbf{cache ad indirizzamento diretto} e le \textbf{cache associative ad insiemi}, mentre ci limiteremo solo ad accennare al secondo metodo.
 
 \subsubsection{Principi di località}
 Le piccole dimensioni delle memorie vengono aiutate dalla \textbf{località} del codice in memoria: istruzioni che compongono le stesse funzioni avranno istruzioni vicine fra di loro, le strutture definite dal programmatore conterranno dati locali, ecc...
@@ -391,7 +393,7 @@ A questo punto, in fase di lettura, nel caso di hit basterà ricavare una linea 
 Nel caso di miss si dovrà invece svolgere la lettura in memoria RAM, e poi riportare l'informazione nella cacheline di indice giusto della cache aggiornando l'etichetta.
 
 \subsubsection{Scrittura}
-Per quanto riguarda le scritture invece, potremo muoverci in due strade: \textbf{write allocate} e \textbf{write no allocate}
+Per quanto riguarda le scritture invece, potremo muoverci in due strade: \textbf{write allocate} e \textbf{write no allocate}.
 
 \begin{itemize}
 	\item \textbf{Write allocate:}

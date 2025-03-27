@@ -44,7 +44,7 @@
 
 % testo cerchiato
 \newcommand*\circled[1]{\tikz[baseline=(char.base)]{
-            \node[shape=circle,draw,inner sep=2pt] (char) {#1};}}
+\node[shape=circle,draw,inner sep=2pt] (char) {#1};}}
 
 % disponi il titolo
 \makeatletter
@@ -97,75 +97,75 @@
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 
 \lstdefinestyle{codestyle}{
-		backgroundcolor=\color{black!5}, 
-		commentstyle=\color{codegreen},
-		keywordstyle=\bfseries\color{magenta},
-		numberstyle=\sffamily\tiny\color{black!60},
-		stringstyle=\color{green!50!black},
-		basicstyle=\ttfamily\footnotesize,
-		breakatwhitespace=false,         
-		breaklines=true,                 
-		captionpos=b,                    
-		keepspaces=true,                 
-		numbers=left,                    
-		numbersep=5pt,                  
-		showspaces=false,                
-		showstringspaces=false,
-		showtabs=false,                  
-		tabsize=2
+	backgroundcolor=\color{black!5}, 
+	commentstyle=\color{codegreen},
+	keywordstyle=\bfseries\color{magenta},
+	numberstyle=\sffamily\tiny\color{black!60},
+	stringstyle=\color{green!50!black},
+	basicstyle=\ttfamily\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
 }
 
 \lstdefinestyle{shellstyle}{
-		backgroundcolor=\color{black!5}, 
-		basicstyle=\ttfamily\footnotesize\color{black}, 
-		commentstyle=\color{black}, 
-		keywordstyle=\color{black},
-		numberstyle=\color{black!5},
-		stringstyle=\color{black}, 
-		showspaces=false,
-		showstringspaces=false, 
-		showtabs=false, 
-		tabsize=2, 
-		numbers=none, 
-		breaklines=true
+	backgroundcolor=\color{black!5}, 
+	basicstyle=\ttfamily\footnotesize\color{black}, 
+	commentstyle=\color{black}, 
+	keywordstyle=\color{black},
+	numberstyle=\color{black!5},
+	stringstyle=\color{black}, 
+	showspaces=false,
+	showstringspaces=false, 
+	showtabs=false, 
+	tabsize=2, 
+	numbers=none, 
+	breaklines=true
 }
 
 
 \lstdefinelanguage{assembler}{ 
-  keywords={AAA, AAD, AAM, AAS, ADC, ADCB, ADCW, ADCL, ADD, ADDB, ADDW, ADDL, AND, ANDB, ANDW, ANDL,
-        ARPL, BOUND, BSF, BSFL, BSFW, BSR, BSRL, BSRW, BSWAP, BT, BTC, BTCB, BTCW, BTCL, BTR, 
-        BTRB, BTRW, BTRL, BTS, BTSB, BTSW, BTSL, CALL, CBW, CDQ, CLC, CLD, CLI, CLTS, CMC, CMP,
-        CMPB, CMPW, CMPL, CMPS, CMPSB, CMPSD, CMPSW, CMPXCHG, CMPXCHGB, CMPXCHGW, CMPXCHGL,
-        CMPXCHG8B, CPUID, CWDE, DAA, DAS, DEC, DECB, DECW, DECL, DIV, DIVB, DIVW, DIVL, ENTER,
-        HLT, IDIV, IDIVB, IDIVW, IDIVL, IMUL, IMULB, IMULW, IMULL, IN, INB, INW, INL, INC, INCB,
-        INCW, INCL, INS, INSB, INSD, INSW, INT, INT3, INTO, INVD, INVLPG, IRET, IRETD, JA, JAE,
-        JB, JBE, JC, JCXZ, JE, JECXZ, JG, JGE, JL, JLE, JMP, JNA, JNAE, JNB, JNBE, JNC, JNE, JNG,
-        JNGE, JNL, JNLE, JNO, JNP, JNS, JNZ, JO, JP, JPE, JPO, JS, JZ, LAHF, LAR, LCALL, LDS,
-        LEA, LEAVE, LES, LFS, LGDT, LGS, LIDT, LMSW, LOCK, LODSB, LODSD, LODSW, LOOP, LOOPE,
-        LOOPNE, LSL, LSS, LTR, MOV, MOVB, MOVW, MOVL, MOVSB, MOVSD, MOVSW, MOVSX, MOVSXB,
-        MOVSXW, MOVSXL, MOVZX, MOVZXB, MOVZXW, MOVZXL, MUL, MULB, MULW, MULL, NEG, NEGB, NEGW,
-        NEGL, NOP, NOT, NOTB, NOTW, NOTL, OR, ORB, ORW, ORL, OUT, OUTB, OUTW, OUTL, OUTSB, OUTSD,
-        OUTSW, POP, POPL, POPW, POPB, POPA, POPAD, POPF, POPFD, PUSH, PUSHL, PUSHW, PUSHB, PUSHA, 
-				PUSHAD, PUSHF, PUSHFD, RCL, RCLB, RCLW, MOVSL, MOVSB, MOVSW, STOSL, STOSB, STOSW, LODSB, LODSW,
-				LODSL, INSB, INSW, INSL, OUTSB, OUTSL, OUTSW
-        RCLL, RCR, RCRB, RCRW, RCRL, RDMSR, RDPMC, RDTSC, REP, REPE, REPNE, RET, ROL, ROLB, ROLW,
-        ROLL, ROR, RORB, RORW, RORL, SAHF, SAL, SALB, SALW, SALL, SAR, SARB, SARW, SARL, SBB,
-        SBBB, SBBW, SBBL, SCASB, SCASD, SCASW, SETA, SETAE, SETB, SETBE, SETC, SETE, SETG, SETGE,
-        SETL, SETLE, SETNA, SETNAE, SETNB, SETNBE, SETNC, SETNE, SETNG, SETNGE, SETNL, SETNLE,
-        SETNO, SETNP, SETNS, SETNZ, SETO, SETP, SETPE, SETPO, SETS, SETZ, SGDT, SHL, SHLB, SHLW,
-        SHLL, SHLD, SHR, SHRB, SHRW, SHRL, SHRD, SIDT, SLDT, SMSW, STC, STD, STI, STOSB, STOSD,
-        STOSW, STR, SUB, SUBB, SUBW, SUBL, TEST, TESTB, TESTW, TESTL, VERR, VERW, WAIT, WBINVD,
-        XADD, XADDB, XADDW, XADDL, XCHG, XCHGB, XCHGW, XCHGL, XLAT, XLATB, XOR, XORB, XORW, XORL},
-  keywordstyle=\color{blue}\bfseries,
-  ndkeywordstyle=\color{darkgray}\bfseries,
-  identifierstyle=\color{black},
-  sensitive=false,
-  comment=[l]{\#},
-  morecomment=[s]{/*}{*/},
-  commentstyle=\color{purple}\ttfamily,
-  stringstyle=\color{red}\ttfamily,
-  morestring=[b]',
-  morestring=[b]"
+	keywords={AAA, AAD, AAM, AAS, ADC, ADCB, ADCW, ADCL, ADD, ADDB, ADDW, ADDL, AND, ANDB, ANDW, ANDL,
+		ARPL, BOUND, BSF, BSFL, BSFW, BSR, BSRL, BSRW, BSWAP, BT, BTC, BTCB, BTCW, BTCL, BTR, 
+		BTRB, BTRW, BTRL, BTS, BTSB, BTSW, BTSL, CALL, CBW, CDQ, CLC, CLD, CLI, CLTS, CMC, CMP,
+		CMPB, CMPW, CMPL, CMPS, CMPSB, CMPSD, CMPSW, CMPXCHG, CMPXCHGB, CMPXCHGW, CMPXCHGL,
+		CMPXCHG8B, CPUID, CWDE, DAA, DAS, DEC, DECB, DECW, DECL, DIV, DIVB, DIVW, DIVL, ENTER,
+		HLT, IDIV, IDIVB, IDIVW, IDIVL, IMUL, IMULB, IMULW, IMULL, IN, INB, INW, INL, INC, INCB,
+		INCW, INCL, INS, INSB, INSD, INSW, INT, INT3, INTO, INVD, INVLPG, IRET, IRETD, JA, JAE,
+		JB, JBE, JC, JCXZ, JE, JECXZ, JG, JGE, JL, JLE, JMP, JNA, JNAE, JNB, JNBE, JNC, JNE, JNG,
+		JNGE, JNL, JNLE, JNO, JNP, JNS, JNZ, JO, JP, JPE, JPO, JS, JZ, LAHF, LAR, LCALL, LDS,
+		LEA, LEAVE, LES, LFS, LGDT, LGS, LIDT, LMSW, LOCK, LODSB, LODSD, LODSW, LOOP, LOOPE,
+		LOOPNE, LSL, LSS, LTR, MOV, MOVB, MOVW, MOVL, MOVSB, MOVSD, MOVSW, MOVSX, MOVSXB,
+		MOVSXW, MOVSXL, MOVZX, MOVZXB, MOVZXW, MOVZXL, MUL, MULB, MULW, MULL, NEG, NEGB, NEGW,
+		NEGL, NOP, NOT, NOTB, NOTW, NOTL, OR, ORB, ORW, ORL, OUT, OUTB, OUTW, OUTL, OUTSB, OUTSD,
+		OUTSW, POP, POPL, POPW, POPB, POPA, POPAD, POPF, POPFD, PUSH, PUSHL, PUSHW, PUSHB, PUSHA, 
+		PUSHAD, PUSHF, PUSHFD, RCL, RCLB, RCLW, MOVSL, MOVSB, MOVSW, STOSL, STOSB, STOSW, LODSB, LODSW,
+		LODSL, INSB, INSW, INSL, OUTSB, OUTSL, OUTSW
+		RCLL, RCR, RCRB, RCRW, RCRL, RDMSR, RDPMC, RDTSC, REP, REPE, REPNE, RET, ROL, ROLB, ROLW,
+		ROLL, ROR, RORB, RORW, RORL, SAHF, SAL, SALB, SALW, SALL, SAR, SARB, SARW, SARL, SBB,
+		SBBB, SBBW, SBBL, SCASB, SCASD, SCASW, SETA, SETAE, SETB, SETBE, SETC, SETE, SETG, SETGE,
+		SETL, SETLE, SETNA, SETNAE, SETNB, SETNBE, SETNC, SETNE, SETNG, SETNGE, SETNL, SETNLE,
+		SETNO, SETNP, SETNS, SETNZ, SETO, SETP, SETPE, SETPO, SETS, SETZ, SGDT, SHL, SHLB, SHLW,
+		SHLL, SHLD, SHR, SHRB, SHRW, SHRL, SHRD, SIDT, SLDT, SMSW, STC, STD, STI, STOSB, STOSD,
+		STOSW, STR, SUB, SUBB, SUBW, SUBL, TEST, TESTB, TESTW, TESTL, VERR, VERW, WAIT, WBINVD,
+	XADD, XADDB, XADDW, XADDL, XCHG, XCHGB, XCHGW, XCHGL, XLAT, XLATB, XOR, XORB, XORW, XORL},
+	keywordstyle=\color{blue}\bfseries,
+	ndkeywordstyle=\color{darkgray}\bfseries,
+	identifierstyle=\color{black},
+	sensitive=false,
+	comment=[l]{\#},
+	morecomment=[s]{/*}{*/},
+	commentstyle=\color{purple}\ttfamily,
+	stringstyle=\color{red}\ttfamily,
+	morestring=[b]',
+	morestring=[b]"
 }
 
 \lstset{language=assembler, style=codestyle}
@@ -174,14 +174,14 @@
 \usepackage{titlesec}
 
 \titleformat{\section}
-	{\sffamily\Large\bfseries} 
-	{\thesection}{1em}{} 
+{\sffamily\Large\bfseries} 
+{\thesection}{1em}{} 
 \titleformat{\subsection}
-	{\sffamily\large\bfseries}   
-	{\thesubsection}{1em}{} 
+{\sffamily\large\bfseries}   
+{\thesubsection}{1em}{} 
 \titleformat{\subsubsection}
-	{\sffamily\normalsize\bfseries} 
-	{\thesubsubsection}{1em}{}
+{\sffamily\normalsize\bfseries} 
+{\thesubsubsection}{1em}{}
 
 % tikz
 \usepackage{tikz}
@@ -231,6 +231,8 @@
 \pagestyle{fancy}
 
 % testo
+Riprendiamo la trattazione dell controllore di interruzini APIC.
+
 \subsubsection{Interruzione di livello o di fronte}
 Vediamo un dettaglio sul comportamento dell'APIC: questo può rilevare, in base alla sua configurazione, i \textbf{livelli} o i \textbf{fronti} delle variabili in ingresso.
 
@@ -238,37 +240,75 @@ Questo può avere delle implicazioni diverse a seconda dell'interfaccia.
 Ad esempio, avevamo detto che il timer in modalità 2 genera un onda quadra.
 Se si usa una routine lanciata dal timer a interruzione di programma, e si configura l'APIC per rilevare il livello, potrebbe essere che a routine concluse il livello del timer è sempre alto, e quindi l'interruzione viene lanciata nuovamente.
 
-Questo è chiaramente diverso dal comportamento desiderato, ed è quindi opportuno configurare l'APIC per rilevare i soltanto fronti di salita.
+Questo è chiaramente diverso dal comportamento desiderato, ed è quindi opportuno configurare l'APIC per rilevare i soli fronti di salita.
+
+\par\medskip
+
+Abbiamo quindi notato praticamente tutte le caratteristiche che ci interessavano dell'APIC, e possiamo procedere ad implementare un esempio di gestione di un interfaccia a controllo di interruzione.
+Vediamo ad esempio il seguente programma, che gestisce la tastiera a controllo di interruzione, di cui la parte C++:
+\lstset{style=codestyle, language=C++}
+\lstinputlisting{../code/interrupts/hw_basic/main.cpp}
+e la parte assembly:
+\lstset{style=codestyle, language=assembler}
+\lstinputlisting{../code/interrupts/hw_basic/main.s}
+
+Il meccanismo di chiamata dell'interruzione (macro per il salvataggio/caricamento registri, istruzione \lstinline|iretq|, ecc...) è identico all'esempio precedente.
+Una novità è la presenza della funzione \lstinline|send_EOI()| nel gestore di interruzione, che invia il segnale di End Of Interrupt all'APIC e gli fa capire, assieme alla lettura che facciamo sulla tastiera (con \lstinline|kbd::get_code()|) che l'interruzione è stata effettivamente gestita.
+Inoltre, la parte di configurazione dell'interruzione è più complessa.
+Bisogna infatti:
+\begin{itemize}
+	\item Attivare le interruzioni da tastiera con \lstinline|kbd::enable_intr()|;
+	\item Impostare l'APIC per inviare tali interruzini al tipo interruzione \lstinline|0x20|, configurandolo per riconoscere fronti, e disattivando la maschera (rispettivamente \lstinline|set_TRGM()| e \lstinline|set_MIRQ|);
+	\item Infine, inizializzare il gate corrispondente al tipo interruzione \lstinline|0x20| come avevamo già visto.
+\end{itemize}
+
+Abbiamo quindi realizzato pienamente quanto ci eravamo posti di fare quando abbiamo iniziato a parlare di interruzione: la CPU è lasciata libera (nell'esempio specifico, esegue un loop infinito), e viene \textit{interrotta} dalla periferica tastiera quando questa ha un nuovo dato disponibile.
+Vediamo che in verità esiste un altra casistica di applicazione delle interruzioni che non abbiamo trattato, cioè quella delle \textit{eccezioni}.
+
+\subsection{Eccezioni}
+Ci rimangono da vedere le \textbf{eccezioni}.
+Queste sono particolari errori logici che il processore potrebbe incontrare nel corso dell'esecuzione, come ad esempio la divisione per 0, il tentativo di eseguire un istruzione non riconosciuta, ecc...
+
+Una differenza fra le interruzioni esterne e le eccezioni è che le eccezioni possono essere sollevate \textit{durante} la lettura e esecuzione di un istruzione, quindi ad esempio mentre si stava interpetando un codice operativo (si pensi all'interruzione di operazione non riconosciuta).
+In verità, per assicurare l'atomicità dei cicli di esecuzione, la CPU ripristina automaticamente il suo stato a prima del lancio dell'interruzione.
+In particolare, possiamo distinguere 3 tipi di eccezione:
+\begin{itemize}
+	\item \textbf{Fault:} l'esecuzione non viene ancora eseguita, lo stato IP prima della sua esecuzione viene salvato (quindi si rimane alla stessa istruzione), e si può riprovare ad eseguirla dopo aver risolto l'errore;
+	\item \textbf{Trap:} l'esecuzione ormai è stata eseguita, e si salva l'IP successivo.
+	\item \textbf{Abort:} raggruppa degli eventi particolarmente disastrosi in cui l'esecuzione si arresta completamente (ad esempio la tripla eccezione).
+\end{itemize}
+
+Quando viene lanciata una \textit{fault} o una \textit{trap}, il processore cerca nella IDT se esiste un handler corrispondente (segnalato attraverso un bit nell'IDT stessa, alla riga della tabella corrispondente all'eccezione considerata).
+Nel caso questo non esista, si riprova con la fault di \textit{doppia eccezione}, che quindi rappresenta una fault a sé.
+Nel caso nemmeno questo handler esista, viene lanciata una fault di \textit{tripla eccezione}, che è di tipo \textit{abort} e comporta quindi l'arresto del programma.
+
+\par\medskip
+
+Vediamo quindi un programma di esempio delle eccezioni, che gestisce ad esempio la divisione per zero (tipo \lstinline|0x00| nella IDT), di cui la parte C++:
+\lstset{style=codestyle, language=C++}
+\lstinputlisting{../code/interrupts/div_zero/main.cpp}
+e la parte assembly:
+\lstset{style=codestyle, language=assembler}
+\lstinputlisting{../code/interrupts/div_zero/main.s}
+
+Notiamo che questo è il primo esempio che vediamo di valore di ritorno dal gestore di eccezione: il valore di RIP al momento dell'interruzione, che viene passato nel registro \lstinline|%RDI| (come definisce l'ABI System V).
+
+\subsubsection{Eccezioni e debug}
+Un interruzione particolare è quella rappresentata da \lstinline|INT3|, l'interruzione di \textit{debug}.
+Attraverso questa, un \textit{debugger} è capace di interrompere l'esecuzione di un programma ad un certo indirizzo del suo codice macchina.
+
+Un'altra interruzione di debug è data dalla single step, che viene lanciata ad ogni istruzione quando è attivo un certo flag (appunto, il flag single step). Questo permette al debugger di eseguire il programma in modalità \textit{passo singolo}, cioè eseguendo un istruzione e interrompendo, permettendo al programmatore di osservare il suo andamento passo per passo.
 
 \subsection{Riassunto sui tipi di interruzioni}
-Abbiamo visto finora le \textbf{interruzioni esterne mascherabili}.
-Vediamo in verità che esistono altri tipi di interruzione, da cui la lista completa:
+Abbiamo quindi visto tutti i tipi di interruzione, di cui riportiamo una lista completa:
 \begin{itemize}
-	\item \textbf{Interruzioni esterne:} il tipo che abbiamo visto finora, di cui notiamo le:
+	\item \textbf{Interruzioni esterne:} causate da interfacce esterne e gestite dall'APIC I/O, di cui distinguiamo:
 		\begin{itemize}
-	\item \textbf{Interruzioni esterne non mascherabili:} cioè che non possono essere mascherate, solitamente rappresentano eventi particolarmente gravi o comunque la cui gestione ha alta importanza;
+			\item \textbf{Interruzioni esterne mascherabli:} quelle che abbiamo visto finora, relative a normali eventi I/O;
+			\item \textbf{Interruzioni esterne non mascherabili:} cioè che non possono essere mascherate, solitamente rappresentano eventi particolarmente gravi o comunque la cui gestione ha alta importanza.
 		\end{itemize}
-	\item \textbf{Interruzioni interne} (\textit{Eccezioni}): eventi che non arrivano dall'esterno, ma si generano all'interno del processore stesso.
-		Questi sono particolari errori logici che potrebbe incontrare il processore, come ad esempio la divisione per 0, il tentativo di eseguire un istruzione non riconosciuta, ecc...
-
-		Un interruzione particolare è quella rappresentata da \lstinline|INT3|, l'interruzione di \textit{debug}.
-		Attraverso questa, un \textit{debugger} è capace di interrompere l'esecuzione di un programma ad un certo indirizzo del suo codice macchina.
-
-		Un'altra interruzione di debug è data dalla single step, che viene lanciata ad ogni istruzione quando è attivo un certo flag (appunto, il flag single step). Questo permette al debugger di eseguire il programma in modalità \textit{passo singolo}, cioè eseguendo un istruzione e interrompendo, permettendo al programmatore di osservare il suo andamento passo per passo.
-
-		Una differenza fra le interruzioni esterne e le eccezioni è che le eccezioni possono essere sollevate \textit{durante} la lettura e esecuzione di un istruzione, quindi ad esempio mentre si stava interpetando un codice operativo (si pensi all'interruzione di operazione non riconosciuta).
-		In verità, per assicurare l'atomicità dei cicli di esecuzione, la CPU ripristina automaticamente il suo stato a prima del lancio dell'interruzione.
-		In particolare, possiamo distinguere 3 tipi di eccezione:
-		\begin{itemize}
-			\item \textbf{Fault:} l'esecuzione non viene ancora eseguita, lo stato IP prima della sua esecuzione viene salvato (quindi si rimane alla stessa istruzione), e si può riprovare ad eseguirla dopo aver risolto l'errore;
-			\item \textbf{Trap:} l'esecuzione ormai è stata eseguita, e si salva l'IP successivo.
-			\item \textbf{Abort:} raggruppa degli eventi particolarmente disastrosi in cui l'esecuzione si arresta completamente (ad esempio la tripla eccezione).
-		\end{itemize}
-
-		Quando viene lanciata una \textit{fault} o una \textit{trap}, il processore cerca nella IDT se esiste un handler corrispondente (segnalato attraverso un bit nell'IDT stessa, alla riga della tabella corrispondente all'eccezione considerata).
-		Nel caso questo non esista, si riprova con la fault di \textit{doppia eccezione}, che quindi rappresenta una fault a sé.
-		Nel caso nemmeno questo handler esista, viene lanciata una fault di \textit{tripla eccezione}, che è di tipo \textit{abort} e comporta quindi l'arresto del programma.
-	\item \textbf{Interruzioni software:} interruzioni che vengono lanciate direttamente dal programma attraverso l'istruzione \lstinline|INT|, la cui utilità verrà vista studiando il meccanismo della \textit{protezione}.
+	\item \textbf{Interruzioni interne} (\textit{Eccezioni}): eventi che non arrivano dall'esterno, ma si generano all'interno del processore stesso;
+	\item \textbf{Interruzioni software:} interruzioni che vengono lanciate direttamente dal programma attraverso l'istruzione \lstinline|INT|, la cui utilità è stata per ora dimostrativa, e verrà inquadrata meglio studiando il meccanismo della \textit{protezione}, e in generale lo sviluppo del sistema multiprogrammato e delle relative \textit{primitive}.
 \end{itemize}
 
 \end{document}

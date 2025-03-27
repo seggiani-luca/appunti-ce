@@ -244,6 +244,65 @@ Un modo più efficiente di fare la stessa cosa è quello di memorizzare non il c
 Questo, chiaramente, implicherà un possibile riordinamento della lista in fase di inserzione (chi arriva prima sta in testa).
 In questo caso basterà decrementare solo il primo elemento della lista, e in occasione di raggiungimento di 0 eliminare quel processo e i successivi con conteggio aggiuntivo pari a 0.
 
+\subsubsection{Implementazione delle primitive d'attesa}
+Vediamo quindi l'implementazione vera e propria della primitiva \lstinline|delay()|, secondo quanto detto finora.
+Questa si basa prima di tutto sulla definizione di una struttura \lstinline|richiesta|, e dal mantenimento di una lista di tali richieste:
+\begin{lstlisting}[language=C++, style=codestyle]	
+struct richiesta {
+	// tempo di attesa aggiuntivo rispetto alla richiesta precedente
+	natl d_attesa;
+	// puntatore alla richiesta successiva
+	richiesta* p_rich;
+	// descrittore del processo che ha effettuato la richiesta
+	des_proc* pp;
+};
+
+// Coda dei processi sospesi
+richiesta* sospesi;
+\end{lstlisting}
+
+A questo punto serviranno due primitive, la \lstinline|delay()| vera e propria, e la \lstinline|driver_td()|, che si occupa effettivamente di avanzare temporalmente le richieste quando ha luogo un impulso di timer.
+\begin{itemize}
+	\item \lstinline|delay()|:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// primitiva di delay
+extern "C" void c_delay(natl n)
+{
+	// caso particolare: se n è 0 non facciamo niente
+	if (!n)
+		return;
+
+	richiesta* p = new richiesta;
+	p->d_attesa = n;
+	p->pp = esecuzione;
+
+	inserimento_lista_attesa(p);
+	schedulatore();
+}
+\end{lstlisting}
+	\item \lstinline|driver_td()|:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// driver del timer
+extern "C" void c_driver_td(void)
+{
+	inspronti();
+
+	if (sospesi != nullptr) {
+		sospesi->d_attesa--;
+	}
+
+	while (sospesi != nullptr && sospesi->d_attesa == 0) {
+		inserimento_lista(pronti, sospesi->pp);
+		richiesta* p = sospesi;
+		sospesi = sospesi->p_rich;
+		delete p;
+	}
+
+	schedulatore();
+}
+\end{lstlisting}
+\end{itemize}
+
 \subsection{Memoria dinamica}
 \lstset{language=C++}
 Vediamo alla gestione della memoria dinamica, in particolare alla parola chiave \lstinline|new| fornita dal linguaggio.
@@ -256,6 +315,8 @@ Per quanto riguarda l'\textbf{utente}, invece, si dedica un altra porzione di me
 Questa condivisione implica che più processi non possono fornire le loro versioni della funzione \lstinline|new| e \lstinline|delete|, in quanto se queste venissero interrotte (le funzioni utente non sono mai atomiche), lascerebbero la memoria dinamica in uno stato inconsistente per altri processi intenzionati a modificarla.
 
 Si usa quindi un semaforo che tiene conto di chi sta scrivendo in memoria.
+
+# scrivi qui o aspetta che spieghi
 
 \subsection{Memoria virtuale}
 Veniamo quindi all'ultimo argomento chiave del corso.
@@ -286,6 +347,6 @@ Si crea quindi per ogni processo una struttura di questo tipo:
 		\sffamily Stack
 	\end{tabular}
 \end{table}
-Dove lo stack e l'heap si espandono in una sola regione, da parti opposte.
+Dove lo stack e l'heap si espandono in una sola regione, da estremità opposte.
 
 \end{document}
