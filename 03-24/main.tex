@@ -296,6 +296,51 @@ Per avere una restituzione di parametri da parte della primitiva la situazione �
 
 Abbiamo però accesso al contesto di processo, nel descrittore di processo, e possiamo quindi modificare i registri che ci interessano direttamente lì.
 
+\subsubsection{Implementazione delle primitive processo}
+Vediamo quindi l'implementazione effettiva delle primitive relative a creazione e terminazione dei processi, cioè le \lstinline|activate_p| e \lstinline|terminate_p|.
+Queste chiaramente vengono chiamate da un handler scritto in assembly, che si occupa di salvare e caricare il contesto correttamente, in modo da non intaccare i registri in uso dal processo in \lstinline|esecuzione|.
+
+\begin{itemize}
+	\item \lstinline|activate_p|: questa sfrutta una funzione, \lstinline|crea_processo| (per adesso non significativa), che si occupa di creare effettivamente il descrittore di processo.
+		Il suo compito è quindi solo quello di controllare che i parametri siano validi, chiamare \lstinline|crea_processo()|, inserire il descrittore in lista pronti e restituire l'id del processo creato.
+\begin{lstlisting}[language=C++, style=codestyle]	
+// crea un nuovo processo
+extern "C" void c_activate_p(void f(natq), natq a, natl prio, natl liv)
+{
+	des_proc* p; // descrittore per il nuovo processo
+	natl id = 0xFFFFFFFF; // id da restituire in caso di fallimento
+
+	// seguono controlli di sicurezza sul livello
+	[...]
+
+	// crea effettivamente il descrittore di processo
+	p = crea_processo(f, a, prio, liv);
+
+	if (p != nullptr) {
+		inserimento_lista(pronti, p);
+		processi++;
+		id = p->id;			// id del processo creato
+						        // (allocato da crea_processo)
+	}
+
+	esecuzione->contesto[I_RAX] = id; // restituisci l'id del processo
+}
+\end{lstlisting}
+\item \lstinline|terminate_p|: questa viene chiamata direttamente dal processo in \lstinline|esecuzione|, quando questo desidera essere terminato. 
+	In questo, sfrutta una funzione, \lstinline|distruggi_processo()| (anche questa al momento non significativa), che si occupa di ripulire il descrittore del processo (e quindi la sua pila, ecc...).
+\begin{lstlisting}[language=C++, style=codestyle]	
+// termina il processo attuale 
+extern "C" void c_terminate_p()
+{
+	des_proc* p = esecuzione;
+
+	distruggi_processo(p);
+	processi--;
+	schedulatore();
+}
+\end{lstlisting}
+\end{itemize}
+
 \subsection{Semafori}
 Per gestire l'accesso condiviso ad una risorsa, nel nostro kernel adotteremo il meccanismo dei \textbf{semafori}.
 
@@ -324,6 +369,112 @@ I problemi che vogliamo risolvere sfruttando i semafori sono effettivamente die 
 \end{itemize}
 
 Dal punto di vista di implementazione, il kernel fornisce una primitiva \lstinline|sem_ini(int val)| che inizializza un semaforo con \lstinline|val| gettoni iniziali, restituendone l'indirizzo.
-Da qui in poi i processi hanno accesso alle primitive \lstinline|sem_wait| e \lstinline|sem_signal|, che si occupano rispettivamente di richiedere e restiture un gettone.\
+Da qui in poi i processi hanno accesso alle primitive \lstinline|sem_wait()| e \lstinline|sem_signal()|, che si occupano rispettivamente di richiedere e restiture un gettone.
+
+\subsubsection{Implementazione delle primitive semaforiche}
+Vediamo quindi l'implementazione delle primitive relative ai semafori, \lstinline|sem_ini()| \lstinline|sem_wait()| e \lstinline|sem_signal()|.
+
+Innanzitutto, un semaforo viene descritto dalla struttura:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// descrittore di semaforo
+struct des_sem {
+	// se >= 0, numero di gettoni contenuti;
+	// se < 0, il valore assoluto e' il numero di processi in coda
+	int counter;
+	// coda di processi bloccati sul semaforo
+	des_proc* pointer;
+};
+\end{lstlisting}
+
+Si definisce quindi, sulla base di un paramero \lstinline|MAX_SEM| che definisce il numero massimo di semaforo in ogni contesto:
+\begin{lstlisting}[language=C++, style=codestyle]	
+des_sem array_dess[MAX_SEM * 2];
+\end{lstlisting}
+
+Il \lstinline|* 2| è motivato dal fatto che si forniscono due array separate di semafori, una al contesto utente e una al contesto sistema.
+
+L'array dei semafori non viene mai ripulita, e i semafori correntemente attivi vengono mantenuti invece da due indici:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// numero di semafori allocati per il livello utente
+natl sem_allocati_utente  = 0;
+
+// numero di semafori allocati per il livello sistema (moduli sistema e I/O)
+natl sem_allocati_sistema = 0;
+\end{lstlisting}
+
+Le primitive vere e proprie sono quindi:
+\begin{itemize}
+	\item \lstinline|sem_ini()|: questa si serve di una funzione, \lstinline|alloca_sem()|, che svolge gli opportuni controlli e incrementa l'indice nel vettore dei semafori corretto:
+\begin{lstlisting}[language=C++, style=codestyle]
+// alloca un semaforo
+natl alloca_sem()
+{
+	// i semafori non vengono mai deallocati, quindi e' possibile allocarli
+	// sequenzialmente. Per far questo e' sufficiente ricordare quanti ne
+	// abbiamo gia' allocati (variabili sem_allocati_utente e
+	// sem_allocati_sistema)
+
+	int liv = liv_chiamante();
+	natl i;
+	if (liv == LIV_UTENTE) { // semaforo utente
+		if (sem_allocati_utente >= MAX_SEM)
+			return 0xFFFFFFFF;
+		i = sem_allocati_utente;
+		sem_allocati_utente++;
+	} else { // semaforo sistema
+		if (sem_allocati_sistema >= MAX_SEM)
+			return 0xFFFFFFFF;
+		i = sem_allocati_sistema + MAX_SEM;
+		sem_allocati_sistema++;
+	}
+	return i;
+}
+
+// inizializza un semaforo
+extern "C" void c_sem_ini(int val)
+{
+	natl i = alloca_sem();
+
+	if (i != 0xFFFFFFFF)
+		array_dess[i].counter = val;
+
+	esecuzione->contesto[I_RAX] = i;
+}
+\end{lstlisting}
+	\item \lstinline|sem_wait()|: è semplicemente:
+\begin{lstlisting}[language=C++, style=codestyle]	
+extern "C" void c_sem_wait(natl sem)
+{
+	// controlli sulla validita' del semaforo
+	[...]
+
+	des_sem* s = &array_dess[sem];
+	s->counter--;
+
+	if (s->counter < 0) {
+		inserimento_lista(s->pointer, esecuzione);
+		schedulatore();
+	}
+}
+\end{lstlisting}
+	\item \lstinline|sem_signal()|: una particolarità di questa è l'uso della funzione \lstinline|inspronti()|, che si rende necessario, come avevamo detto, per non svantaggiare inutilmente il processo corrente alla chiamata di \lstinline|schedulatore()|:
+\begin{lstlisting}[language=C++, style=codestyle]	
+extern "C" void c_sem_signal(natl sem)
+{
+	// controlli sulla validita' del semaforo
+	[...]
+
+	des_sem* s = &array_dess[sem];
+	s->counter++;
+
+	if (s->counter <= 0) {
+		des_proc* lavoro = rimozione_lista(s->pointer);
+		inspronti();	// preemption
+		inserimento_lista(pronti, lavoro);
+		schedulatore();	// preemption
+	}
+}
+\end{lstlisting}
+\end{itemize}
 
 \end{document}

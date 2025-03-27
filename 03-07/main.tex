@@ -232,24 +232,24 @@
 
 % testo
 Riprendiamo il discorso della memoria cache.
-Avevamo che questa è montata fra la CPU e lo spazio di memoria.
-Più propriamente, questa si trova fra la CPU e il bus.
 
-In questo, può vedere non solo le operazioni sulla memoria, ma anche sullo spazio di I/O.
+\subsubsection{Cache e I/O}
+Avevamo che la memoria cache è montata fra la CPU e lo spazio di memoria: più propriamente, si trova fra la CPU e il bus.
+Può quindi vedere non solo le operazioni sulla memoria, ma anche sullo spazio di I/O.
 In questo caso, però, dovrà ovviamente comportarsi sempre in maniera \textit{read-through} e \textit{write-through}, quindi effettivamente disattivarsi e lasciare che il processore interagisca direttamente con l'I/O.
 
-Questo è dovuto al fatto che allo spazio di I/O potrebbero accedere e modificare dati dispositivi esterni alla CPU (le interfacce), operazione che invaliderebbe immediatamente qualsiasi cosa venga scritta in memoriaa cache.
+Questo è dovuto al fatto che allo spazio di I/O potrebbero accedere e modificare dati dispositivi esterni alla CPU (le interfacce), operazione che invaliderebbe immediatamente qualsiasi cosa venga scritta in memoria cache.
 
-Inoltre, ogni operazione di lettura può comportare di per sé un aggiornamento delle interfacce, che comporterà un aggiornamento della memoria, motivo per cui un operazione di caching sarebbe superflua.
+Inoltre, ogni operazione di lettura può comportare di per sé un aggiornamento delle interfacce, che comporterà un aggiornamento della memoria, motivo per cui un operazione di caching sarebbe superflua se non addirittura dannosa.
 
 Operazione simile varrà effettuata per la memoria video (che non sta nello spazio di I/O).
-Questa facoltà verra realizzata dalla cache attraverso, probabilmente, \textit{maschere} o \textit{tabelle}.
+Questa facoltà verra realizzata dalla cache attraverso, probabilmente, \textit{maschere} o \textit{tabelle} che tengono conto di dove si trova la memoria video, e quindi quali richieste di lettura e scrittura vi hanno luogo.
 
 \subsubsection{Cache associative ad insiemi}
 Avevamo visto come il difetto principale della cache ad indirizzamento diretta è quello delle \textit{collisioni}.
 Presentiamo un metodo, quello delle \textbf{cache associative ad insiemi}, che risolve il problema permettendo di allocare più cacheline allo stesso indirizzo.
 
-Duplichiamo quindi la struttura vista per la cache ad indirizzamento diretto (qui 2 volte), e sfruttiamo le uscite hit/miss delle singole memorie delle etichette per pilotare un multiplexer con in ingresso le linee dati delle memorie di cache corrispondenti.
+Duplichiamo quindi la struttura vista per la cache ad indirizzamento diretto (qui solo 1 volta, anche se nei sistemi moderni si va dai 4-8 insiemi per le cache di primo livello e 8-16 insiemi per le cache di secondo e terzo livello), e sfruttiamo le uscite hit/miss delle singole memorie delle etichette per pilotare un multiplexer con in ingresso le linee dati delle memorie di cache corrispondenti.
 
 La struttura così modificata sarà la seguente:
 \begin{center}
@@ -265,13 +265,13 @@ Chiaramente, visto che non si può prevedere il futuro (o almeno non lo possono 
 Una di queste euristiche è la politica \textbf{LRU} (\textit{Least Recently Used}), dove si sceglie la cacheline al quale non si accede da più tempo.
 
 Per realizzare tale politica si sfrutta una memoria, che chiamiamo $R$.
-Con solo due vie, basterà memorizzare su $R$ l'ultima via usata, e quella su cui scriviere sarà immediatamente l'altra.
+Con solo due vie, basterà memorizzare su $R$ l'ultima via usata, e quella su cui scrivere sarà immediatamente l'altra.
 
-Con più di due vie sarebbe necessario mantenere l'ordine degli accessi, cio per $n$ vie ricordare informazione necessaria a controllare $n!$ diverse possibilità.
+Con più di due vie sarebbe necessario mantenere l'ordine degli accessi, cioè per $n$ vie ricordare informazione necessaria a controllare $n!$ diverse possibilità.
 Nella pratica, però, conviene usare politiche approssimate.
 
 \subsubsection{Pseudo-LRU dell'80486}
-Vediamo una di queste politiche approssimate, che gestiva 4 vie attraverso 3 bit $b_00$, $b_1$ e $b_2$.
+Vediamo una di queste politiche approssimate, implementata nella cache del processore Intel 486, che gestiva 4 insiemi attraverso 3 bit $b_0$, $b_1$ e $b_2$.
 Si usava un albero binario per la selezione di una delle vie, disposto come:
 \begin{center}
 	\begin{forest}
@@ -287,7 +287,7 @@ Si usava un albero binario per la selezione di una delle vie, disposto come:
 		]	
 	\end{forest}
 \end{center}
-dove i valori 1 sono i rami a destra, e viceversa i valori 0 sono i rami a sinistra.
+dove i valori 1 sono i rami a destra, viceversa i valori 0 sono i rami a sinistra, e gli $\mathsf{A, B, C, D}$ rappresentano i 4 insiemi associativi.
 
 In fase di rimpiazzamento, si sceglie la via seguendo l'albero.
 In fase di accesso, si modificano i $b_i$ in modo da portare la via a cui si è fasso accesso in fondo all'ordinamento che si ottiene visitando l'albero.
@@ -295,27 +295,29 @@ L'errore può essere dato dal fatto che la via che si trova nello stesso gruppo 
 
 \par\smallskip
 
-Per cache più grandi si sfruttano sempre algoritmi ad albero di questo tipo, magari tagliando i rami più bassi per lasciare spazio a scelte completamente casuali.
+Ad oggi, anche per cache più grandi si sfruttano sempre algoritmi ad albero di questo tipo, magari tagliando i rami più bassi per lasciare spazio a scelte completamente casuali.
 
+\subsubsection{Cache ed accessi sequenziali}
 Notiamo poi che le memorie cache di questo tipo incontrano sempre difficoltà quando si fanno accessi ciclici ad indici che si ripetono con un modulo con il numero di vie diverso da zero: ad esempio se si leggono ciclicamente 5 indirizzi che corrispondono allo stesso indice, la cache non riuscirà mai a mantenere tutti e 5 in una delle cacheline delle vie, e quindi ogni accesso comporterà un miss.
 
 \subsubsection{Livelli di cache}
-Nei processori moderni si hanno solitamente più livelli di cache (3 o 4), che crescono in dimensioni e associatività più si vanno a disporre "lontano" dal processore e "vicini" alla RAM.
+Come abbiamo accennato, nei processori moderni si hanno solitamente più livelli di cache (3 o 4), che crescono in dimensioni e associatività più si vanno a disporre "lontano" dal processore e "vicini" alla RAM.
 Le cache di livello più basso saranno quindi più veloci ma più piccole, mentre le cache di livelo alto saranno più lente ma più grandi.
 
 Il controllore di cache provvederà a gestire i livelli di cache, effettuando gli accessi controllando a partire dal livello più basso (più veloce) per arrivare al livello più basso, fino alla RAM.
 
 \subsection{Interruzioni}
 La limitazione principale del processore studiato finora è che il flusso di controllo è completamente determinato dal programma in esecuzione.
-Attraverso il meccanismo dell'interruzione, il sistema definisce $e_1, ..., e_n$ \textbf{eventi}, e il programmatore $r_1, ..., r_n$ \textbf{routine} per la gestione di tali eventi.
+L'\textbf{interruzione} viene introdotta per allontanarsi da questo paradigma e introdurre nel processore la possibilità di gestire \textbf{eventi}.
+Infatti, attraverso il meccanismo dell'interruzione, il sistema definisce $e_1, ..., e_n$ di questi eventi, e il programmatore $r_1, ..., r_n$ \textbf{routine} per la loro gestione.
 Da qui in poi il processore continua ad eseguire il suo normale flusso di controllo, ma monitorando in qualche modo lo stato di questi eventi.
-Nel caso uno degli eventi $e_i$ effettivamente si verifichi, la CPU provvederà a sospendere il flusso di controllo attuale e ad eseguire la routine $r_i$.
+Nel caso uno degli eventi $e_i$ effettivamente si verifichi, il processore provvederà a sospendere il flusso di controllo attuale e ad eseguire la routine $r_i$.
 
-Un esempio classico dell'utilità di un meccanismo di questo tipo è dato dalle fasi di stampa che avevamo definito per dispositivi come le stampanti: attraverso l'approcio visto finora dovremmo controllare periodicamente un certo registro di stato per verificare la possibilità di scrivere un nuovo dato in un certo registro di buffer.
+Un esempio classico dell'utilità di un meccanismo di questo tipo è dato dalle fasi di stampa che avevamo definito per dispositivi come schermi o stampanti: attraverso l'approccio visto finora dovremmo controllare periodicamente un certo registro di stato per verificare la possibilità di scrivere un nuovo dato in un certo registro di buffer.
 Questo occupa la CPU con operazioni inutili, che potrebbe saltare se fosse la stampante stessa ad avvertirla di quando è pronta a ricevere un nuovo dato.
 
 L'idea di base è quella di avere una nuova operazione da svolgere in fase di esecuzione di un instruzione da parte della CPU, dopo l'esecuzione dell'istruzione stessa.
-Ad esempio, potremmo riportarci un bit di valdiità, \lstinline|READY|, da parte della stampante, e controllarlo ad ogni istruzione per la chiamata di una routine di stampa, cioè aggiungere la seguente circuiteria:
+Ad esempio, potremmo riportarci un bit di validità, \lstinline|READY|, da parte della stampante, e controllarlo ad ogni istruzione per la chiamata di una routine di stampa, cioè aggiungere la seguente circuiteria:
 \begin{center}
 	\includegraphics[scale = 0.4]{../figures/int_1.png}
 \end{center}
@@ -323,7 +325,7 @@ Ad esempio, potremmo riportarci un bit di valdiità, \lstinline|READY|, da parte
 La chiamata sarà semplicemente un aggiornamento condizionato a RIP, con scrittura del contenuto attuale di RIP in pila (che è compatibile con le regole di chiamata dei sottoprogrammi a cui siamo abituati).
 
 Un problema di questo approccio potrebbe essere che, se il bit che segnala l'evento non si aggiorna immediatamente, la CPU andrà in un ciclo continuo di arresto dell'esecuzione e inizio di una routine.
-Una soluzione potrebbe essere dotare della CPU di una \textit{rete di accettazione} della richiesta: il bit di segnalazione dell'evento va in un generatore di impulsi che setta un SR flip-flop, cioè aggiungere la seguente circuiteria:
+Una soluzione potrebbe essere dotare la CPU di una \textit{rete di accettazione} della rihiesta: il bit di segnalazione dell'evento va in un generatore di impulsi che setta un SR flip-flop, cioè aggiungere la seguente circuiteria:
 \begin{center}
 	\includegraphics[scale = 0.35]{../figures/int_2.png}
 \end{center}
@@ -344,22 +346,22 @@ Abbiamo quindi che il meccanismo delle interruzioni, per citare Dijkstra, \texti
 Infatti, la loro utilità ha fatto sì che esse non venissero usate solo per l'I/O, ma anche per altre applicazioni.
 Possiamo infatti distinguere i tipi di interruzione:
 \begin{itemize}
-	\item \textbf{Esterne}, che come vedremo si dividono a loro volta in \textit{mascherabili} e \textit{non mascherabili};
+	\item \textbf{Esterne}, quelle introdotte adesso, che come vedremo si dividono a loro volta in \textit{mascherabili} e \textit{non mascherabili};
 	\item \textbf{Software}, lanciate dal processore stesso attraverso l'istruzione \lstinline|INT|;
-	\item \textbf{Interne} (\textit{eccezioni}), lanciate in caso di errori interni al processore.
+	\item \textbf{Interne} (\textit{eccezioni}), lanciate sempre dal processorein caso di errori ad esso interni.
 \end{itemize}
 
 Vediamo l'esempio basilare di un'interruzione software (per noi analoga, almeno per adesso, alle altre 2 in funzionamento), per osservare il funzionamento del meccanismo di interruzione sopratutto riguardo alla pila.
 Scriviamo un breve programma misto C++/assembly, di cui la parte C++:
-\lstset{language=C++}
+\lstset{style=codestyle, language=C++}
 \lstinputlisting{../code/interrupts/sw_basic/main.cpp}
 e la parte assembly:
-\lstset{language=assembler}
+\lstset{style=codestyle, language=assembler}
 \lstinputlisting{../code/interrupts/sw_basic/main.s}
 
-Questo tipo di programmazione mista si rende necessario in quanto la gestione dell'interruzione richiede meccanismi accessibili solo all'assembly (in particolare la \lstinline|iretq|, che serve per ritornare dal gestore di interruzione).
+Questo tipo di programmazione mista si rende necessario in quanto la gestione dell'interruzione richiede meccanismi accessibili solo all'assembly (in particolare la \lstinline|IRETQ|, che serve per ritornare dal gestore di interruzione).
 
-Ignoriamo quindi per adesso la riga 11 della funzione \lstinline|main()|, che ha il solo compito di impostare il gestore di interruzioni per l'interruzione \lstinline|0x40|, e vediamo cosa accade alla riga \lstinline|14|, dove si solleva effettivamente l'interruzione.
+Ignoriamo quindi per adesso la riga 11 della funzione \lstinline|main()|, che ha il solo compito di impostare il gestore di interruzione per l'interruzione \lstinline|0x40|, e vediamo cosa accade alla riga \lstinline|14|, dove si solleva effettivamente l'interruzione.
 In questo caso, il processore sospende l'esecuzione del programma e salta alla funzione \lstinline|a_handler()|, che provvede a salvare i registri, stampare un messaggio, ricaricare i registri e ritornare.
 Il contenuto della pila al momento della chiamata di \lstinline|a_handler()| sarà il seguente:
 \begin{table}[h!]

@@ -236,24 +236,25 @@ Torniamo sull'argomento delle interruzioni, specificando il modo in cui dobbiamo
 Il calcolatore visto finora dispone di 4 interfacce: \begin{itemize}
 	\item L'interfaccia \textit{tastiera}, letta finora in controllo di programma, valutando la validità di un bit FI sul registro di stato;
 	\item L'interfaccia \textit{timer}, dotata di 3 singoli timer, di cui abbiamo detto il primo viene usato per generare interruzioni, il secondo non è più usato, e il terzo e connesso al \textit{beeper speaker};
-	\item L'interfaccia a blocchi per \textit{hard disk}, che accede ad un drive pilotando in base al suo stato un registro di stato (per noi era utile ad implementare la funzione di attesa del drive a controllo programma \lstinline|wait_for_br()|).
+	\item L'interfaccia a blocchi per \textit{hard disk}, che accede ad un drive pilotando in base al suo stato un registro di stato (per noi era utile implementare la funzione di attesa del drive a controllo programma \lstinline|wait_for_br()|).
 \end{itemize} 
 
 Ignoriamo, per adesso, il video.
 Ognuna di queste interfacce può trarre beneficio dalla presenza di interruzioni:
 \begin{itemize}
-	\item La tastiera potrebbe \textit{avvertirci} dei nuovi tasti premuti, anziché costringerci a controllari;
+	\item La tastiera potrebbe \textit{avvertirci} dei nuovi tasti premuti, anziché costringerci a controllare;
 	\item Il timer ci deve avvisare, al termine del conteggio del timer 0, attraverso un interruzione;
 	\item L'hard disk, come la tastiera, ci può avvisare con un interruzione quando è pronto ad una nuova scrittura.
 \end{itemize}
 
 Questo comportamento, delle cosiddette \textbf{interruzioni esterne}, è definito nella macchina studiata dal \textbf{controllore delle interruzioni}, che è l'Intel \textbf{APIC} (\textit{Advanced Progammable Interruption Controller}).
-Questo scansiona periodicamente tutte le linee generatrici di interruzione ottenute dalle varie interfacce, e invia le interruzioni corrispondenti, una per volta, alla CPU. 
+Questo scansiona periodicamente tutte le linee di richiesta d'interruzione (le \textbf{IRQ}) ottenute dalle varie interfacce, e invia le interruzioni corrispondenti, una per volta, alla CPU. 
 
 Avevamo già reputato necessario specificare un \textbf{tipo di interruzione}, su 8 bit (per 256 tipi) per ogni interruzione lanciata.
 L'APIC, allora, fornirà semplicemente la possibilità di assegnare un tipo di interruzione diverso ad ogni piedino di ingresso dall interfacce, in modo che si possa assegnare ad ogni interruzione la routine di gestione più adatta.
+In questo, la configurazione dell'APIC si svolge come la configurazione di una qualsiasi periferica attraverso un'apposita interfaccia.
 
-La comunicazione fra CPU e APIC viene effettuata attraverso un \textit{handshake} su due linee, \textbf{INTR} (\textit{Interrupt Request}) e \textbf{INTA} (\textit{Interrupt Acknowledge}), che comporta anche una lettura da parte della CPU di quanto l'APIC metterà sul bus (cioè il tipo di interruzione).
+La comunicazione fra CPU e APIC in fase di interruzione viene effettuata attraverso un \textit{handshake} su due linee, \textbf{INTR} (\textit{Interrupt Request}) e \textbf{INTA} (\textit{Interrupt Acknowledge}), che comporta anche una lettura da parte della CPU di quanto l'APIC metterà sul bus (cioè il tipo di interruzione).
 
 A questo punto, le routine vere e proprie verrano definite nell'\textbf{IDT}, (\textit{Interrupt Descriptor Table}), contenente in sequenza gli indirizzi delle prime istruzioni di ogni routine per ogni tipo di interruzione, e specificata a partire da un certo indirizzo indicato nel registro \textbf{IDTR}.
 
@@ -263,10 +264,10 @@ Nel caso si passi effettivamente ad eseguire l'interruzione, ricordiamo che sia 
 \subsubsection{Rilevamento di interruzioni da parte dell'APIC}
 Potremmo chiederci come fa il controllore APIC a capire quando un'interfaccia sta richiedendo una nuova richiesta.
 
-Un primo approccio potrebbe essere di non rileggere il piedino di ingresso di quell'interfaccia, al ottenimento e successivo invio alla CPU di un interruzione, fino alla segnalazione, sempre da parte della CPU, di avvenuta gestione dell'interruzione.
+Un primo approccio potrebbe essere di non rileggere il piedino di ingresso di quell'interfaccia, all'ottenimento e successivo invio alla CPU di un interruzione, fino alla segnalazione, sempre da parte della CPU, di avvenuta gestione dell'interruzione.
 Questo può essere effettuato dotando l'APIC di un opportuno registro (\textbf{EOI}, \textit{End Of Interrupt}), che la CPU andrà a modificare conclusa la gestione dell'interruzione.
 
-Altri 2 registri di interesse sono i seguenti, entrambi su 256 bit (un bit per ogni tipo di interruzione):
+Un approccio più sicuro può essere ottenuto dotando il controllore delle interruzioni di due registri, entrambi su 256 bit (un bit per ogni tipo di interruzione):
 \begin{itemize}
 	\item \textbf{IRR} (\textit{Interrupt Request Register}): indica con bit alti quali interruzioni sono state inviate dalle interfacce attualmente;
 	\item \textbf{ISR} (\textit{Interrupt Service Register}): indica con bit alti a quali interruzioni sta rispondendo il processore attualmente. In un processore single-threaded come quello che studiamo al più uno solo dei suoi bit sarà alto in un dato momento (escluso il caso della \textit{gestione annidata}).
@@ -282,21 +283,19 @@ Si avrà quindi la seguente organizzazione:
 \end{table}
 
 Un interruzione generata lato hardware si tradurrà nell'innalzamento (se non era già alto) di un bit nell'IRR, e l'inizio (o schedulazione dell'inizio) di un handshake con la CPU.
-Al termine dell'handshake (quindi all'abbassamento di INTA successivo ad un suo innalzamento per acknowledge) i lbit passa dall'IRR all'ISR.
-Infine, la transizione dal bit presente nell'ISR all'interruzione gestita (bit nuovamente basso) si ha con il segnale EOI da parte della CPU.
+Al termine dell'handshake (quindi all'abbassamento di INTA successivo ad un suo innalzamento per acknowledge) il bit dell'interruzione corrente passa dall'IRR all'ISR.
+Infine, la transizione dal bit presente nell'ISR all'interruzione gestita (bit nuovamente basso) si ha sempre con il segnale EOI da parte della CPU (con successivo inizio, se necessario, di un nuovo ciclo di handshake per una nuova richiesta di interruzione).
 
 \subsubsection{Priorità delle interruzioni e gestione annidata}
-Possiamo chiederci come l'APIC si comporta in caso di più richieste concorrenti.
-Un idea potrebbe essere di assegnare una priorità ad ogni richiesta, e rispondere prima alle richieste di priorità più alta.
-
 Ci rendiamo quindi conto che alcune richieste sono più importanti di altre: ad esempio, la pressione di un tasto su tastiera può essere ignorata, se ad esempio nel frattempo arriva una richiesta di interruzione da parte di un timer.
 La pressione del tasto non si ripeterà infatti in tempo utile, mentre il timer potrebbe inviarci nuove richieste mentre ancora non siamo pronti a riceverle, e continuerà a farlo a scadenze regolari (potremmo finire per gestire solo un sottoinsieme delle richieste che ci vengono effettivamente inviate).
 
-Vediamo quindi nel dettaglio di come i codici delle interruzioni sono definiti.
-I primi 4 bit rappresentano la \textbf{classe di precedenza} dell'interruzione: a classi di precedenza maggiore abbiamo gestione prioritaria delle richieste di interruzione.
-Il trasferimento da IRR a ISR avverrà quindi prima per richieste di classe di precedenza più alta, e poi per quelle di classe di precedenza più bassa.
+Possiamo quindi chiederci come l'APIC si comporta in caso di più richieste concorrenti.
+Un idea potrebbe essere di assegnare una priorità ad ogni richiesta, e rispondere prima alle richieste di priorità più alta.
+Questa priorità può essere implementata chiamando i 4 bit più significativi del tipo dell'interruzione \textbf{classe di precedenza} dell'interruzione: a classi di precedenza maggiore abbiamo gestione prioritaria delle richieste di interruzione.
+Il trasferimento da IRR a ISR avverrà quindi prima per richieste di classe di precedenza più alta, e poi per quelle di classe di precedenza \textit{uguale} o più bassa, con la possibilità per le prime di \textit{interrompere} i gestori di interruzione delle ultime.
 
 La precedenza delle interruzioni è quindi necessaria all'implementazione corretta della \textbf{gestione annidata} delle interruzioni, dove un interruzione di precedenza più altra può interrompere (a patto che IF sia alto) un gestore di interruzione in esecuzione. 
-Questo è il caso a cui accennavamo prima, dove più bit di ISR possono essere alti contemporaneamente (a patto che si dispongano nel tempo, da destra verso sinistra, cioè da minore priorità a maggiore priorità).
+Questo è il caso a cui accennavamo prima, dove più bit di ISR possono essere alti contemporaneamente (a patto che si dispongano nel tempo, da destra verso sinistra, cioè da minore priorità a maggiore priorità), e che si risolvano da sinistra verso destra (cioè da maggiore priorità a minore priorità).
 
 \end{document}

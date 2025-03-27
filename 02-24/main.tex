@@ -328,10 +328,10 @@ Un esempio di utilizzo del big-endian e nella trasmissione di dati attraverso il
 Il formalismo introdotto nel paragrafo precedente si dimostra utile anche da questo punto di vista: scrivendo le parole da destra verso sinistra, cioè a offset nella parola crescenti verso sinistra, si ha che il MSB finisce a sinistra, come suggerirebbe il senso di scrittura naturalsd.
 
 \subsubsection{Allineamento}
-Indicheremo con \textbf{offset} la distanza in byte fra due locazioni di memoria, inteso come il numero di locazioni che vanno saltate per raggiungere un indirizzo a partire dall'altro.
+Indicheremo con \textbf{offset} la distanza in byte fra due locazioni di memoria, intesa come il numero di locazioni che vanno saltate per raggiungere un indirizzo a partire dall'altro.
 In questo ha senso parlare anche di offset \textit{negativi}.
 
-Visto che lo spazio di memoria è effettivamente ciclico, cioò si ha \textit{wrap-around} ai suoi capi, si ha che gli offset rimangono validi \textbf{modulo} la dimensione dello spazio di memoria, che è sempre $2^n$, con $n$ nel nostro caso uguale a 64.
+Visto che lo spazio di memoria è effettivamente ciclico, cioè si ha \textit{wrap-around} ai suoi capi, si ha che gli offset rimangono validi \textbf{modulo} la dimensione dello spazio di memoria, che è sempre $2^n$, con $n$ nel nostro caso uguale a 64.
 
 Il \textit{wrap-around} si comporta bene con gli offset, ma lo stesso non si può dire per quanto riguarda \textbf{intervalli} di byte.
 Preso un certo intervallo $[x, y)$, quindi, si ha che questo contiene gli indirizzi $\{n \, | \, x \leq n < y\}$, ammesso che $x < y$, cosa che risulta falsa nel caso di intervalli che hanno \textit{wrap-around}. 

@@ -236,14 +236,14 @@ Nell'architettura Intel x86 la CPU interroga la RAM in due situazioni:
 \begin{itemize}
 	\item Durante la lettura di un istruzione;
 	\item Durante la lettura di \textit{eventuali} operandi in memoria richiesti dall'istruzione.
-		Notiamo che per ogni istruzione è previsto un solo indirizzo esplicito di un operando in memoria (non è permesso scrivere qualcosa come \lstinline|MOV (%RBP), (%RDI)|). indirizzo
+		Notiamo che per ogni istruzione è previsto un solo indirizzo esplicito di un operando in memoria (non è permesso scrivere qualcosa come \lstinline|MOV (%RBP), (%RDI)|). 
 		Alcune istruzioni possono però avere comunque più di un operando in memoria (ad esempio le istruzioni di stringa, \lstinline|MOVS|, ecc... o la stessa istruzione di pila \lstinline|POP|).
 \end{itemize}
 
-Dal punto di vista pratico, il collegamento fra CPU e RAM è rappresentato da:
+Dal punto di vista pratico, il collegamento fra CPU e RAM è quindi rappresentato da:
 \begin{itemize}
 	\item Un \textbf{bus dati} a 64 bit;
-	\item Un certo numero di linee per il \textbf{numero di riga}. Questo non corrisponde all'indirizzo del primo byte contenuto in ogni riga, ma l'indice proprio di ogni regione (intesa come riga) da 64 bit all'interno della RAM. Si noti inoltre che queste non sono necessariamente $2^{64}$, o $2^{57}$ (il massimo spazio indirizzabile secondo l'architettura x86), ma più spesso intorno alle $2^{36}$-$2^{37}$;
+	\item Un certo numero di linee per il \textbf{numero di riga}. Questo non corrisponde all'indirizzo del primo byte contenuto in ogni riga, ma l'indice proprio di ogni regione (intesa come riga) da 64 bit all'interno della RAM. Si noti inoltre che queste non sono necessariamente disposte per indirizzare un numero di byte pari a $2^{64}$, o $2^{57}$ (il massimo spazio indirizzabile secondo l'architettura x86), ma più spesso intorno ai $2^{36}$-$2^{37}$;
 	\item Determinate \textbf{linee di controllo} che segnalano l'operazione in corso da parte del processore.
 	\item 8 linee di \textbf{byte enable}, attive basse, che rappresentano i byte di interesse all'interno di ogni locazione da 64 bit della RAM. Dal punto di vista della lettura, queste linee non sono particolarmente utili in quanto tutta la locazione verrà comunque riportata sul bus dati, o comunque le locazioni non selezionate potranno essere invalide o in alta impedenza, senza avere effetto sulla CPU (che non le leggerà). Per quanto riguarda la scrittura, invece, la RAM lascerà inalterati i byte con byte enable alto. 
 \end{itemize}
@@ -259,44 +259,45 @@ Modelliziamo un modulo di RAM come una rete provvista di:
 
 Dalla CPU arriveranno, come abbiamo detto, i \textbf{numeri di riga}, i \textbf{byte enable}, il \textbf{bus dati} e le \textbf{linee di controllo}.
 
-I numeri di riga si collegano direttamente alle linee di indirizzo di ogni modulo, che rappresenterà un certo byte della locazione (avremo quindi, nell'architettura descritta, 8 moduli per 8 byte, quindi 64 bit).
+I numeri di riga si collegano direttamente alle linee di indirizzo di ogni modulo (o lo fanno le prime $k$ nel caso di banchi di dimensione $2^k$).
+Ogni modulo rappresenterà allora un byte della locazione (avremo quindi, nell'architettura descritta, 8 moduli per 8 byte per banco di memoria, quindi 64 bit).
 I byte enable dovranno quindi smistarsi nelle linee di select di ogni modulo di RAM, a selezionare il modulo corrispondente.
 Il bus dati verrà composto, analogamente, concatenando le linee di uscita da 8 bit di ogni modulo di RAM. 
 Notiamo che avevamo chiamato questo montaggio \textbf{parallelo}.
 
 \par\smallskip 
 
-Vorremo poter estendere la memoria disponibile oltre il numero di locazioni da un byte fornite da ogni modulo di RAM.
-Pensiamo di fare questo attraverso più banchi di memoria con locazioni da 64 bit.
-In questo caso avremo bisogno di montaggio in \textbf{serie}, e quindi di generare un segnale di select a partire non solo dalle line di byte enable, ma anche da una \textbf{maschera} generata a partire dal numero di riga.
-Questo si potrà fare agevolemnte mettendo il segnale di uscita della maschera in OR (ricordiamo segnali attivi bassi, quindi si applica De Morgan) con il byte enable di ogni modulo di RAM compreso nel banco di memoria associato a tale maschera.
+Vorremo poter estendere la memoria disponibile oltre il numero di locazioni fornite da ogni banco di RAM.
+Pensiamo di fare questo attraverso più banchi di memoria con locazioni da 64 bit (che possono tranquillamente essere realizzati anch'essi unendo 8 banchi da 1 byte).
+In questo caso avremo bisogno di montaggio in \textbf{serie}, e quindi di generare un segnale di select a partire non solo dalle line di byte enable, ma anche da una \textbf{maschera} generata a partire dagli $n - k$ numeri di riga.
+Questo si potrà fare agevolmente mettendo il segnale di uscita della maschera in OR (ricordiamo segnali attivi bassi, quindi si applica De Morgan) con il byte enable di ogni modulo di RAM compreso nel banco di memoria associato a tale maschera.
 
+\noindent
+\begin{minipage}{\textwidth}
 La struttura complessiva della RAM sarà quindi la seguente:
 \begin{center}
 	\includegraphics[scale=0.6]{../figures/ram.png}
 \end{center}
 dove la rete $M_r$ è quella che si occupa di generare la maschera, prendendo banchi di dimensione $2^k$ righe.
+\end{minipage}
 
 \subsubsection{Allineamento e RAM}
 Quanto discusso finora rende più chiaro l'importanza del corretto allineamento degli oggetti in memoria.
 Leggere un oggetto da 8 byte non allineato nel montaggio di RAM descritto, infatti, richiederà necessariamente 2 accessi, contro il singolo accesso necessario per un oggetto allineato.
 Inoltre, alcuni dei byte più significativi risulteranno invertiti di posto rispetto ai byte meno significativi, cioè si richiede un operazione di shift interna al processore.
 
-Questa combinazione di operazioni, eseguite in \textbf{hardware}, rende gli accessi in memoria non allineati molto poco performanti, e quindi sconsigliati (anche se l'architettura Intel x86 li permette comunque).
+Questa combinazione di operazioni, eseguite in \textbf{hardware}, rende gli accessi in memoria non allineati molto poco performanti, e quindi sconsigliati (anche se l'architettura Intel x86 li permette comunque, probabilmente malvolentieri).
 
-\par\medskip 
-
-Un problema che potrebbe interessarci è, data una regione di memoria $[x, y)]$ di dimensione $b$ uguale a un singolo banco di RAM, ottenere gli indici della prima regione in cui cade l'intervallo, e la prima in cui non cade più.
+\subsubsection{Posizione dei confini in RAM}
+Un altro problema che potrebbe interessarci è, data una regione di memoria $[x, y)$ di dimensione $b$ uguale a un singolo banco di RAM, ottenere gli indici della prima regione in cui cade l'intervallo, e la prima in cui non cade più, cioè gli indici delle regioni di appartenenza suoi \textit{confini}.
 
 Vediamo come calcolare la prima regione di appartenenza.
 In \textbf{hardware}, questo può essere calcolato semplicemente prendendo gli $n - b$ bit più significativi dei numeri di riga $x$ e $y$.
-
 In \textbf{software}, questo equivarrà ad uno shift a destra che conservi i soli $n-b$ bit più significativi.
 
-Vediamo come calcolare l'offset di $x$ o $y$ all'interno delle rispettive regioni.
-Mascherando gli stessi bit, invece, si può ottenere l'indirizzo all'interno del banco del confine della regione.
+Mascherando gli stessi bit, invece, si può ottenere l'indirizzo (offset) all'interno del banco del confine della regione.
 Per la precisione, vogliamo una maschera fatta da $n - b$ 0 e $b$ 1.
-Questa si può ricavare agevolmente prendendo $2^b$ come \lstinline|1UL << b| e sottrandogli 1, ottenendo la maschera desiderata (si avranno borrow propagati dal bit in $b$ fino al LSB).
+Questa si può ricavare agevolmente prendendo $2^b$ come \lstinline|1UL << b| e sottraendogli 1 (\lstinline|UL| è da intendersi come il suffisso di letterale \textit{unsigned long} del C), ottenendo la maschera desiderata (si avranno borrow propagati dal bit in $b$ fino al LSB).
 
 Infine, vediamo come calcolare la prima regione di non appartenenza.
 In questo caso potremo calcolare la regione in cui cade $y - 1$, e aggiungervi 1 (tenendo conto di eventuali \textit{wrap-around}). Il $-1$ è richiesto dal fatto che $y$ potrebbe cadere sul confine.
