@@ -1,0 +1,309 @@
+
+\documentclass[a4paper,11pt]{article}
+\usepackage[a4paper, margin=8em]{geometry}
+
+% usa i pacchetti per la scrittura in italiano
+\usepackage[french,italian]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\frenchspacing 
+
+% usa i pacchetti per la formattazione matematica
+\usepackage{amsmath, amssymb, amsthm, amsfonts}
+
+% usa altri pacchetti
+\usepackage{gensymb}
+\usepackage{hyperref}
+\usepackage{standalone}
+
+\usepackage{colortbl}
+
+\usepackage{xstring}
+\usepackage{karnaugh-map}
+
+% imposta il titolo
+\title{Appunti Calcolatori Elettronici}
+\author{Luca Seggiani}
+\date{2025}
+
+% imposta lo stile
+% usa helvetica
+\usepackage[scaled]{helvet}
+% usa palatino
+\usepackage{palatino}
+% usa un font monospazio guardabile
+\usepackage{lmodern}
+
+\renewcommand{\rmdefault}{ppl}
+\renewcommand{\sfdefault}{phv}
+\renewcommand{\ttdefault}{lmtt}
+
+% circuiti
+\usepackage{circuitikz}
+\usetikzlibrary{babel}
+
+% testo cerchiato
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+            \node[shape=circle,draw,inner sep=2pt] (char) {#1};}}
+
+% disponi il titolo
+\makeatletter
+\renewcommand{\maketitle} {
+	\begin{center} 
+		\begin{minipage}[t]{.8\textwidth}
+			\textsf{\huge\bfseries \@title} 
+		\end{minipage}%
+		\begin{minipage}[t]{.2\textwidth}
+			\raggedleft \vspace{-1.65em}
+			\textsf{\small \@author} \vfill
+			\textsf{\small \@date}
+		\end{minipage}
+		\par
+	\end{center}
+
+	\thispagestyle{empty}
+	\pagestyle{fancy}
+}
+\makeatother
+
+% disponi teoremi
+\usepackage{tcolorbox}
+\newtcolorbox[auto counter, number within=section]{theorem}[2][]{%
+	colback=blue!10, 
+	colframe=blue!40!black, 
+	sharp corners=northwest,
+	fonttitle=\sffamily\bfseries, 
+	title=Teorema~\thetcbcounter: #2, 
+	#1
+}
+
+% disponi definizioni
+\newtcolorbox[auto counter, number within=section]{definition}[2][]{%
+	colback=red!10,
+	colframe=red!40!black,
+	sharp corners=northwest,
+	fonttitle=\sffamily\bfseries,
+	title=Definizione~\thetcbcounter: #2,
+	#1
+}
+
+% disponi codice
+\usepackage{listings}
+\usepackage[table]{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{codestyle}{
+		backgroundcolor=\color{black!5}, 
+		commentstyle=\color{codegreen},
+		keywordstyle=\bfseries\color{magenta},
+		numberstyle=\sffamily\tiny\color{black!60},
+		stringstyle=\color{green!50!black},
+		basicstyle=\ttfamily\footnotesize,
+		breakatwhitespace=false,         
+		breaklines=true,                 
+		captionpos=b,                    
+		keepspaces=true,                 
+		numbers=left,                    
+		numbersep=5pt,                  
+		showspaces=false,                
+		showstringspaces=false,
+		showtabs=false,                  
+		tabsize=2
+}
+
+\lstdefinestyle{shellstyle}{
+		backgroundcolor=\color{black!5}, 
+		basicstyle=\ttfamily\footnotesize\color{black}, 
+		commentstyle=\color{black}, 
+		keywordstyle=\color{black},
+		numberstyle=\color{black!5},
+		stringstyle=\color{black}, 
+		showspaces=false,
+		showstringspaces=false, 
+		showtabs=false, 
+		tabsize=2, 
+		numbers=none, 
+		breaklines=true
+}
+
+
+\lstdefinelanguage{assembler}{ 
+  keywords={AAA, AAD, AAM, AAS, ADC, ADCB, ADCW, ADCL, ADD, ADDB, ADDW, ADDL, AND, ANDB, ANDW, ANDL,
+        ARPL, BOUND, BSF, BSFL, BSFW, BSR, BSRL, BSRW, BSWAP, BT, BTC, BTCB, BTCW, BTCL, BTR, 
+        BTRB, BTRW, BTRL, BTS, BTSB, BTSW, BTSL, CALL, CBW, CDQ, CLC, CLD, CLI, CLTS, CMC, CMP,
+        CMPB, CMPW, CMPL, CMPS, CMPSB, CMPSD, CMPSW, CMPXCHG, CMPXCHGB, CMPXCHGW, CMPXCHGL,
+        CMPXCHG8B, CPUID, CWDE, DAA, DAS, DEC, DECB, DECW, DECL, DIV, DIVB, DIVW, DIVL, ENTER,
+        HLT, IDIV, IDIVB, IDIVW, IDIVL, IMUL, IMULB, IMULW, IMULL, IN, INB, INW, INL, INC, INCB,
+        INCW, INCL, INS, INSB, INSD, INSW, INT, INT3, INTO, INVD, INVLPG, IRET, IRETD, JA, JAE,
+        JB, JBE, JC, JCXZ, JE, JECXZ, JG, JGE, JL, JLE, JMP, JNA, JNAE, JNB, JNBE, JNC, JNE, JNG,
+        JNGE, JNL, JNLE, JNO, JNP, JNS, JNZ, JO, JP, JPE, JPO, JS, JZ, LAHF, LAR, LCALL, LDS,
+        LEA, LEAVE, LES, LFS, LGDT, LGS, LIDT, LMSW, LOCK, LODSB, LODSD, LODSW, LOOP, LOOPE,
+        LOOPNE, LSL, LSS, LTR, MOV, MOVB, MOVW, MOVL, MOVSB, MOVSD, MOVSW, MOVSX, MOVSXB,
+        MOVSXW, MOVSXL, MOVZX, MOVZXB, MOVZXW, MOVZXL, MUL, MULB, MULW, MULL, NEG, NEGB, NEGW,
+        NEGL, NOP, NOT, NOTB, NOTW, NOTL, OR, ORB, ORW, ORL, OUT, OUTB, OUTW, OUTL, OUTSB, OUTSD,
+        OUTSW, POP, POPL, POPW, POPB, POPA, POPAD, POPF, POPFD, PUSH, PUSHL, PUSHW, PUSHB, PUSHA, 
+				PUSHAD, PUSHF, PUSHFD, RCL, RCLB, RCLW, MOVSL, MOVSB, MOVSW, STOSL, STOSB, STOSW, LODSB, LODSW,
+				LODSL, INSB, INSW, INSL, OUTSB, OUTSL, OUTSW
+        RCLL, RCR, RCRB, RCRW, RCRL, RDMSR, RDPMC, RDTSC, REP, REPE, REPNE, RET, ROL, ROLB, ROLW,
+        ROLL, ROR, RORB, RORW, RORL, SAHF, SAL, SALB, SALW, SALL, SAR, SARB, SARW, SARL, SBB,
+        SBBB, SBBW, SBBL, SCASB, SCASD, SCASW, SETA, SETAE, SETB, SETBE, SETC, SETE, SETG, SETGE,
+        SETL, SETLE, SETNA, SETNAE, SETNB, SETNBE, SETNC, SETNE, SETNG, SETNGE, SETNL, SETNLE,
+        SETNO, SETNP, SETNS, SETNZ, SETO, SETP, SETPE, SETPO, SETS, SETZ, SGDT, SHL, SHLB, SHLW,
+        SHLL, SHLD, SHR, SHRB, SHRW, SHRL, SHRD, SIDT, SLDT, SMSW, STC, STD, STI, STOSB, STOSD,
+        STOSW, STR, SUB, SUBB, SUBW, SUBL, TEST, TESTB, TESTW, TESTL, VERR, VERW, WAIT, WBINVD,
+        XADD, XADDB, XADDW, XADDL, XCHG, XCHGB, XCHGW, XCHGL, XLAT, XLATB, XOR, XORB, XORW, XORL},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{\#},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\lstset{language=assembler, style=codestyle}
+
+% disponi sezioni
+\usepackage{titlesec}
+
+\titleformat{\section}
+	{\sffamily\Large\bfseries} 
+	{\thesection}{1em}{} 
+\titleformat{\subsection}
+	{\sffamily\large\bfseries}   
+	{\thesubsection}{1em}{} 
+\titleformat{\subsubsection}
+	{\sffamily\normalsize\bfseries} 
+	{\thesubsubsection}{1em}{}
+
+% tikz
+\usepackage{tikz}
+
+% float
+\usepackage{float}
+
+% grafici
+\usepackage{pgfplots}
+\pgfplotsset{width=10cm,compat=1.9}
+
+% disponi alberi
+\usepackage{forest}
+
+\forestset{
+	rectstyle/.style={
+		for tree={rectangle,draw,font=\large\sffamily}
+	},
+	roundstyle/.style={
+		for tree={circle,draw,font=\large}
+	}
+}
+
+% disponi algoritmi
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\makeatletter
+\renewcommand{\ALG@name}{Algoritmo}
+\makeatother
+
+% disponi numeri di pagina
+\usepackage{fancyhdr}
+\fancyhf{} 
+\fancyfoot[L]{\sffamily{\thepage}}
+
+\makeatletter
+\fancyhead[L]{\raisebox{1ex}[0pt][0pt]{\sffamily{\@title \ \@date}}} 
+\fancyhead[R]{\raisebox{1ex}[0pt][0pt]{\sffamily{\@author}}}
+\makeatother
+
+\begin{document}
+% sezione (data)
+\section{Lezione del 28-03-25}
+
+% stili pagina
+\thispagestyle{empty}
+\pagestyle{fancy}
+
+% testo
+Riprendiamo il discorso della memoria virtuale.
+
+\subsubsection{BASE e LIMIT}
+Avevamo detto che intendeveamo dividere la memoria utente fra processi, senza dover ricorrere al caricamento da disco della memoria relativa ad ognuno di essi.
+
+Decidiamo quindi di dotare la CPU di due registri, \textbf{BASE} e \textbf{LIMIT}, che puntano rispettivamente all'inizio e alla fine della memoria dedicata al proesso, che questa dovrà controllare per prevenire accessi all'esterno della zona definita quando ci si trova in modalità utente.
+
+Chiaramente potrebbero esserci problematiche rispetto a quali indirizzi i singoli programmi vogliono usare: questi non potranno chiaramente usare salti a posizioni arbitrarie in memoria.
+
+Una prima soluzione può essere quella di rendere il \textbf{PIC} (\textit{Position Indipendent Code}), cioè codice indipendente dalla posizione (dove ad esempio le \lstinline|CALL| e le \lstinline|JUMP| saltano ad \textit{offset}, e non ad indirizzi assoluti).
+Un primo problema di questo approccio è che costringe i programmi di stare all'intero di una zona di $\sim 4 \text{GB}$, in quanto gli offset sono su 32 bit (e non è nemmeno detto che il kernel dedicherà ad ogni processo la stessa quantità di memoria).
+
+Un altro approccio può essere quello di realizzare un \textit{caricatore rilocante} (ad esempio impementato in MS-DOS): si fa in modo che il collegatore lasci gli indirizzi non completamente specificati, e si definiscono una volta nota la posizione al partire da cui il processo verrà caricato (semplicemente incrementando gli indirizzi a partire da 0 in modo che puntino alla stessa posizione relativa al nuovo punto di inizio del programma).
+
+Notiamo però che una problematica si presenterà sempre se intendiamo spostare processi fra memoria e disco in posizioni diverse, in quanto un processo potrebbe ad esempio poter aver messo un indirizzo assoluto in un registro, pianificando di effettuarci successivamente un accesso.
+
+Un'altra problematica è che abbiamo perso l'accesso alla \textit{memoria condivisa}, a meno di non sovrapporre le regioni definite dal BASE e LIMIT di due processi, sempre però limitandosi a due regioni molto specifiche di soli due processi.
+
+Decidiamo quindi di usare il seguente approccio: ogni accesso in memoria ad un indirizzo $x$ richiesto dal programma viene trasformato in un accesso a $\text{BASE} + x$.
+In questo modo il collegatore potrà far partire ogni programma dall'indirizzo 0: ogni indirizzo usato da quel processo non sarà quindi altro che un offset a partire dall'inizio della regione di memoria dedicata a tale processo.
+
+Risolveremo così i problemi relativi agli indirizzi assoluti, ma resterà il problema della dimensione del codice e della memoria condivisa.
+
+Trascurando per adesso questi due dettagli, vediamo che abbiamo effettivamente realizzato una \textbf{memoria virtuale}, dove una certa funzione $f$ mappa indirizzi \textit{virtuali} $x_1, ...$ ad indirizzi \textit{fisici} $v_1, ...$:
+$$
+\begin{array}{c}
+	x_1 \\ x_2 \\ x_3
+\end{array}
+\xrightarrow{f(x) = \text{BASE} + x}
+\begin{array}{c}
+	v_1 \\ v_2 \\ v_3
+\end{array}
+$$
+
+Vediamo però che spostare processi nella memoria comporta comunque un gran dispendio di risorse in quanto la memoria dedicata ad un processo può raggiungere dimensioni considerevoli, problema che viene solo moltiplicato quando si inizia a lanciare sempre più processi.
+
+\subsubsection{Paginazione}
+Questo problema, assieme in qualche modo agli altri due che avevamo lasciato in sospeso, può essere risolto agendo sulla funzione $f$.
+Decidiamo infatti di dividere la memoria processo in una serie di \textbf{pagine}, di dimensione fissa (prendiamo 4 KB), che possono prese in qualsiasi ordine dalla memoria centrale, ad unità sempre da 4 KB che chiamiamo \textbf{frame
+}.
+
+A questo punto non avremo più bisogno di \textbf{continuità} nella memoria dedicata ai processi, cioè non avremo problemi di \textit{frammentazione esterna}, anche se in qualche modo avremo introdotto \textit{frammentazione interna} dove ogni processo dovrà ottenere memoria a "pacchetti" di 4 KB (che è comunque più vantaggioso).
+
+BASE e LIMIT non saranno chiaramente abbastanza per gestire una situazione di questo tipo, e avremo quindi bisogno di una \textbf{tabella di corrispondenza}, allocata da qualche parte in memoria, che contenga una riga per ogni pagina, contenente il frame corrispondente alla pagina.
+Ogni indirizzo $x$ sarà quindi scomposto in due valori, il \textbf{numero di pagina} e l'\textbf{offset di pagina} al suo interno.
+Il numero di pagina verrà quindi trasformato nel frame corrispondente alla pagina, e si potrà procedere all'accesso.
+
+Ogni processo avrà quindi bisogno della sua tabella di corrispondenza personale, che pensiamo per adesso di poter semplicemente caricare e scaricare da memoria assieme al processo stesso.
+
+Risolveremo quindi anche il problema della memoria condivisa, in quanto basterà mettere alcuni frame in comune fra più processi (starà al kernel tenere conto di quali frame sono in uso da quali processi e cosi via).
+Inoltre, agendo sulle tabelle, possiamo anche immaginare come questo sistema porterebbe almeno via di un livello di astrazione l'accesso a regioni di memoria più grandi di 4 GB.
+
+\subsubsection{Memory Management Unit}
+Aggiungiamo quindi, lato hardware e posta fra processore e cache, un nuovo componente detto \textbf{MMU}, \textit{Memory Management Unit}, che tiene conto delle tabelle di corrispondenza e trasforma tramite esse le pagine degli indirizzi nei frame giusti.
+
+Assumeremo che tutti gli indirizzi che la CPU genera saranno indirizzi virtuali, e che tutti gli indirizzi che escono dalla MMU saranno indirizzi fisici.
+Decidere che tutti gli indirizzi generati dalla CPU sono virtuali solleva una questione riguardo al kernel: idealmente, vorremmo che questo veda l'interezza della memoria, senza paginazione.
+Prendiamo quindi la sua memoria come in testa allo spazio di memoria, con le regioni successive dedicate ai frame di pagina dei processi.
+
+Potremmo allora avere una tabella dedicata al solo kernel, che tiene conto di tutto lo spazio indirizzabile.
+Inoltre, potremmo prendere la tabella del kernel come \textit{identiva}, cioè dare al kernel la visione della sua memoria \textit{così com'è}.
+
+Corrediamo allora la tabella di pagina introducendo:
+\begin{itemize}
+	\item \textbf{P:} un bit di presenza, che definisce l'esistenza o meno di una traduzione per quell'indirizzo: nel caso di accesso a pagine non traducibili si genera un ecceione, detta \textbf{page fault}, che comporta il caricamento della pagina richiesta o la terminazione forzata del programma per \textbf{segmentation fault}.
+
+		Ad esempio, se scegliamo 0 come la codifica del null pointer, vogliamo che la prima pagina (o le prime pagine, se vogliamo essere più larghi con accessi a strutture puntate da null pointer, che potrebbero avere offset negli struct anche consideravoli) sia non presente, e quindi si traduca in eccezione prima di effettuare accessi chiaramente erronei;
+	\item \textbf{S/U:} \textit{Sistema/Utente}, indica se una pagina è accessibile o meno ad un processo utente;  
+	\item \textbf{R/W:} \textit{Read/Write}, indica se una pagina è accessibile solo in scrittura o solo in lettura per un certo processo. 
+		Questa può essere utile ad esempio per la sezione \textit{text} del programma, che ricordiamo contiene il codice e non vogliamo venga modificata;
+	\item \textbf{PCD} e \textbf{PWT}: indicano se ignorare completamente la cache (PCD) o se adottare una politica di scrittura \textit{write-through} (PWT).
+		Questo può essere utile nel caso di dispositivi mappati in memoria (come l'APIC o l'adattatore video);
+	\item \textbf{A} e \textbf{D}: due flag che danno indicazioni agli accessi che la MMU ha individuato sulla pagina.
+\end{itemize}
+
+\end{document}
