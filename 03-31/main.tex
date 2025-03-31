@@ -224,76 +224,108 @@
 
 \begin{document}
 % sezione (data)
-\section{Lezione del 28-03-25}
+\section{Lezione del 31-03-25}
 
 % stili pagina
 \thispagestyle{empty}
 \pagestyle{fancy}
 
 % testo
-Riprendiamo il discorso della memoria virtuale.
+Continuiamo il discorso sulla paginazione.
 
-\subsubsection{BASE e LIMIT}
-Avevamo detto che intendeveamo dividere la memoria utente fra processi, senza dover ricorrere al caricamento da disco della memoria relativa ad ognuno di essi.
+\subsubsection{Funzionamento della MMU}
+Avevamo definito una MMU che definiva tabelle di corrispodenza fra pagine e frame, una per ogni processo in esecuzione.
+Avevamo quindi detto che il processo (diciamo $P_1$) in esecuzione ha più sezioni di dati, cui potremmo assegnare ad esempio un frame ciascuna:
+\begin{table}[H]
+	\center
+	\begin{tabular} { | c | c | }
+		\bfseries Sezione & \bfseries Frame \\
+		\hline
+		\textsf{Text (Code)} $P_1$ & 2 \\
+		\textsf{Data} $P_1$ & 3 \\
+		... & // \\
+		\textsf{Stack} $P_1$ & 4 \\
+	\end{tabular}
+\end{table}
 
-Decidiamo quindi di dotare la CPU di due registri, \textbf{BASE} e \textbf{LIMIT}, che puntano rispettivamente all'inizio e alla fine della memoria dedicata al proesso, che questa dovrà controllare per prevenire accessi all'esterno della zona definita quando ci si trova in modalità utente.
+I \textit{frame} di memoria scelti e sono in posizioni arbitrarie, l'unica cosa importante è che la MMU li possa rintracciare attraverso le sue tabelle di corrispondenza.
 
-Chiaramente potrebbero esserci problematiche rispetto a quali indirizzi i singoli programmi vogliono usare: questi non potranno chiaramente usare salti a posizioni arbitrarie in memoria.
+Potremo quindi assumere che la pagina 0 sia riservata, la pagina 1 riservata al sistema, e vedere che una tabella di corrispondenza per $P_1$ potrebbe essere la seguente:
+\begin{table}[H]
+	\center
+	\begin{tabular} { | c | c | c | }
+		\bfseries Pagina & \bfseries Sezione & \bfseries Frame \\
+		\hline
+		0 & \textsf{Null} & // \\
+		1 & \textsf{Sistema} & 1 \\
+		2 & \textsf{Text} $P_1$ & 2 \\
+		3 & \textsf{Data} $P_1$ & 3 \\
+		... & ... & // \\
+		7 & \textsf{Stack} $P_1$ & 4 \\
+	\end{tabular}
+\end{table}
+dove si è scelto di disporre lo stack in fondo allo spazio di memoria.
 
-Una prima soluzione può essere quella di rendere il \textbf{PIC} (\textit{Position Indipendent Code}), cioè codice indipendente dalla posizione (dove ad esempio le \lstinline|CALL| e le \lstinline|JUMP| saltano ad \textit{offset}, e non ad indirizzi assoluti).
-Un primo problema di questo approccio è che costringe i programmi di stare all'intero di una zona di $\sim 4 \text{GB}$, in quanto gli offset sono su 32 bit (e non è nemmeno detto che il kernel dedicherà ad ogni processo la stessa quantità di memoria).
+Nel momento in cui un altro processo (diciamo $P_2$) entra in esecuzione, potremmo assegnargli le seguenti pagine:
+\begin{table}[H]
+	\center
+	\begin{tabular} { | c | c | }
+		\bfseries Sezione & \bfseries Frame \\
+		\hline
+		\textsf{Text} $P_2$ & 5 \\
+		\textsf{Data} $P_2$ & 6 \\
+		... & // \\
+		\textsf{Stack} $P_2$ & 7 \\
+	\end{tabular}
+\end{table}
+e disporre una tabella di corrispondenza:
+\begin{table}[H]
+	\center
+	\begin{tabular} { | c | c | c | }
+		\bfseries Pagina & \bfseries Sezione & \bfseries Frame \\
+		\hline
+		0 & \textsf{Null} & 0 \\
+		1 & \textsf{Sistema} & 1 \\
+		2 & \textsf{Text} $P_2$ & 5 \\
+		3 & \textsf{Data} $P_2$ & 6 \\
+		... &... & // \\
+		7 & \textsf{Stack} $P_2$ & 7 \\
+	\end{tabular}
+\end{table}
 
-Un altro approccio può essere quello di realizzare un \textit{caricatore rilocante} (ad esempio impementato in MS-DOS): si fa in modo che il collegatore lasci gli indirizzi non completamente specificati, e si definiscono una volta nota la posizione al partire da cui il processo verrà caricato (semplicemente incrementando gli indirizzi a partire da 0 in modo che puntino alla stessa posizione relativa al nuovo punto di inizio del programma).
+Vediamo che la pagina sistema resta nella tabella, ergo quella pagina è \textbf{condivisa} fra più processi.
+Cambiare contesto significherà quindi, oltre che caricare i registri, passare da una tabella di corrispondenza di processo all'altra.
+Il fatto che la pagina sistema sia sempre la 1 ci assicura che i suoi indirizzi siano per il programmatore sempre gli stessi.
 
-Notiamo però che una problematica si presenterà sempre se intendiamo spostare processi fra memoria e disco in posizioni diverse, in quanto un processo potrebbe ad esempio poter aver messo un indirizzo assoluto in un registro, pianificando di effettuarci successivamente un accesso.
+\subsubsection{Verso la MMU reale}
+Vediamo che la MMU come l'abbiamo definita adesso è effettivamente di impossibile realizzazione.
+Vediamo infatti le dimensione di queste tabelle: se si prendono 12 bit di offset, per pagine da 4 KiB, si ha che nei 48 bit indirizzabili dall'architettura x86 (senza estendere a 57) lasciano 36 bit, e quindi $2^{36}$, cioè 64 miliardi circa di pagine.
+Se vogliamo dedicare 8 byte ad ogni entrata di una tabella di corrispondenza, quindi, abbiamo bisogno di 512 GiB di spazio, che non è chiaramente fattibile (considerando poi che vogliamo una tabella per processo, quindi moltiplicando questo valore per un $n$ arbitrariamente grande).
 
-Un'altra problematica è che abbiamo perso l'accesso alla \textit{memoria condivisa}, a meno di non sovrapporre le regioni definite dal BASE e LIMIT di due processi, sempre però limitandosi a due regioni molto specifiche di soli due processi.
+Chiamiamo quindi il modello fittizio visto finora \textbf{S-MMU} (da \textit{Super MMU}) e ne introduciamo una versione più vicina alla realtà, che adotta una struttura dati diversa: la \textbf{T-MMU} (da \textit{Trie MMU}).
 
-Decidiamo quindi di usare il seguente approccio: ogni accesso in memoria ad un indirizzo $x$ richiesto dal programma viene trasformato in un accesso a $\text{BASE} + x$.
-In questo modo il collegatore potrà far partire ogni programma dall'indirizzo 0: ogni indirizzo usato da quel processo non sarà quindi altro che un offset a partire dall'inizio della regione di memoria dedicata a tale processo.
+La \textbf{trie} è una struttura dat che nasce per effettuare ricerche chiave-valore.
+Sono simili agli alberi binari, con la differenza che la chiave non è memorizzata nei nodi, ma nella posizione stessa dei nodi all'interno dell'albero.
 
-Risolveremo così i problemi relativi agli indirizzi assoluti, ma resterà il problema della dimensione del codice e della memoria condivisa.
+Utilizziamo le trie per realizzare una struttura dati detta \textbf{bitwise tree}, o \textit{albero bitwise}.
+L'idea è quella di dividere i 36 bit di pagina in 4 porzioni da 9 bit ciascuna, sulle quali costruire delle trie.
+La radice della struttura che costruiamo sarà quindi una tabella di $2^9 = 512$ entrate, corrispondente alle 512 possibili configurazioni dei primi 9 dei 36 bit di pagina.
+Ognuna di queste entrate punterà ad un altra tabella di $512$ entrate, relative ai 9 bit successivi.
+Si hanno quindi 4 livelli di accesso che bisogna attraversare per arrivare fino al frame corrispondente alla pagina che ci interessa.
+Il procedimento che ci porta dai bit di pagina all'indirizzo del frame si chiama \textbf{table walk}, o \textit{cammino della tabella}.
+Ogni entrata delle tabelle di trie sarà grande 8 byte, per cui $2^9 \cdot 2^3 = 2^{12} = 4\text{ KiB}$ di memoria ciascuna.
 
-Trascurando per adesso questi due dettagli, vediamo che abbiamo effettivamente realizzato una \textbf{memoria virtuale}, dove una certa funzione $f$ mappa indirizzi \textit{virtuali} $x_1, ...$ ad indirizzi \textit{fisici} $v_1, ...$:
-$$
-\begin{array}{c}
-	x_1 \\ x_2 \\ x_3
-\end{array}
-\xrightarrow{f(x) = \text{BASE} + x}
-\begin{array}{c}
-	v_1 \\ v_2 \\ v_3
-\end{array}
-$$
+Potremmo chiederci dov'è il guadagno, in quanto a memoria l'ultimo livello di trie necessiterà degli stessi 512 GiB, più lo spazio necessario ai livelli precedenti.
+Il vantaggio sarà però quello di poter tagliare arbitrariamente rami dall'albero che abbiamo formato, cioè non tenere conto di pagine di cui non abbiamo attualmente bisogno. 
 
-Vediamo però che spostare processi nella memoria comporta comunque un gran dispendio di risorse in quanto la memoria dedicata ad un processo può raggiungere dimensioni considerevoli, problema che viene solo moltiplicato quando si inizia a lanciare sempre più processi.
+# fai i calcoli, quanto è grande ogni tabella, quanto spazio raggiunge ogni entrata
 
-\subsection{Paginazione}
-Questo problema, assieme in qualche modo agli altri due che avevamo lasciato in sospeso, può essere risolto agendo sulla funzione $f$.
-Decidiamo infatti di dividere la memoria processo in una serie di \textbf{pagine}, di dimensione fissa (prendiamo 4 KB), che possono prese in qualsiasi ordine dalla memoria centrale, ad unità sempre da 4 KB che chiamiamo \textbf{frame
-}.
-
-A questo punto non avremo più bisogno di \textbf{continuità} nella memoria dedicata ai processi, cioè non avremo problemi di \textit{frammentazione esterna}, anche se in qualche modo avremo introdotto \textit{frammentazione interna} dove ogni processo dovrà ottenere memoria a "pacchetti" di 4 KB (che è comunque più vantaggioso).
-
-BASE e LIMIT non saranno chiaramente abbastanza per gestire una situazione di questo tipo, e avremo quindi bisogno di una \textbf{tabella di corrispondenza}, allocata da qualche parte in memoria, che contenga una riga per ogni pagina, contenente il frame corrispondente alla pagina.
-Ogni indirizzo $x$ sarà quindi scomposto in due valori, il \textbf{numero di pagina} e l'\textbf{offset di pagina} al suo interno.
-Il numero di pagina verrà quindi trasformato nel frame corrispondente alla pagina, e si potrà procedere all'accesso.
-
-Ogni processo avrà quindi bisogno della sua tabella di corrispondenza personale, che pensiamo per adesso di poter semplicemente caricare e scaricare da memoria assieme al processo stesso.
-
-Risolveremo quindi anche il problema della memoria condivisa, in quanto basterà mettere alcuni frame in comune fra più processi (starà al kernel tenere conto di quali frame sono in uso da quali processi e cosi via).
-Inoltre, agendo sulle tabelle, possiamo anche immaginare come questo sistema porterebbe almeno via di un livello di astrazione l'accesso a regioni di memoria più grandi di 4 GB.
-
-\subsubsection{Memory Management Unit}
-Aggiungiamo quindi, lato hardware e posta fra processore e cache, un nuovo componente detto \textbf{MMU}, \textit{Memory Management Unit}, che tiene conto delle tabelle di corrispondenza e trasforma tramite esse le pagine degli indirizzi nei frame giusti.
-
-Assumeremo che tutti gli indirizzi che la CPU genera saranno indirizzi virtuali, e che tutti gli indirizzi che escono dalla MMU saranno indirizzi fisici.
-Decidere che tutti gli indirizzi generati dalla CPU sono virtuali solleva una questione riguardo al kernel: idealmente, vorremmo che questo veda l'interezza della memoria, senza paginazione.
-Prendiamo quindi la sua memoria come in testa allo spazio di memoria, con le regioni successive dedicate ai frame di pagina dei processi.
-
-Potremmo allora avere una tabella dedicata al solo kernel, che tiene conto di tutto lo spazio indirizzabile.
-Inoltre, potremmo prendere la tabella del kernel come \textit{identiva}, cioè dare al kernel la visione della sua memoria \textit{così com'è}.
-
-Corrediamo allora la tabella di pagina introducendo:
+\subsubsection{Descrittori nella T-MMU}
+Vediamo come si evolvono i descrittori che avevamo messa corredo delle tabelle di corrispondenza, nella T-MMU.
+Avremo che ci dovrà essere una distinzione fra i descrittori di primo e di secondo, terzo e quarto livello:
+\begin{itemize}
+	\item \textbf{Descrittori di primo livello:}
+		qui vogliamo usare l'intero insieme di descrittori, che riportiamo:
 \begin{itemize}
 	\item \textbf{P:} un bit di presenza, che definisce l'esistenza o meno di una traduzione per quell'indirizzo: nel caso di accesso a pagine non traducibili si genera un ecceione, detta \textbf{page fault}, che comporta il caricamento della pagina richiesta o la terminazione forzata del programma per \textbf{segmentation fault}.
 
@@ -304,6 +336,20 @@ Corrediamo allora la tabella di pagina introducendo:
 	\item \textbf{PCD} e \textbf{PWT}: indicano se ignorare completamente la cache (PCD) o se adottare una politica di scrittura \textit{write-through} (PWT).
 		Questo può essere utile nel caso di dispositivi mappati in memoria (come l'APIC o l'adattatore video);
 	\item \textbf{A} e \textbf{D}: due flag che danno indicazioni agli accessi che la MMU ha individuato sulla pagina.
+
+		Vediamo adesso la loro utilità: la MMU setta questi bit per dare informazioni al kernel su cosa è successo alle pagine all'ultimo accesso.
+		Il bit \textbf{A}, quindi, indica che una certa pagina è stata usata (\textit{attraversata}), mentre il bit \textbf{D} (\textit{Dirty}) indica che si è scritto su una certa pagina. 
+		Abbiamo quindi una situazione dove è l'\textit{hardware} ad informare il \textit{software} del suo funzionamento, e non viceversa (come eravamo abituati). 
 \end{itemize}
+	\item \textbf{Descrittori di secondo, terzo e quarto livello:}
+		in questo caso non abbiamo bisogno di \textbf{PWT}, \textbf{PCT} e \textbf{D}, mentre introduciamo un nuovo bit, \textbf{PS}, \textit{Page Size}, che distingue due situazioni: se PS è basso, si procede come si è detto finora, altrimenti, quella entrata punta ad un unica pagina contigua di entrate (e non al livello successivo della trie).
+
+		# usa calcoli di prima per dire dimensioni di huge page ad ogni livello di trie
+\end{itemize}
+
+\subsubsection{T-MMU e memoria condivisa}
+La struttura ad albero delle trie ci permette, ad esempio, di far puntare un entrata di un sottoalbero della trie associata ad un processo, ad un sottoalbero di una trie di un altro processo.
+Questo ci permette effettivamente di realizzare pagine, o tabelle di pagine, condivise fra processi.
+Potremo liberamente assegnare la stessa pagina in posizioni diverse dello spazio di memoria di ogni processo, in quanto l'unica cosa importante è il \textit{percorso} che ci porta alla tabella condivisa, che può variare di processo in processo (o meglio di trie di processo in trie di processo).
 
 \end{document}
