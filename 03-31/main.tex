@@ -299,26 +299,43 @@ Il fatto che la pagina sistema sia sempre la 1 ci assicura che i suoi indirizzi 
 
 \subsubsection{Verso la MMU reale}
 Vediamo che la MMU come l'abbiamo definita adesso è effettivamente di impossibile realizzazione.
-Vediamo infatti le dimensione di queste tabelle: se si prendono 12 bit di offset, per pagine da 4 KiB, si ha che nei 48 bit indirizzabili dall'architettura x86 (senza estendere a 57) lasciano 36 bit, e quindi $2^{36}$, cioè 64 miliardi circa di pagine.
+Vediamo infatti le dimensione di queste tabelle: se si prendono 12 bit di offset, per pagine da 4 KiB, si ha che nei 48 bit indirizzabili dall'architettura x86 (senza estendere a 57) lasciano 36 bit, e quindi $2^{36}$, cioè 64 miliardi (64 Gi, \textit{Gibi}) circa di pagine.
 Se vogliamo dedicare 8 byte ad ogni entrata di una tabella di corrispondenza, quindi, abbiamo bisogno di 512 GiB di spazio, che non è chiaramente fattibile (considerando poi che vogliamo una tabella per processo, quindi moltiplicando questo valore per un $n$ arbitrariamente grande).
 
 Chiamiamo quindi il modello fittizio visto finora \textbf{S-MMU} (da \textit{Super MMU}) e ne introduciamo una versione più vicina alla realtà, che adotta una struttura dati diversa: la \textbf{T-MMU} (da \textit{Trie MMU}).
 
-La \textbf{trie} è una struttura dat che nasce per effettuare ricerche chiave-valore.
+La \textbf{trie} è una struttura dati iche nasce per effettuare ricerche chiave-valore.
 Sono simili agli alberi binari, con la differenza che la chiave non è memorizzata nei nodi, ma nella posizione stessa dei nodi all'interno dell'albero.
 
 Utilizziamo le trie per realizzare una struttura dati detta \textbf{bitwise tree}, o \textit{albero bitwise}.
 L'idea è quella di dividere i 36 bit di pagina in 4 porzioni da 9 bit ciascuna, sulle quali costruire delle trie.
 La radice della struttura che costruiamo sarà quindi una tabella di $2^9 = 512$ entrate, corrispondente alle 512 possibili configurazioni dei primi 9 dei 36 bit di pagina.
 Ognuna di queste entrate punterà ad un altra tabella di $512$ entrate, relative ai 9 bit successivi.
-Si hanno quindi 4 livelli di accesso che bisogna attraversare per arrivare fino al frame corrispondente alla pagina che ci interessa.
+Si hanno quindi 4 livelli di accesso, ordinati dal 4 all'1, che bisogna attraversare per arrivare fino al frame corrispondente alla pagina che ci interessa:
+
+\begin{center}
+	\includegraphics[scale=0.6]{../figures/mmu_trie.png}
+\end{center}
+
+Questa struttura sta in memoria, e processore è dotato di un registro \textbf{CR3} che mantiene la posizione della prima tabella (la 4). 
 Il procedimento che ci porta dai bit di pagina all'indirizzo del frame si chiama \textbf{table walk}, o \textit{cammino della tabella}.
-Ogni entrata delle tabelle di trie sarà grande 8 byte, per cui $2^9 \cdot 2^3 = 2^{12} = 4\text{ KiB}$ di memoria ciascuna.
+Ogni entrata delle tabelle di trie sarà grande 8 byte (almeno 7 bit per i flag, più $\sim 48$ bit di indirizzo, ricordando che lo spazio indirizzabile nell'x86\_64 non corrisponde al massimo di 64 bit), per cui $2^9 \cdot 2^3 = 2^{12} = 4\text{ KiB}$ di memoria ciascuna.
+La memoria massima e il numero di entrate di ogni livello sono quindi:
+
+\begin{table}[H]
+	\center \rowcolors{2}{white}{black!10}
+	\begin{tabular} { c | p{6cm} | p{6cm} }
+		\bfseries Livello & \bfseries Memoria massima usata & \bfseries Numero di entrate \\ 
+		\hline 
+		4 & $2^9 \cdot 2^3 = 2^{12} = 4 \text{ KiB}$                       & $2^9 = 512$ \\
+		3 & $2^9 \cdot 2^9 \cdot 2^3 = 2^{21} = 2 \text{ MiB}$             & $2^9 \cdot 2^9 = 2^{18} = 256 \text{ Ki}$ \\            
+		2 & $2^9 \cdot 2^9 \cdot 2^9 \cdot 2^3 = 2^{30} = 1 \text{ GiB}$   & $2^9 \cdot 2^9 \cdot 2^9 = 2^{27} = 128 \text{ Mi}$ \\ 
+		1 & $2^9 \cdot 2^9 \cdot 2^9 \cdot 2^9 \cdot 2^3 = 2^{39} = 512 \text{ GiB}$ & $2^9 \cdot 2^9 \cdot 2^9 \cdot 2^9 = 2^{36} = 64 \text{ Gi}$
+	\end{tabular}
+\end{table}
 
 Potremmo chiederci dov'è il guadagno, in quanto a memoria l'ultimo livello di trie necessiterà degli stessi 512 GiB, più lo spazio necessario ai livelli precedenti.
 Il vantaggio sarà però quello di poter tagliare arbitrariamente rami dall'albero che abbiamo formato, cioè non tenere conto di pagine di cui non abbiamo attualmente bisogno. 
-
-# fai i calcoli, quanto è grande ogni tabella, quanto spazio raggiunge ogni entrata
 
 \subsubsection{Descrittori nella T-MMU}
 Vediamo come si evolvono i descrittori che avevamo messa corredo delle tabelle di corrispondenza, nella T-MMU.
@@ -326,6 +343,9 @@ Avremo che ci dovrà essere una distinzione fra i descrittori di primo e di seco
 \begin{itemize}
 	\item \textbf{Descrittori di primo livello:}
 		qui vogliamo usare l'intero insieme di descrittori, che riportiamo:
+\begin{center}
+	\includegraphics[scale=0.6]{../figures/mmu_level1.png}
+\end{center}
 \begin{itemize}
 	\item \textbf{P:} un bit di presenza, che definisce l'esistenza o meno di una traduzione per quell'indirizzo: nel caso di accesso a pagine non traducibili si genera un ecceione, detta \textbf{page fault}, che comporta il caricamento della pagina richiesta o la terminazione forzata del programma per \textbf{segmentation fault}.
 
@@ -337,14 +357,33 @@ Avremo che ci dovrà essere una distinzione fra i descrittori di primo e di seco
 		Questo può essere utile nel caso di dispositivi mappati in memoria (come l'APIC o l'adattatore video);
 	\item \textbf{A} e \textbf{D}: due flag che danno indicazioni agli accessi che la MMU ha individuato sulla pagina.
 
-		Vediamo adesso la loro utilità: la MMU setta questi bit per dare informazioni al kernel su cosa è successo alle pagine all'ultimo accesso.
+		Vediamo solo adesso la loro utilità: la MMU setta questi bit per dare informazioni al kernel su cosa è successo alle pagine fino all'ultimo accesso.
 		Il bit \textbf{A}, quindi, indica che una certa pagina è stata usata (\textit{attraversata}), mentre il bit \textbf{D} (\textit{Dirty}) indica che si è scritto su una certa pagina. 
 		Abbiamo quindi una situazione dove è l'\textit{hardware} ad informare il \textit{software} del suo funzionamento, e non viceversa (come eravamo abituati). 
+		L'informazione può quindi essere usata per gestire meglio il caricamento su e da memoria delle pagine, sopratutto in sistemi che supportano la \textit{memoria di swap}, cioè una certa porzione di memoria sul disco rigido che viene impiegata nella memorizzazione delle immagini dei processi in esecuzione (che è come, in origine, avevamo ipotizzato funzionasse il meccanismo della multiprogrammazione).
+		In questo caso conoscere il flag D può evitare una scrittura su disco quando una pagina non è stata modificata, mentre conoscere il flag A può dare un euristica su quali pagine conviene spostare nello swap e quali mantenere nel caso di spostamento di pagine da e su disco.
+		Per la precisione, in sistemi di questo tipo i pagefault sono normali, e vengono sfruttati per realizzare la \textit{paginazione su domanda}: può essere che la pagina richiesta da un processo non esista, quindi comporti un'eccezione, che viene gestita caricando la pagina corrispondente (e quindi verificando i flag A se altre pagine vanno rimosse per fare spazio).
 \end{itemize}
-	\item \textbf{Descrittori di secondo, terzo e quarto livello:}
-		in questo caso non abbiamo bisogno di \textbf{PWT}, \textbf{PCT} e \textbf{D}, mentre introduciamo un nuovo bit, \textbf{PS}, \textit{Page Size}, che distingue due situazioni: se PS è basso, si procede come si è detto finora, altrimenti, quella entrata punta ad un unica pagina contigua di entrate (e non al livello successivo della trie).
 
-		# usa calcoli di prima per dire dimensioni di huge page ad ogni livello di trie
+	\item \textbf{Descrittori di secondo, terzo e quarto livello:} il descrittore ha questo aspetto:
+\begin{center}
+	\includegraphics[scale=0.6]{../figures/mmu_level234.png}
+\end{center}
+		in questo caso non abbiamo bisogno di \textbf{PWT}, \textbf{PCT} e \textbf{D}, mentre introduciamo un nuovo bit, \textbf{PS}, \textit{Page Size}, che distingue due situazioni: se PS è basso, si procede come si è detto finora, altrimenti, quella entrata punta ad un unica pagina contigua di entrate (e non al livello successivo della trie).
+		Il numero di entrate delle pagine contigue, dette \textbf{huge page}, cambia in base al livello:
+\begin{table}[H]
+	\center \rowcolors{2}{white}{black!10}
+	\begin{tabular} { c | p{6cm} | p{6cm} }
+		\bfseries Livello & \bfseries Memoria indirizzata dalla huge page\\ 
+		\hline 
+		4 & // \\ 
+		3 & 1 GiB \\ 
+		2 & 2 MiB \\ 
+		1 & 4 Kib (default) \\
+	\end{tabular}
+\end{table}
+
+Come si vede dalla tabella, il flag PS è ignorato al livello 4 e al livello 1.
 \end{itemize}
 
 \subsubsection{T-MMU e memoria condivisa}

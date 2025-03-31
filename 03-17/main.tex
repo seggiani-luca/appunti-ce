@@ -326,9 +326,8 @@ La struttura a livello di memoria contiene le seguenti informazioni:
 
 Sorvolando su alcuni dettagli non immediatamente rilevanti (il valore del \textit{Segment Selector} SS è piuttosto complesso, ma è quello che va a definire quello che noi intediamo con L), la struttura generale di un'entrata dell'IDT è quindi la seguente:
 \begin{center}
-	\includegraphics[scale=0.45]{../figures/entrata_idt.png}
+	\includegraphics[scale=0.2]{../figures/entrata_idt.png}
 \end{center}
-come riportato su \url{https://wiki.osdev.org/Interrupt_Descriptor_Table}.
 
 \subsubsection{Gestione dell'interruzione software}
 Avevamo visto come il meccanismo dell'interruzione, definito un gate nella IDT, si riduceva al caricamento in RIP dell'indirizzo del gestore e dell'immissione in pila dei seguenti dati:
