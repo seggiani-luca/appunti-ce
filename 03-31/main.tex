@@ -304,7 +304,7 @@ Se vogliamo dedicare 8 byte ad ogni entrata di una tabella di corrispondenza, qu
 
 Chiamiamo quindi il modello fittizio visto finora \textbf{S-MMU} (da \textit{Super MMU}) e ne introduciamo una versione più vicina alla realtà, che adotta una struttura dati diversa: la \textbf{T-MMU} (da \textit{Trie MMU}).
 
-La \textbf{trie} è una struttura dati iche nasce per effettuare ricerche chiave-valore.
+La \textbf{trie} è una struttura dati che nasce per effettuare ricerche chiave-valore.
 Sono simili agli alberi binari, con la differenza che la chiave non è memorizzata nei nodi, ma nella posizione stessa dei nodi all'interno dell'albero.
 
 Utilizziamo le trie per realizzare una struttura dati detta \textbf{bitwise tree}, o \textit{albero bitwise}.
@@ -317,7 +317,6 @@ Si hanno quindi 4 livelli di accesso, ordinati dal 4 all'1, che bisogna attraver
 	\includegraphics[scale=0.6]{../figures/mmu_trie.png}
 \end{center}
 
-Questa struttura sta in memoria, e processore è dotato di un registro \textbf{CR3} che mantiene la posizione della prima tabella (la 4). 
 Il procedimento che ci porta dai bit di pagina all'indirizzo del frame si chiama \textbf{table walk}, o \textit{cammino della tabella}.
 Ogni entrata delle tabelle di trie sarà grande 8 byte (almeno 7 bit per i flag, più $\sim 48$ bit di indirizzo, ricordando che lo spazio indirizzabile nell'x86\_64 non corrisponde al massimo di 64 bit), per cui $2^9 \cdot 2^3 = 2^{12} = 4\text{ KiB}$ di memoria ciascuna.
 La memoria massima e il numero di entrate di ogni livello sono quindi:
