@@ -268,16 +268,19 @@ Questa infatti permette di invalidare un indirizzo virtuale, se questo è conten
 
 La struttura del TLB è analoga a quella della cache: si prendono i 48 bit di indirizzo virtuale, di cui i 12 più bassi saranno come sempre l'offset, e si dividono i 36 rimanenti in due parti che usiamo come indice e come numero di pagina in una memoria delle etichette.
 Una and fa il bit di validità nella tabella delle entrate e un comparatore fra il numero di pagina e l'etichetta fissata all'indice corrente ci darà quindi gli hit di cache.
-
-# figura
-
-Una memoria a sé stante conterrà quindi gli indirizzi fisici veri e propri.
+La struttura è quindi la seguente:
+\begin{center}
+	\includegraphics[scale=0.8]{../figures/tlb.png}
+\end{center}
+Dove una memoria a sé stante conterrà quindi gli indirizzi fisici veri e propri, oltre ad alcuni flag.
 Notiamo che questa non ha bisogno di conoscere A (se è nel TLB ci è già stato fatto accesso).
 Ad esempio però vogliamo sapere PCD e PWT, in quanto questi regoleranno l'accesso o meno via cache.
 Abbiamo poi un solo bit dedicato a U/S e R/W, in quanto comunque tutto ciò che vorremo sapere è se a quell'indirizzo si può accedere o meno nel contesto corrente.
 Infine, manteniamo il bit D.
 Effettuare il write back di tale bit è complicato in quanto occorre effettivamente ritrovare la pagina effettuando il table walk.
 Possiamo risolvere questa situazione fingendo di non conoscere (praticamente invalidando) una pagina, anche se conosciuta, quando il suo bit D è basso, costringendo l'MMU ad effettuare il page walk ed alzarlo. 
+
+Notiamo infine di poter applicare tutte le ottimizzazioni che avevamo visto per le cache tradizionali, inclusa l'introduzione di memorie aggiuntive e una memoria per l'LRU, in modo da realizzare effettivamente una cache a contenitori associativi.
 
 \subsubsection{Pagine di grandi dimensioni}
 Vediamo un ultimo dettaglio sulla MMU approfondendo il discorso delle pagine di grandi dimensioni (\textit{huge page}).
