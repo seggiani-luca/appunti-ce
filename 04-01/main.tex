@@ -284,6 +284,8 @@ Notiamo infine di poter applicare tutte le ottimizzazioni che avevamo visto per 
 
 \subsubsection{Pagine di grandi dimensioni}
 Vediamo un ultimo dettaglio sulla MMU approfondendo il discorso delle pagine di grandi dimensioni (\textit{huge page}).
+Anche se teoricamente si potrebbe procedere ignorando questi oggetti, il significato della MMU è quello di mantenere \textit{pagine}, e quindi offset all'interno di tali pagine, e dobbiamo quindi mantenere informazione riguardo al fatto che gli indirizzi in una huge page sono più grandi di quelli in una pagina normale da 4 KiB (come abbiamo riportato in 14.0.3).
+
 Storicamente, trovata una huge page, la MMU la caricava interamente all'interno della cache TLB.
 Oggi, si mantengono 3 TLB separati per ogni dimensione di pagina (1 GiB, 2 MiB e 4 KiB).
 

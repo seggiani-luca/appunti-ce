@@ -319,7 +319,7 @@ Si hanno quindi 4 livelli di accesso, ordinati dal 4 all'1, che bisogna attraver
 
 Il procedimento che ci porta dai bit di pagina all'indirizzo del frame si chiama \textbf{table walk}, o \textit{cammino della tabella}.
 Ogni entrata delle tabelle di trie sarà grande 8 byte (almeno 7 bit per i flag, più $\sim 48$ bit di indirizzo, ricordando che lo spazio indirizzabile nell'x86\_64 non corrisponde al massimo di 64 bit), per cui $2^9 \cdot 2^3 = 2^{12} = 4\text{ KiB}$ di memoria ciascuna.
-La memoria massima e il numero di entrate di ogni livello sono quindi:
+La memoria massima e il numero di entrate ad ogni livello sono quindi:
 
 \begin{table}[H]
 	\center \rowcolors{2}{white}{black!10}
@@ -369,11 +369,11 @@ Avremo che ci dovrà essere una distinzione fra i descrittori di primo e di seco
 	\includegraphics[scale=0.6]{../figures/mmu_level234.png}
 \end{center}
 		in questo caso non abbiamo bisogno di \textbf{PWT}, \textbf{PCT} e \textbf{D}, mentre introduciamo un nuovo bit, \textbf{PS}, \textit{Page Size}, che distingue due situazioni: se PS è basso, si procede come si è detto finora, altrimenti, quella entrata punta ad un unica pagina contigua di entrate (e non al livello successivo della trie).
-		Il numero di entrate delle pagine contigue, dette \textbf{huge page}, cambia in base al livello:
+		Il numero di entrate delle pagine contigue, dette \textbf{huge page}, cambia quindi in base al livello:
 \begin{table}[H]
 	\center \rowcolors{2}{white}{black!10}
-	\begin{tabular} { c | p{6cm} | p{6cm} }
-		\bfseries Livello & \bfseries Memoria indirizzata dalla huge page\\ 
+	\begin{tabular} { c | p{6cm} }
+		\bfseries Livello & \bfseries Memoria indirizzata in huge page\\ 
 		\hline 
 		4 & // \\ 
 		3 & 1 GiB \\ 
@@ -381,8 +381,20 @@ Avremo che ci dovrà essere una distinzione fra i descrittori di primo e di seco
 		1 & 4 Kib (default) \\
 	\end{tabular}
 \end{table}
+in quanto, ad ogni livello, stiamo effettivamente "passando" 9 bit dall'indirizzo di pagina all'offset nella pagina, cioè stiamo adottando indirizzi e offset di dimensione:
+\begin{table}[H]
+	\center \rowcolors{2}{white}{black!10}
+	\begin{tabular} { c | p{5cm} | p{5cm} }
+		\bfseries Livello & \bfseries Dimensione indirizzo & \bfseries Dimensione offset \\ 
+		\hline 
+		4 & // & // \\ 
+		3 & 18 bit & 30  bit \\
+		2 & 27 bit & 21 bit \\ 
+		1 & 36 bit & 12 bit \\
+	\end{tabular}
+\end{table}
 
-Come si vede dalla tabella, il flag PS è ignorato al livello 4 e al livello 1.
+Come si vede poi dalla tabella, il flag PS è ignorato al livello 4 (avremmo pagine da 512 GB, ridicolo) e al livello 1 (è la dimensione di default delle pagine).
 \end{itemize}
 
 \subsubsection{T-MMU e memoria condivisa}
