@@ -302,7 +302,9 @@ Questa si può ricavare agevolmente prendendo $2^b$ come \lstinline|1UL << b| e 
 Infine, vediamo come calcolare la prima regione di non appartenenza.
 In questo caso potremo calcolare la regione in cui cade $y - 1$, e aggiungervi 1 (tenendo conto di eventuali \textit{wrap-around}). Il $-1$ è richiesto dal fatto che $y$ potrebbe cadere sul confine.
 In questo caso avremo \lstinline|((y - 1) >> b) + 1|, considerata somma modulo $n - b$.
-Alternativamente, si può prendere $y + b$ e calcolarne la regione di appartenenza.
+Alternativamente, si può prendere $y + b - 1$ e calcolarne la regione di appartenenza. Il $-1$ è necessario per evitare il caso limite dove $y$ è già allineato a $b$ (in quel caso $y + b$, ricordando che è $y$ è il primo indirizzo \textit{non più contenuto} di $[x, y)$, punterebbe alla regione ancora dopo a quella desiderata).
+
+Faremo considerazioni simili a queste quanto studieremo il meccanismo della \textit{memoria paginata}, quando avremo bisogno di individuare i frame di appartenenza di regioni in memoria.
 
 \subsection{Spazio di I/O}
 Veniamo quindi alla trattazione dello spazio di I/O e delle interfacce ivi connesse.

@@ -248,7 +248,10 @@ Perchè il kernel possa accedere a tali indirizzi senza problemi (ricordiamo che
 Nello specifico, possiamo immaginare che il kernel faccia, all'avvio, le seguenti operazioni:
 \begin{enumerate}
 	\item Preso lo spazio indirizzabile come diviso in 2 (che abbiamo visto essere il caso nell'architettura x86\_64), dedica una delle due parti (la superiore in Windows, l'inferiore in Linux) alla memoria sistema;
-	\item Inizializza un primo trie per la MMU in memoria sistema, e vi crea una serie di pagine (una \textbf{finestra}), corrispondenti ai loro frame, di tipo sistema, in modo da poter indirizzare la memoria con indirizzi che si traducono in loro stessi;
+	\item Inizializza un primo trie per la MMU in memoria sistema, e vi crea una serie di pagine (una \textbf{finestra} sulla memoria virtuale, detta \textbf{ªM}), corrispondenti ai loro frame, di tipo sistema, in modo da poter indirizzare la memoria con indirizzi che si traducono in loro stessi;
+
+		# graf. finestra fisica 
+
 	\item Carica tale trie in CR3 ed abilita la MMU.
 \end{enumerate}
 
@@ -268,10 +271,15 @@ Questa infatti permette di invalidare un indirizzo virtuale, se questo è conten
 
 La struttura del TLB è analoga a quella della cache: si prendono i 48 bit di indirizzo virtuale, di cui i 12 più bassi saranno come sempre l'offset, e si dividono i 36 rimanenti in due parti che usiamo come indice e come numero di pagina in una memoria delle etichette.
 Una and fa il bit di validità nella tabella delle entrate e un comparatore fra il numero di pagina e l'etichetta fissata all'indice corrente ci darà quindi gli hit di cache.
+
+\noindent
+\begin{minipage}{\textwidth}
 La struttura è quindi la seguente:
 \begin{center}
-	\includegraphics[scale=0.8]{../figures/tlb.png}
+	\includegraphics[scale=0.78]{../figures/tlb.png}
 \end{center}
+\end{minipage}
+
 Dove una memoria a sé stante conterrà quindi gli indirizzi fisici veri e propri, oltre ad alcuni flag.
 Notiamo che questa non ha bisogno di conoscere A (se è nel TLB ci è già stato fatto accesso).
 Ad esempio però vogliamo sapere PCD e PWT, in quanto questi regoleranno l'accesso o meno via cache.

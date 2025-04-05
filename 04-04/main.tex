@@ -1,0 +1,444 @@
+
+\documentclass[a4paper,11pt]{article}
+\usepackage[a4paper, margin=8em]{geometry}
+
+% usa i pacchetti per la scrittura in italiano
+\usepackage[french,italian]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\frenchspacing 
+
+% usa i pacchetti per la formattazione matematica
+\usepackage{amsmath, amssymb, amsthm, amsfonts}
+
+% usa altri pacchetti
+\usepackage{gensymb}
+\usepackage{hyperref}
+\usepackage{standalone}
+
+\usepackage{colortbl}
+
+\usepackage{xstring}
+\usepackage{karnaugh-map}
+
+% imposta il titolo
+\title{Appunti Calcolatori Elettronici}
+\author{Luca Seggiani}
+\date{2025}
+
+% imposta lo stile
+% usa helvetica
+\usepackage[scaled]{helvet}
+% usa palatino
+\usepackage{palatino}
+% usa un font monospazio guardabile
+\usepackage{lmodern}
+
+\renewcommand{\rmdefault}{ppl}
+\renewcommand{\sfdefault}{phv}
+\renewcommand{\ttdefault}{lmtt}
+
+% circuiti
+\usepackage{circuitikz}
+\usetikzlibrary{babel}
+
+% testo cerchiato
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+            \node[shape=circle,draw,inner sep=2pt] (char) {#1};}}
+
+% disponi il titolo
+\makeatletter
+\renewcommand{\maketitle} {
+	\begin{center} 
+		\begin{minipage}[t]{.8\textwidth}
+			\textsf{\huge\bfseries \@title} 
+		\end{minipage}%
+		\begin{minipage}[t]{.2\textwidth}
+			\raggedleft \vspace{-1.65em}
+			\textsf{\small \@author} \vfill
+			\textsf{\small \@date}
+		\end{minipage}
+		\par
+	\end{center}
+
+	\thispagestyle{empty}
+	\pagestyle{fancy}
+}
+\makeatother
+
+% disponi teoremi
+\usepackage{tcolorbox}
+\newtcolorbox[auto counter, number within=section]{theorem}[2][]{%
+	colback=blue!10, 
+	colframe=blue!40!black, 
+	sharp corners=northwest,
+	fonttitle=\sffamily\bfseries, 
+	title=Teorema~\thetcbcounter: #2, 
+	#1
+}
+
+% disponi definizioni
+\newtcolorbox[auto counter, number within=section]{definition}[2][]{%
+	colback=red!10,
+	colframe=red!40!black,
+	sharp corners=northwest,
+	fonttitle=\sffamily\bfseries,
+	title=Definizione~\thetcbcounter: #2,
+	#1
+}
+
+% disponi codice
+\usepackage{listings}
+\usepackage[table]{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{codestyle}{
+		backgroundcolor=\color{black!5}, 
+		commentstyle=\color{codegreen},
+		keywordstyle=\bfseries\color{magenta},
+		numberstyle=\sffamily\tiny\color{black!60},
+		stringstyle=\color{green!50!black},
+		basicstyle=\ttfamily\footnotesize,
+		breakatwhitespace=false,         
+		breaklines=true,                 
+		captionpos=b,                    
+		keepspaces=true,                 
+		numbers=left,                    
+		numbersep=5pt,                  
+		showspaces=false,                
+		showstringspaces=false,
+		showtabs=false,                  
+		tabsize=2
+}
+
+\lstdefinestyle{shellstyle}{
+		backgroundcolor=\color{black!5}, 
+		basicstyle=\ttfamily\footnotesize\color{black}, 
+		commentstyle=\color{black}, 
+		keywordstyle=\color{black},
+		numberstyle=\color{black!5},
+		stringstyle=\color{black}, 
+		showspaces=false,
+		showstringspaces=false, 
+		showtabs=false, 
+		tabsize=2, 
+		numbers=none, 
+		breaklines=true
+}
+
+
+\lstdefinelanguage{assembler}{ 
+  keywords={AAA, AAD, AAM, AAS, ADC, ADCB, ADCW, ADCL, ADD, ADDB, ADDW, ADDL, AND, ANDB, ANDW, ANDL,
+        ARPL, BOUND, BSF, BSFL, BSFW, BSR, BSRL, BSRW, BSWAP, BT, BTC, BTCB, BTCW, BTCL, BTR, 
+        BTRB, BTRW, BTRL, BTS, BTSB, BTSW, BTSL, CALL, CBW, CDQ, CLC, CLD, CLI, CLTS, CMC, CMP,
+        CMPB, CMPW, CMPL, CMPS, CMPSB, CMPSD, CMPSW, CMPXCHG, CMPXCHGB, CMPXCHGW, CMPXCHGL,
+        CMPXCHG8B, CPUID, CWDE, DAA, DAS, DEC, DECB, DECW, DECL, DIV, DIVB, DIVW, DIVL, ENTER,
+        HLT, IDIV, IDIVB, IDIVW, IDIVL, IMUL, IMULB, IMULW, IMULL, IN, INB, INW, INL, INC, INCB,
+        INCW, INCL, INS, INSB, INSD, INSW, INT, INT3, INTO, INVD, INVLPG, IRET, IRETD, JA, JAE,
+        JB, JBE, JC, JCXZ, JE, JECXZ, JG, JGE, JL, JLE, JMP, JNA, JNAE, JNB, JNBE, JNC, JNE, JNG,
+        JNGE, JNL, JNLE, JNO, JNP, JNS, JNZ, JO, JP, JPE, JPO, JS, JZ, LAHF, LAR, LCALL, LDS,
+        LEA, LEAVE, LES, LFS, LGDT, LGS, LIDT, LMSW, LOCK, LODSB, LODSD, LODSW, LOOP, LOOPE,
+        LOOPNE, LSL, LSS, LTR, MOV, MOVB, MOVW, MOVL, MOVSB, MOVSD, MOVSW, MOVSX, MOVSXB,
+        MOVSXW, MOVSXL, MOVZX, MOVZXB, MOVZXW, MOVZXL, MUL, MULB, MULW, MULL, NEG, NEGB, NEGW,
+        NEGL, NOP, NOT, NOTB, NOTW, NOTL, OR, ORB, ORW, ORL, OUT, OUTB, OUTW, OUTL, OUTSB, OUTSD,
+        OUTSW, POP, POPL, POPW, POPB, POPA, POPAD, POPF, POPFD, PUSH, PUSHL, PUSHW, PUSHB, PUSHA, 
+				PUSHAD, PUSHF, PUSHFD, RCL, RCLB, RCLW, MOVSL, MOVSB, MOVSW, STOSL, STOSB, STOSW, LODSB, LODSW,
+				LODSL, INSB, INSW, INSL, OUTSB, OUTSL, OUTSW
+        RCLL, RCR, RCRB, RCRW, RCRL, RDMSR, RDPMC, RDTSC, REP, REPE, REPNE, RET, ROL, ROLB, ROLW,
+        ROLL, ROR, RORB, RORW, RORL, SAHF, SAL, SALB, SALW, SALL, SAR, SARB, SARW, SARL, SBB,
+        SBBB, SBBW, SBBL, SCASB, SCASD, SCASW, SETA, SETAE, SETB, SETBE, SETC, SETE, SETG, SETGE,
+        SETL, SETLE, SETNA, SETNAE, SETNB, SETNBE, SETNC, SETNE, SETNG, SETNGE, SETNL, SETNLE,
+        SETNO, SETNP, SETNS, SETNZ, SETO, SETP, SETPE, SETPO, SETS, SETZ, SGDT, SHL, SHLB, SHLW,
+        SHLL, SHLD, SHR, SHRB, SHRW, SHRL, SHRD, SIDT, SLDT, SMSW, STC, STD, STI, STOSB, STOSD,
+        STOSW, STR, SUB, SUBB, SUBW, SUBL, TEST, TESTB, TESTW, TESTL, VERR, VERW, WAIT, WBINVD,
+        XADD, XADDB, XADDW, XADDL, XCHG, XCHGB, XCHGW, XCHGL, XLAT, XLATB, XOR, XORB, XORW, XORL},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{\#},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\lstset{language=assembler, style=codestyle}
+
+% disponi sezioni
+\usepackage{titlesec}
+
+\titleformat{\section}
+	{\sffamily\Large\bfseries} 
+	{\thesection}{1em}{} 
+\titleformat{\subsection}
+	{\sffamily\large\bfseries}   
+	{\thesubsection}{1em}{} 
+\titleformat{\subsubsection}
+	{\sffamily\normalsize\bfseries} 
+	{\thesubsubsection}{1em}{}
+
+% tikz
+\usepackage{tikz}
+
+% float
+\usepackage{float}
+
+% grafici
+\usepackage{pgfplots}
+\pgfplotsset{width=10cm,compat=1.9}
+
+% disponi alberi
+\usepackage{forest}
+
+\forestset{
+	rectstyle/.style={
+		for tree={rectangle,draw,font=\large\sffamily}
+	},
+	roundstyle/.style={
+		for tree={circle,draw,font=\large}
+	}
+}
+
+% disponi algoritmi
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\makeatletter
+\renewcommand{\ALG@name}{Algoritmo}
+\makeatother
+
+% disponi numeri di pagina
+\usepackage{fancyhdr}
+\fancyhf{} 
+\fancyfoot[L]{\sffamily{\thepage}}
+
+\makeatletter
+\fancyhead[L]{\raisebox{1ex}[0pt][0pt]{\sffamily{\@title \ \@date}}} 
+\fancyhead[R]{\raisebox{1ex}[0pt][0pt]{\sffamily{\@author}}}
+\makeatother
+
+\begin{document}
+% sezione (data)
+\section{Lezione del 04-04-25}
+
+% stili pagina
+\thispagestyle{empty}
+\pagestyle{fancy}
+
+% testo
+\subsection{Funzioni di supporto alla paginazione}
+Riprendiamo la trattazione della memoria virtuale paginata, discutendo quali funzioni il kernel studiato mette a supporto della sua operazione.
+
+\subsubsection{Funzioni sugli indirizzi}
+Nell'architettura x86\_64 un indirizzo, virtuale o fisico, sta su 64 bit, e quindi definiamo i tipi \lstinline|vaddr| e \lstinline|paddr|:
+\begin{lstlisting}[language=C++, style=codestyle]	
+typedef natq /* (uint64_t) */ vaddr; // indirizzo virtuale
+typedef natq /*    idem    */ paddr; // indirizzo fisico 
+\end{lstlisting}
+
+Dotiamoci quindi di alcune funzioni per la gestione di questi indirizzi.
+Di base, vorremmo un modo per verificare la normalizzazione di un indirizzo (quindi il fatto che i bit dal 48 al 63 siano uguali al bit 47, che possiamo fare con la \lstinline|norm(vaddr)|):
+\begin{lstlisting}[language=C++, style=codestyle]	
+if(norm(v) != v) {
+	// errore: indirizzo non normalizzato
+}
+\end{lstlisting}
+
+Definiamo poi due funzioni per trovare l'indirizzo della prima pagina contenuta e della prima pagina immediatamente dopo una regione di memoria $[x, y]$.
+Avevamo trattato questo problema nella sezione 2.1.3, e usando quanto avevamo detto possiamo definire le funzioni \lstinline|base(vaddr)| e \lstinline|limit(vaddr)|.
+\begin{lstlisting}[language=C++, style=codestyle]	
+vaddr base(vaddr v, int liv)
+{
+	natq mask = dim_region(liv) - 1;
+	return v & ~mask;
+}
+
+vaddr limit(vaddr v, int liv)
+{
+	natq dr = dim_region(liv);
+	natq mask = dr - 1;
+	return (v + dr - 1) & ~mask;
+}
+\end{lstlisting}
+dove notiamo che l'indice di pagina resta comunque nei 36 (o meno nel caso di huge page) bit dedicati al numero di pagina (nel caso più semplice, azzeriamo i 12 bit di offset di pagina). 
+
+La funzione helper \lstinline|dim_region(int)| calcola la dimensione di una pagina ad un certo livello di paginazione (sui i livelli $4, 3, 2, 1$, indicati come $3, 2, 1, 0$), ed è definita come:
+\begin{lstlisting}[language=C++, style=codestyle]	
+natq dim_region(int liv)
+{
+	natq v = 1ULL << (liv * 9 + 12);
+	return v;
+}
+\end{lstlisting}
+
+\subsubsection{Funzioni sulle tabelle}
+Un singolo descrittore di tabella viene rappresentato dal tipo \lstinline|tab_entry|, che entra (come abbiamo visto nella sezione 14.0.3) in 64 bit, per cui possiamo dire:
+\begin{lstlisting}[language=C++, style=codestyle]	
+typedef natq /* (uint64_t) */ tab_entry;
+\end{lstlisting}
+
+L'interazione vera e propria con il descrittore avverrà attraverso maschere e funzioni che applicano maschere.
+Ad esempio, se per modificare il bit di presenza di una pagina si può dire:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// e e' un riferimento ad una tabella
+e |= BIT_P; // BIT_P maschera il bit di presenza
+\end{lstlisting}
+mentre se si vuole estrarre o modificare l'indirizzo fisico si possono sfruttare rispettivamente le funzioni \lstinline|extr_IND_FISICO(tab_entry)| e \lstinline|set_IND_FISICO(tab_entry)|:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// e e' un riferimento ad una tabella
+paddr p;
+
+// prendi l'indirizzo fisico di e
+p = extr_IND_FISICO(e);
+
+// per esempio, rimetticelo
+set_IND_FISICO(e, p);
+\end{lstlisting}
+
+Esiste poi le funzione \lstinline|i_tab(vaddr v, int liv)| per l'accesso alla regione da 9 bit che indirizza le tabelle di livello \lstinline|liv| di un indirizzo \lstinline|v|.
+Questa potrà essere usata con le funzioni \lstinline|get_entry(paddr, int)| e \lstinline|set_entry(paddr, int, tab_entry)|, che si occupano rispettivamente di ottenere un entrata di una tabella e modificarne una, sostituendo l'intero descrittore.
+
+Ad esempio, potremo dire:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// questo e' un indirizzo, diciamo che la tabella tab e' di livello 2
+vaddr v;
+
+// e e' un descrittore di tabella di livello 1 
+tab_entry& e = get_entry(tab, i_tab(v, 2));
+
+// creiamo un descrittore per sostituire e
+tab_entry se;
+// ... imposta se
+
+// modifica la stessa entrata
+set_entry(tab, i_tab(v, 2), se);
+\end{lstlisting}
+
+Copie o sovrascritture in massa si possono fare poi con le funzioni \lstinline|copy_des()| e \lstinline|set_des()|, che per adesso non vediamo nel dettaglio.
+
+\subsubsection{Funzioni sulla MMU}
+Notiamo l'esistenza della \lstinline|loadCR3()| per l'attivazione di un nuovo albero di traduzione, che carica un indirizzo fisico nel registro \lstinline|CR3|, e \lstinline|readCR3()|, che permette successivamente di rileggerlo.
+
+Esiste anche la \lstinline|readCR2()|, che permette la lettura di \lstinline|CR2|, dove si trova l'ultimo indirizzo la cui traduzione ha causato un pagefault.
+
+Esistono poi le funzioni di interazione con il TLB: \lstinline|invalida_entrata_TLB(vaddr v)| permette di invalidare l'indirizzo virtuale \lstinline|v| sfruttando l'istruzione assembler \lstinline|INVLPG|, mentre \lstinline|invalida_TLB()| invalida l'intero albero di traduzione (cosa che ricordiamo faceva già la \lstinline|loadCR3()|).
+
+\subsubsection{Iteratori di tabella}
+La gestione ad alto livello dei trie (\textit{alberi di traduzione}) viene effettuata sfruttando l'iteratore \lstinline|tab_iter|.
+
+Questo serve per effettuare visite in diversi ordini (che vederemo fra poco), a livello di \textit{pagina}: l'offset di pagina andrà comunque conservato a parte, in quanto l'iteratore ci porterà, al massimo, solo fino all'indirizzo fisico della pagina giusta.
+Sui \lstinline|tab_iter| sono definite alcune funzioni membro: le \lstinline|get_e()|, \lstinline|get_tab()| e \lstinline|get_l()| permettono di ottenere, rispettivamente, un riferimento all’entrata su cui si trova l’iteratore, l’indirizzo fisico della tabella che contiene questa entrata e il livello (4, 3, 2 o 1) di questa tabella. 
+La funzione \lstinline|get_v()|, invece, restituisce il più piccolo indirizzo virtuale la cui traduzione passa da questa entrata.
+
+Il \lstinline|tab_iter| viene inizializzato attraverso un indirizzo virtuale, o una coppia di questi in modo da esplorare un intera regione di indirizzi virtuali.
+Una volta definito un'oggetto \lstinline|tab_iter|, si possono sfruttare le funzioni \lstinline|up|, \lstinline|down| e \lstinline|right| per spostarsi rispettivamente nella tabella di livello superiore, inferiore, e a destra fra le tabelle di livello corrente.
+La funzione \lstinline|done()|, che si ottiene anche dall'operatore di conversione a \lstinline|bool|, restituisce falso quando la visita è terminata (siamo arrivati alla pagina o non possiamo proseguire).
+
+Attraverso queste funzioni, e alle \lstinline|next()| (che avanza l'iteratore in avanti in visita anticipata, cercando di raggiungere il prossimo indirizzo) e \lstinline|next_post()| (che avanza l'iteratore in avanti in visita posticipata) si possono realizzare quindi diversi tipi di visita ad un trie, fra cui:
+\begin{itemize}
+	\item \textbf{Visita anticipata di un singolo indirizzo:} si percorre l'intero percorso di traduzione di un indirizzo \lstinline|v| come segue:
+\begin{lstlisting}[language=C++, style=codestyle]	
+for(tab_iter it(tab, v); it; it.next()) {
+	// it e' l'elemento corrente
+}
+\end{lstlisting}
+
+Una soluzione alternativa si ha sfruttando direttamente \lstinline|down()|:
+\begin{lstlisting}[language=C++, style=codestyle]	
+tab_iter it(tab, v);
+while (it.down()) {
+	// it e' l'elemento corrente
+}
+\end{lstlisting}
+
+	\item \textbf{Visita anticipata di una regione di indirizzi:} analoga a sopra, ma si forniscono entrambi gli indirizzi al costruttore del \lstinline|tab_iter|: 
+\begin{lstlisting}[language=C++, style=codestyle]	
+for(tab_iter it(tab, v_lo, v_hi); it; it.next()) {
+	// it e' l'elemento corrente
+}
+\end{lstlisting}
+	
+	\item \textbf{Visita posticipata di una regione di indirizzi:} ancora analoga a sopra, ma si scende del tutto sfruttando la \lstinline|post()|, e poi si prosegue con la \lstinline|next_post()|: 
+\begin{lstlisting}[language=C++, style=codestyle]	
+tab_iter it(tab, v);
+for (it.post(); it; it.next_post()} {
+	// it e' l'elemento corrente
+}
+\end{lstlisting}
+
+Notiamo che la \lstinline|post()| non implementa altro che la visita anticipata che abbiamo visto prima:
+\begin{lstlisting}[language=C++, style=codestyle]	
+void tab_iter::post()
+{
+	// controlli di validita'
+	if (done())
+		return;
+
+	while (down())
+		;
+}
+\end{lstlisting}
+
+\end{itemize}
+
+\subsubsection{Trasformazione}
+Possiamo quindi definire la funzione \lstinline|trasforma(paddr, vaddr)| che usa l'albero di traduzione puntato dall'indirizzo fisico al primo argomento per tradurre, in un altro indirizzo fisico, l'indirizzo virtuale al secondo argomento.
+Solitamente l'albero di traduzione che ci interesserà sara quello attualmente caricato in \lstinline|readCR3()|, cioè:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// v e' un indirizzo virtuale
+paddr p = trasforma(readCR3(), v);
+\end{lstlisting}
+
+L'implementazione della \lstinline|trasforma()| si riduce effettivamente a:
+\begin{enumerate}
+	\item Esegui una visita in ordine anticipato fino alla pagina corretta;
+	\item Verifica se la pagina è stata effettivamente ottenuta (altrimenti restituisci l'indirizzo 0);
+	\item Combina l'indirizzo fisico di pagina con l'offset di pagina. 
+\end{enumerate}
+cioè in codice:
+\begin{lstlisting}[language=C++, style=codestyle]	
+paddr trasforma(paddr root_tab, vaddr v)
+{
+	// punto 1
+	tab_iter it(root_tab, v);
+	while (it.down())
+		;
+
+	// punto 2
+	tab_entry e = it.get_e();
+	if (!(e & BIT_P))
+		return 0;
+
+	// punto 3 (con un dettaglio riguardante le huge page: si prende come offset la maschera ottenuta da dim_region())
+	int l = it.get_l();
+	natq mask = dim_region(l - 1) - 1;
+	return (e & ~mask) | (v & mask);
+}
+\end{lstlisting}
+
+\subsubsection{map() e unmap()}
+Vediamo infine due funzioni che permettono di mappare e liberare regioni di memoria contigue nello spazio virtuale, ottenendo attraverso un qualche helper \lstinline|alloca_tab()| nuovi frame fisici (anche non contigui) e rilasciandoli con \lstinline|rilascia_tab()|.
+Queste sono la \lstinline|map()| e la \lstinline|unmap()|.
+
+La chiamata della \lstinline|map()| è:
+\begin{lstlisting}[language=C++, style=codestyle]	
+vaddr map(paddr tab, vaddr begin, vaddr end, natl flags, T& getpaddr, int ps_lvl = 1)
+\end{lstlisting}
+cioè dobbiamo specificare la tabella madre, gli indirizzi virtuali di confine della regione, una double word contenente eventuali flag R/W o U/S, e una funzione per l'ottenimento sequenziale di indirizzi fisici, che viene passata come \textit{funtore} o come \textit{lambda} (non si entra nei dettagli dello standard C++, va bene una funzione come una classe che ridefinisce l'operatore di chiamata).
+
+La chiamata della \lstinline|unmap()| è invece:
+\begin{lstlisting}[language=C++, style=codestyle]	
+void unmap(paddr tab, vaddr begin, vaddr end, T& putpaddr)
+\end{lstlisting}
+dove vediamo servono principalmente gli stessi parametri, più la funzione \lstinline|putpaddr()|, che può essere usata per fare pulizia degli indirizzi fisici non più usati.
+
+Ad esempio, se questi vengono posti in memoria dinamica attraverso l'helper passato a \lstinline|getpaddr| della \lstinline|map()|, e si sfrutta qualche struttura dati che tiene conto di quali regioni di memoria fisica sono effettivamente in utilizzo, il parametro \lstinline|putpaddr()| ci permette di definire una funzione che ripulisca i frame utilizzati una volta che questi vengono liberati, liberando le pagine di memoria corrispondente.
+
+Un'ultima precisazione va fatta riguardo alle funzioni usate da \lstinline|map()| e \lstinline|unmap()|: queste saranno la \lstinline|copy_des()| e la \lstinline|set_des()| che avevamo visto in 16.1.2, più ottimizzate per la modifica in massa.
+
+\end{document}

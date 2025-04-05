@@ -317,9 +317,29 @@ Si hanno quindi 4 livelli di accesso, ordinati dal 4 all'1, che bisogna attraver
 	\includegraphics[scale=0.6]{../figures/mmu_trie.png}
 \end{center}
 
+Nei sistemi operativi moderni, quali Linux, ogni livello di accesso ha un nome specifico e quindi ogni segmento da 9 bit dei 36 bit di pagina rappresenta un informazione denominata diversamente, che riportiamo per completezza (dal più significativo):
+
+\begin{table}[h!]
+	\center \rowcolors{2}{white}{black!10}
+	\begin{tabular} { c | c | p{7cm} }
+		\bfseries Bit & \bfseries Nome & \bfseries Significato \\ 
+		\hline
+		9 bit & PML4I & \textit{Page Map Level 4 Index} \\
+		9 bit & PDPTI & \textit{Page Directory Pointer Table Index} \\
+		9 bit & PDI & \textit{Page Directory Index} \\
+		9 bit & PTI & \textit{Page Table Index} \\
+		12 bit & // & Offset di pagina 
+	\end{tabular}
+\end{table}
+
+Resta comunque il fatto che quale nome decidiamo di assegnare alle tabelle di ogni livello di accesso non è importante, in quanto le strutture ad ogni livello sono sovrapposte (puntare a una tabella o a un frame è la stessa cosa).
+
 Il procedimento che ci porta dai bit di pagina all'indirizzo del frame si chiama \textbf{table walk}, o \textit{cammino della tabella}.
 Ogni entrata delle tabelle di trie sarà grande 8 byte (almeno 7 bit per i flag, più $\sim 48$ bit di indirizzo, ricordando che lo spazio indirizzabile nell'x86\_64 non corrisponde al massimo di 64 bit), per cui $2^9 \cdot 2^3 = 2^{12} = 4\text{ KiB}$ di memoria ciascuna.
-La memoria massima e il numero di entrate ad ogni livello sono quindi:
+
+\noindent
+\begin{minipage}{\textwidth}
+La memoria massima \textit{raggiunta ad} ogni livello e il numero di entrate \textit{raggiunta ad} ogni livello sono quindi:
 
 \begin{table}[H]
 	\center \rowcolors{2}{white}{black!10}
@@ -332,8 +352,12 @@ La memoria massima e il numero di entrate ad ogni livello sono quindi:
 		1 & $2^9 \cdot 2^9 \cdot 2^9 \cdot 2^9 \cdot 2^3 = 2^{39} = 512 \text{ GiB}$ & $2^9 \cdot 2^9 \cdot 2^9 \cdot 2^9 = 2^{36} = 64 \text{ Gi}$
 	\end{tabular}
 \end{table}
+\end{minipage}
+\par\bigskip
 
-Potremmo chiederci dov'è il guadagno, in quanto a memoria l'ultimo livello di trie necessiterà degli stessi 512 GiB, più lo spazio necessario ai livelli precedenti.
+Per cottenere l'informazione inversa, cioè la memoria massima \textit{raggiungibile da} ogni livello e il numero di entrate \textit{raggiungibili da} ogni livelo basterà invertire l'ordine verticale delle ultime 2 colonne. 
+
+Potremmo allora chiederci dov'è il guadagno di un sistema di questo tipo, in quanto a memoria l'ultimo livello di trie necessiterà degli stessi 512 GiB, più lo spazio necessario ai livelli precedenti.
 Il vantaggio sarà però quello di poter tagliare arbitrariamente rami dall'albero che abbiamo formato, cioè non tenere conto di pagine di cui non abbiamo attualmente bisogno. 
 
 \subsubsection{Descrittori nella T-MMU}
@@ -394,7 +418,7 @@ in quanto, ad ogni livello, stiamo effettivamente "passando" 9 bit dall'indirizz
 	\end{tabular}
 \end{table}
 
-Come si vede poi dalla tabella, il flag PS è ignorato al livello 4 (avremmo pagine da 512 GB, ridicolo) e al livello 1 (è la dimensione di default delle pagine).
+Come si vede poi dalla tabella, il flag PS è effettivamente ignorato al livello 4 (avremmo pagine da 512 GB, che ad oggi non tornano particolarmente utili) e al livello 1 (è la dimensione di default delle pagine).
 \end{itemize}
 
 \subsubsection{T-MMU e memoria condivisa}
