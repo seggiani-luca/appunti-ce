@@ -356,7 +356,7 @@ while (it.down()) {
 }
 \end{lstlisting}
 
-	\item \textbf{Visita anticipata di una regione di indirizzi:} analoga a sopra, ma si forniscono entrambi gli indirizzi al costruttore del \lstinline|tab_iter|: 
+	\item \textbf{Visita anticipata di una regione di indirizzi:} analoga a sopra, ma si fornisce l'indirizzo base e la dimensione della regione al costruttore del \lstinline|tab_iter|: 
 \begin{lstlisting}[language=C++, style=codestyle]	
 for(tab_iter it(tab, v_lo, v_hi); it; it.next()) {
 	// it e' l'elemento corrente
@@ -429,7 +429,7 @@ La chiamata della \lstinline|map()| è:
 \begin{lstlisting}[language=C++, style=codestyle]	
 vaddr map(paddr tab, vaddr begin, vaddr end, natl flags, T& getpaddr, int ps_lvl = 1)
 \end{lstlisting}
-cioè dobbiamo specificare la tabella madre, gli indirizzi virtuali di confine della regione, una double word contenente eventuali flag R/W o U/S, e una funzione per l'ottenimento sequenziale di indirizzi fisici, che viene passata come \textit{funtore} o come \textit{lambda} (non si entra nei dettagli dello standard C++, va bene una funzione come una classe che ridefinisce l'operatore di chiamata).
+cioè dobbiamo specificare la tabella madre, gli indirizzi virtuali di confine della regione, una double word contenente eventuali flag R/W o U/S, e una funzione per l'ottenimento sequenziale di indirizzi fisici \textit{di pagina}, che viene passata come \textit{funtore} o come \textit{lambda} (non si entra nei dettagli dello standard C++, va bene una funzione come una classe che ridefinisce l'operatore di chiamata).
 
 La chiamata della \lstinline|unmap()| è invece:
 \begin{lstlisting}[language=C++, style=codestyle]	
