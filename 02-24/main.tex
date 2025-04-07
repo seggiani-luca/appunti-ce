@@ -325,7 +325,7 @@ In particolare, se l'ultimo byte sta in fondo nella memoria, si dice \textbf{big
 L'architettura Intel x86 che andiamo a considerare è little-endian, come lo sono la maggior parte delle architetture moderne.
 Un esempio di utilizzo del big-endian e nella trasmissione di dati attraverso il protocollo IP, usato nelle comunicazioni Internet.
 
-Il formalismo introdotto nel paragrafo precedente si dimostra utile anche da questo punto di vista: scrivendo le parole da destra verso sinistra, cioè a offset nella parola crescenti verso sinistra, si ha che il MSB finisce a sinistra, come suggerirebbe il senso di scrittura naturalsd.
+Il formalismo introdotto nel paragrafo precedente si dimostra utile anche da questo punto di vista: scrivendo le parole da destra verso sinistra, cioè a offset nella parola crescenti verso sinistra, si ha che il MSB finisce a sinistra, come suggerirebbe il senso di scrittura naturale.
 
 \subsubsection{Allineamento}
 Indicheremo con \textbf{offset} la distanza in byte fra due locazioni di memoria, intesa come il numero di locazioni che vanno saltate per raggiungere un indirizzo a partire dall'altro.
@@ -341,7 +341,7 @@ Questo rende necessaria un'eccezione per intervalli che comprendono l'ultimo byt
 Veniamo quindi all'\textbf{allineamento}.
 Dire che un indirizzo è allineato ad un numero $n$ significa dire che quell'indirizzo è un multiplo di $n$.
 Chiaramente, conviene scegliere $n$ potenze di 2.
-In questo caso, per riconoscere se un indirizzo è allineato a $2^k$, basta guardare i suoi primi $k$ bit.
+In questo caso, per riconoscere se un indirizzo è allineato a $2^k$, basta guardare i suoi ultimi $k$ bit.
 
 Si dice spesso che oggetti sono \textit{allineati alla parola}, ecc...
 Questo significa che sono allineati alla \textit{dimensione} della parola specificata.

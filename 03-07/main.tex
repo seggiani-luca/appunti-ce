@@ -251,10 +251,13 @@ Presentiamo un metodo, quello delle \textbf{cache associative ad insiemi}, che r
 
 Duplichiamo quindi la struttura vista per la cache ad indirizzamento diretto (qui solo 1 volta, anche se nei sistemi moderni si va dai 4-8 insiemi per le cache di primo livello e 8-16 insiemi per le cache di secondo e terzo livello), e sfruttiamo le uscite hit/miss delle singole memorie delle etichette per pilotare un multiplexer con in ingresso le linee dati delle memorie di cache corrispondenti.
 
+\noindent
+\begin{minipage}{\textwidth}
 La struttura così modificata sarà la seguente:
 \begin{center}
 	\includegraphics[scale = 0.455]{../figures/cache_associativa.png}
 \end{center}
+\end{minipage}
 
 In questo caso a letture allo stesso indice le cache potranno rispondere diversamente (magari la prima in miss e la seconda in hit), e il processore vedrà ritornarsi il dato corretto (in questo caso quello della seconda).
 

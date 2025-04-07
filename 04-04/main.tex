@@ -242,7 +242,7 @@ typedef natq /*    idem    */ paddr; // indirizzo fisico
 \end{lstlisting}
 
 Dotiamoci quindi di alcune funzioni per la gestione di questi indirizzi.
-Di base, vorremmo un modo per verificare la normalizzazione di un indirizzo (quindi il fatto che i bit dal 48 al 63 siano uguali al bit 47, che possiamo fare con la \lstinline|norm(vaddr)|):
+Di base, vorremmo un modo per verificare la normalizzazione di un indirizzo (quindi il fatto che i bit dal 48 al 63 siano uguali al bit 47), che potrebbe essere la \lstinline|norm(vaddr)|:
 \begin{lstlisting}[language=C++, style=codestyle]	
 if(norm(v) != v) {
 	// errore: indirizzo non normalizzato
@@ -283,7 +283,7 @@ typedef natq /* (uint64_t) */ tab_entry;
 \end{lstlisting}
 
 L'interazione vera e propria con il descrittore avverrà attraverso maschere e funzioni che applicano maschere.
-Ad esempio, se per modificare il bit di presenza di una pagina si può dire:
+Ad esempio, per modificare il bit di presenza di una pagina si può dire:
 \begin{lstlisting}[language=C++, style=codestyle]	
 // e e' un riferimento ad una tabella
 e |= BIT_P; // BIT_P maschera il bit di presenza
@@ -437,7 +437,7 @@ void unmap(paddr tab, vaddr begin, vaddr end, T& putpaddr)
 \end{lstlisting}
 dove vediamo servono principalmente gli stessi parametri, più la funzione \lstinline|putpaddr()|, che può essere usata per fare pulizia degli indirizzi fisici non più usati.
 
-Ad esempio, se questi vengono posti in memoria dinamica attraverso l'helper passato a \lstinline|getpaddr| della \lstinline|map()|, e si sfrutta qualche struttura dati che tiene conto di quali regioni di memoria fisica sono effettivamente in utilizzo, il parametro \lstinline|putpaddr()| ci permette di definire una funzione che ripulisca i frame utilizzati una volta che questi vengono liberati, liberando le pagine di memoria corrispondente.
+Ad esempio, se questi vengono posti in memoria dinamica attraverso l'helper passato a \lstinline|getpaddr| della \lstinline|map()|, e si sfrutta qualche struttura dati che tiene conto di quali regioni di memoria fisica sono effettivamente in utilizzo, il parametro \lstinline|putpaddr()| ci permette di definire una funzione che ripulisca i frame utilizzati una volta che questi vengono liberati, liberando le pagine di memoria corrispondenti.
 
 Un'ultima precisazione va fatta riguardo alle funzioni usate da \lstinline|map()| e \lstinline|unmap()|: queste saranno la \lstinline|copy_des()| e la \lstinline|set_des()| che avevamo visto in 16.1.2, più ottimizzate per la modifica in massa.
 

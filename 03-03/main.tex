@@ -251,8 +251,13 @@ Lo standard VGA usato dal PC IBM prevede che l'adattatore sia configurabile e ut
 			\item I 3 bit successivi rappresentano il colore del \textit{background};
 				\item Il bit più significativo rappresenta il \textit{blinking}, cioè indica all'adattatore di far \textit{lampeggiare} quel carattere nel tempo.
 		\end{itemize}
+		Il layout dei flag è quindi:
+		\begin{center}
+			\includegraphics[scale=0.4]{../figures/char_flags.png}
+		\end{center}
 
-		La modalità testo non ha idea della posizione del cursore sullo scherm: attraverso registri si può indicare la posizione del cursore, e modificando la regione di memoria interessata si possono cambiare i caratteri in qualsiasi zona dello schermo.
+		Parliamo quindi del \textbf{cursore} comunemente visualizzato sullo schermo nelle interfacce a riga di comando.
+		La modalità testo non ha idea della posizione del cursore sullo schermo: attraverso registri si può indicare la posizione del cursore, e modificando la regione di memoria interessata si possono cambiare i caratteri in qualsiasi zona dello schermo.
 		Il comportamento del cursore (spostamento, ritorno a capo, ritorno carrello, ecc...) è quindi gestito interamente lato software.
 	\item \textbf{Modalità grafica:} programmando i registri dell'adattatore si possono ottenere diverse modalità grafiche, che permettono al progammatore di colorare singoli pixel sul display.
 		Le modalità più popolari di questo tipo su schede VGA erano o a 640 $\times$ 400 pixel a 70 Hz (fase di boot grafica), o a 640 $\times$ 480 pixel a 60 Hz non interlacciati (la modalità di default di Microsoft Windows). 
@@ -267,7 +272,7 @@ Le scritture vengono quindi eseguite inserie:
 \begin{itemize}
 	\item Prima specificando l'\textbf{indirizzo} del registro da aggiornare;
 	\item Poi inserendo i \textbf{dati} da scrivere a tale indirizzo.
-\end{itemize}inpulso
+\end{itemize}
 
 \par\smallskip
 
@@ -285,11 +290,11 @@ Al raggiungimento di 0 da parte del contatore, si resetta e si invia un certo ev
 Nel PC IBM in particolare troviamo 3 contatori:
 \begin{itemize}
 	\item \textbf{Contatore 0:} è collegata al controllore delle interruzioni;
-	\item \textbf{Contatore 1:} era storicamente usato per il refreseh della RAM, oggi non viene più usato;
+	\item \textbf{Contatore 1:} era storicamente usato per il refresh della RAM, oggi non viene più usato;
 	\item \textbf{Contatore 2:} era collegato all'unico dispositivo audio presente sull'IBM, cioè il beeper speaker.
 \end{itemize}
 
-Le porte del timer sono i seguenti:
+Le porte del timer sono le seguenti:
 \begin{table}[h!]
 	\center
 	\begin{tabular} { c | p{7cm} }

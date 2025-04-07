@@ -249,7 +249,7 @@ Dal punto di vista pratico, il collegamento fra CPU e RAM è quindi rappresentat
 \end{itemize}
 
 \subsubsection{Struttura della RAM}
-Modelliziamo un modulo di RAM come una rete provvista di:
+Modellizziamo un modulo di RAM come una rete provvista di:
 \begin{itemize}
 	\item Una linea di \textbf{select}, attiva bassa;
 	\item Le \textbf{linee di indirizzo};
@@ -338,6 +338,12 @@ La tastiera non restituisce solo pressioni di tasti, ma anche i loro rilasci, co
 I codici di pressione si dicono \textbf{make code}, mentre i codici di rilascio si dicono \textbf{break code} 
 La stessa pressione ripetuta di un tasto quando l'utente lo tiene premuto per un certo istante temporale era, nei PC IBM, realizzata direttamente nella tastiera (tecnologia \textit{type-matic}), tra l'altro con periodo configurabile.
 Tramite il \textit{type-matic}, su appositi tasti abilitati, si ha infatti una ripetizione dell'evento di \textit{pressione} (non rilascio) di un tasto a frequenza costante dopo un intervallo di pressione continua.
+
+Abbiamo quindi che i make code e i break code dei diversi tasti in una classica tastiera layout US sono i seguenti, nel cosiddetto \textit{set 0} (man mano che le tastiere si sono evolute, sono stati introdotti nuovi set con codifiche diverse):
+
+\begin{center}
+	\includegraphics{../figures/keyb.png}
+\end{center}
 
 Lato calcolatore, il segnale prodotto dal microcontrollore della tastiera viene letto da un interfaccia provvista dei seguenti registri:
 \begin{table}[H]

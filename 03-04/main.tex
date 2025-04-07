@@ -282,7 +282,7 @@ L'interfaccia ATA è dotata di diversi registri a 8 bit e uno a 16 bit:
 		$$
 		2^{28} \cdot 2^9 = 2^{37} = 128 \, \mathrm{GB}
 		$$
-		Per questo si puo' abilitare la modalità \textbf{LBA48} (che non è un gruppo di idol giapponesi), dove ci si aspetta il LBA venga specificato in due passate, una da 24 bit e una da 20 bit sugli stessi registri.
+		Per questo si puo' abilitare la modalità \textbf{LBA48} (che non è un gruppo di idol giapponesi), dove ci si aspetta che l'LBA venga specificato in due passate, una da 24 bit e una da 20 bit sugli stessi registri.
 	\item \textbf{SCR} (Section Counter): permette di specificare su quanti settori contigui a partire da quello specificato prima eseguire l'operazione;
 	\item \textbf{BR} (Buffer Register): l'unico registro a 16 bit, permette di accedere al buffer 2 byte alla volta;
 	\item \textbf{STS} (Status Register): il classico registro di stato che ci notifica se un'operazione è conclusa o si puo' effettuare;
@@ -383,10 +383,13 @@ Per ottenere la regione corrispondente ad un indirizzo (il numero di cacheline) 
 Inoltre, alla regione selezionata si associa solitamente un singolo bit di validità.
 Un comparatore fra etichetta e gli $n$ bit piu significativi messo in AND a questo bit di validità ci assicurerà quindi la presenza nella cacheline del dato richiesto, detta \textbf{hit/miss}.
 
+\noindent
+\begin{minipage}{\textwidth}
 La struttura complessiva è quindi la seguente:
 \begin{center}
 	\includegraphics[scale = 0.5]{../figures/cache_diretta.png}
 \end{center}
+\end{minipage}
 
 \subsubsection{Lettura}
 A questo punto, in fase di lettura, nel caso di hit basterà ricavare una linea di offset dai bit meno significativi di A, e leggere dalla memoria cache a tale offset, all'indice indicato dall'etichetta.

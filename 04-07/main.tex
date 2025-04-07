@@ -232,11 +232,139 @@
 
 % testo
 
-# ha parlato dell'implementazione di map e unmap
+\subsubsection{Implementazione di map() e unmap()}
+Vediamo brevemente come sono implementate in pratica la \lstinline|map()| e la \lstinline|unmap()|.
+\begin{itemize}
+	\item \lstinline|map()|: si basa su una visita \textit{anticipata} del trie:
+\begin{lstlisting}[language=C++, style=codestyle]	
+vaddr map(paddr tab, vaddr begin, vaddr end, natl flags, T& getpaddr, int ps_lvl = 1)
+{
+	vaddr v;	/* indirizzo virtuale corrente */
+	int l;		/* livello (del TRIE) corrente */
+	natq dr;	/* dimensione delle regioni di livello ps_lvl */
+	[...]
 
-\subsubsection{Descrittori di frame e gestione}
-Abbiamo quindi visti come abbiamo bisogno di una struttura dati, contenuta in memoria sistema ($M_1$), che gestisce i frame di memoria nella parte alta ($M_2$). 
-# da qualche parte specifica sto discorso M\_1 contro M\_2
+	// controlli
+	[...]
+
+	// usiamo un iteratore di tabella per effettuare una visita anticipata
+	tab_iter it(tab, begin, end - begin);
+	for ( /* niente */ ; it; it.next()) {
+		tab_entry& e = it.get_e();
+		l = it.get_l();
+		v = it.get_v();
+		
+		// new verra' popolato dal nuovo indirizzo fisico da collegare a una tabella o a una traduzione, indistintamente 
+		paddr new_f = 0;
+
+		if (l > ps_lvl) {
+			// nodo non foglia
+
+			if (!(e & BIT_P)) {
+				// va allocata una tabella, chiama alloca_tab()
+				new_f = alloca_tab(); // caso 1) si crea una nuova tabella 
+				
+				// controlli
+				[...]
+
+			} else if (e & BIT_PS) {
+				// errore: e' una huge page
+			}
+		} else {
+			// va allocata una traduzione, chiama get_paddr()
+			new_f = getpaddr(v);	// caso 2) si crea una nuova traduzione
+
+			// controlli
+			[...]
+
+			// configura i flag
+			if (l > 1)
+				e |= BIT_PS;
+
+			e |= (flags & (BIT_PWT|BIT_PCD));
+		}
+
+		if (new_f) {
+			// siam qui per il caso 1) o per il caso 2), cioe':
+			// - caso 1) bisogna creare una tabella
+			// - caso 2) bisogna creare una traduzione
+			// in entrambi i casi si fanno le stesse operazioni
+			
+			// 'e' non puntava a niente e ora deve puntare a new_f
+			set_IND_FISICO(e, new_f);
+			e |= BIT_P;
+
+			// dobbiamo incrementare il contatore delle entrate
+			// valide della tabella a cui 'e' appartiene
+			inc_ref(it.get_tab());
+		}
+		
+		// configura altri flag
+		e |= (flags & (BIT_RW|BIT_US));
+	}
+	return end;
+\end{lstlisting}
+Vediamo quindi che la situazione rispetto all'ultima volta si complica: non abbiamo bisogno soltanto della \lstinline|getpaddr()|, per l'ottenimento degli indirizzi fisici, ma anche della \lstinline|alloca_tab()| per l'allocazione di tabelle del trie.
+	Questo ha senso, in quanto la tabella si distingue dal semplice frame di collegato a una pagina, per il fatto che necessita di un contatore di entrate valide che ne facilità la pulizia in caso di inutilizzo.
+	Come vedremo, in ogni caso, sia la \lstinline|getpaddr()| che la \lstinline|alloca_tab()| vengono spesso definite, ad esempio nel nucleo, sulla base della stessa funzione helper per l'ottenimento di memoria libera (\lstinline|allocaframe()|); 
+\item \lstinline|unmap()|: si basa su una visita \textit{posticipata} del trie:
+\begin{lstlisting}[language=C++, style=codestyle]	
+void unmap(paddr tab, vaddr begin, vaddr end, T& putpaddr)
+{
+	// usiamo un iteratore di tabella per effettuare una visita posticipata
+	tab_iter it(tab, begin, end - begin);
+	for (it.post(); it; it.next_post()) {
+		tab_entry& e = it.get_e();
+		
+		// non eliminare tabelle non allocate
+		if (!(e & BIT_P))
+			continue;
+
+		paddr p = extr_IND_FISICO(e);
+		if (!it.is_leaf()) {
+			// l'entrata punta a una tabella.
+			
+			// qui entra in gioco il numero di entrate valide:
+			// la get_ref() ci permete di ottenere le sottotabelle con P alto
+
+			if (!get_ref(p)) {
+				// se la tabella non contiene piu' entrate
+				// valide la deallochiamo
+				rilascia_tab(p);
+			} else {
+				// altrimenti non facciamo niente
+				// (la tabella serve per traduzioni esterne
+				// all'intervallo da eliminare)
+				continue;
+			}
+		} else {
+			// l'entrata punta ad una pagina (di livello it.get_l())
+			vaddr v = it.get_v();
+			int l = it.get_l();
+			
+			// controlli
+			[...]
+
+			putpaddr(v, p, l);
+		}
+
+		// azzeriamo l'entrata di tabella
+		e = 0;
+		// decrementiamo i riferimenti
+		dec_ref(it.get_tab());
+	}
+}
+\end{lstlisting}
+Vediamo qui ancor meglio come è necessario mantenere separatamente il numero di sottotabelle occupate di una tabella, in modo da capire quando si può procedere alla tabella con \lstinline|rilascia_tab()|, o quando questa mantiene ancora sottotabelle utili ad altre traduzioni.
+L'eliminazione delle traduzioni stesse, e quindi delle locazioni fisiche allocate, invece, viene svolta dalla \lstinline|putpaddr()|.
+\end{itemize}
+
+\subsection{Gestione della memoria fisica}
+Osservando come la \lstinline|map()| e la \lstinline|unmap()| hanno bisogno di funzioni (\lstinline|alloca_tab()| e \lstinline|dealloca_tab()|, nonché \lstinline|getpaddr()| e \lstinline|putpaddr()|, comunque queste siano implementate) che si occupano di ottenere effettivamente memoria fisica.
+Vediamo come queste vengono implementate.
+
+\subsubsection{Descrittori di frame}
+Ci rendiamo quindi conto di aver bisogno di una struttura dati, contenuta in memoria sistema ($M_1$), che gestisce i frame di memoria nella parte alta ($M_2$). 
 Questa struttura è implementata come un'array:
 \begin{lstlisting}[language=C++, style=codestyle]	
 // descrittore di frame
@@ -253,12 +381,12 @@ struct des_frame {
 des_frame vdf[N_FRAME];
 \end{lstlisting}
 
-A questo punto si potra allocare e deallocare frame come segue:
+\subsubsection{Gestione dei frame}
+Definiti descrittori di frame, si potrà allocare e deallocare come segue:
 \begin{itemize}
 	\item \textbf{Allocazione:} prendiamo il primo frame libero, che manteniamo in un apposita variabile (appositamente inizializzata), sostituiamo il suo puntatore a frame libero con il numero di entrate valide nullo, e prendiamo il suo puntatore a prossimo frame libero come nuovo puntatore globale, ovvero:
 \begin{lstlisting}[language=C++, style=codestyle]			
-paddr alloca_frame()
-{
+paddr alloca_frame() {
 	if (!num_frame_liberi) {
 		flog(LOG_ERR, "out of memory");
 		return 0;
@@ -273,8 +401,7 @@ paddr alloca_frame()
 
 	\item \textbf{Deallocazione:} prendiamo il frame come primo frame libero e impostiamo il suo puntatore a prossimo frame libero al puntatore a frame libero corrente, ovvero:
 \begin{lstlisting}[language=C++, style=codestyle]	
-void rilascia_frame(paddr f)
-{
+void rilascia_frame(paddr f) {
 	natq j = f / DIM_PAGINA;
 	if (j < N_M1) {
 		fpanic("tentativo di rilasciare il frame %lx di M1", f);
@@ -293,8 +420,7 @@ Vorrremo usare le \lstinline|alloca_frame()| e \lstinline|rilascia_frame()| per 
 \begin{itemize}
 	\item \textbf{Allocazione:}
 \begin{lstlisting}[language=C++, style=codestyle]	
-paddr alloca_tab()
-{
+paddr alloca_tab() {
 	paddr f = alloca_frame();
 	if (f) {
 		memset(voidptr_cast(f), 0, DIM_PAGINA);
@@ -306,8 +432,7 @@ paddr alloca_tab()
 
 	\item \textbf{Deallocazione:}
 \begin{lstlisting}[language=C++, style=codestyle]	
-void rilascia_tab(paddr f)
-{
+void rilascia_tab(paddr f) {
 	if (int n = get_ref(f)) {
 		fpanic("tentativo di deallocare la tabella %lx con %d entrate valide", f, n);
 	}
@@ -316,9 +441,8 @@ void rilascia_tab(paddr f)
 \end{lstlisting}
 \end{itemize}
 
-Queste funzioni non sono altro che le \lstinline|getpaddr| e \lstinline|putpaddr| che davamo in argomento a le \lstinline|map()| e \lstinline|unmap()| per la gestione del trie.
-
-In altre parole, staimo quindi gestendo l'albero di traduzione attraverso le funzioni \lstinline|map()| e \lstinline|unmap()|, e i frame di memoria fisica attraverso le \lstinline|alloca_tab()| e \lstinline|rilascia_tab()|.
+Queste funzioni sono proprio quelle che davamo in argomento a le \lstinline|map()| e \lstinline|unmap()| per la gestione del trie.
+In altre parole, stiamo gestendo l'albero di traduzione attraverso le funzioni \lstinline|map()| e \lstinline|unmap()|, le tabelle attraverso le \lstinline|alloca_tab()| e \lstinline|rilascia_tab()|, e i frame di memoria fisica attraverso le \lstinline|alloca_frame()| e \lstinline|rilascia_frame()|.
 
 \subsection{Bootloader}
 Vediamo quindi il \textbf{bootloader}, cioè quella parte del kernel che si occupa di effettuare il \textit{bootstrap} e portare il sistema in uno stato operativo.
@@ -406,9 +530,7 @@ Questa è scritta in assembler come:
 Visto che dall'esecuzione della \lstinline|MOVL| in poi il processore emetterà indirizzi che verrano tradoti dalla MMU, sarà necessario che l'indirizzo puntato in quel momento dal RIP sia contenuto nella finestra creata prima, così che si mantenga la continuità fra le istruzioni del programma.
 
 \subsection{Partizione della memoria nel nucleo}
-# qui ci dovrebbe essere lo schema sulla FM d prima
-
-Abbiamo quindi visto come la memoria indirizzabile è divisa in due regioni da $2^47$ bit ciascuna (cioè la divisione data dagli indirizzi a 48 bit normalizzati).
+Abbiamo quindi visto come la memoria indirizzabile è divisa in due regioni da $2^{47}$ bit ciascuna (cioè la divisione data dagli indirizzi a 48 bit normalizzati).
 Vediamo come questa memoria è divisa nel nucleo.
 Abbiamo che nella regione bassa allochiamo memoria sistema, come segue:
 \begin{itemize}
@@ -431,21 +553,46 @@ La parte alta alloca invece memoria utente, come segue:
 		\end{itemize}
 \end{itemize}
 
-Facciamo alcune semplificazioni riguardo a questa struttura:
+\noindent
+\begin{minipage}{\textwidth}
+Lo schema complessivo è quindi del tipo seguente:
+\begin{center}
+	\includegraphics[scale=0.8]{../figures/mem_map.png}
+\end{center}
+in questo caso relativa ai trie di due processi, da cui notiamo ancora come la prima pagina non è tradotta, in quanto rappresenta l'area raggiungibile dai nullptr.
+\end{minipage}
+
+\par\bigskip
+
+Facciamo allora alcune semplificazioni riguardo a questa struttura, in modo da avvicinarci ad un'implementazione effettiva:
 \begin{itemize}
 	\item Tutte le parti di livello più alte vengono create come multipli di 512 GiB, in modo che occupino intere entrate di livello 4;
 	\item Le parti condivise sono \textit{"fisse"}, riferite da tabelle di livello 3 che vengono puntate nuovamente in ogni tabella di livello 4 che creiamo come radice degli alberi di traduzione di ogni processo (e che sono le stesse dell'albero di traduzione del nucleo). 
 \end{itemize}
 
 Vediamo che le tabelle di livello 3 della parte utente e sistema condivise si possono quindi creare una volta sola all'avvio del sistema (si dovrebbe ricaricare la parte codice dei processi nel caso di un sistema che carica software dal disco).
-Questa allocazione viene fatta usando la \lstinline|map()| aiutata da \lstinline|alloca_frame()|, per ottenere memoria e disporre traduzioni per regioni di memoria di indirizzi prestabiliti (che seguono lo schema definito finora). 
+Questa allocazione viene fatta usando la \lstinline|map()| aiutata da \lstinline|alloca_frame()|, per ottenere memoria e disporre traduzioni per regioni di memoria di indirizzi prestabiliti.
+Queste regioni seguono lo schema visto finora, che viene definito in codice come:
+\begin{lstlisting}[language=C++, style=codestyle]	
+#define I_SIS_C		0 	// prima entrata sistema/condivisa (inizio M1)
+#define I_SIS_P		1		// prima entrata sistema/privata
+#define I_MIO_C		2		// prima entrata modulo IO/condivisa
+#define I_UTN_C   256	// prima entrata utente/condivisa (inizio M2)
+#define I_UTN_P	  384	// prima entrata utente/privata
+
+#define N_SIS_C		1		// numero entrate sistema/condivisa
+#define N_SIS_P		1		// numero entrate sistema/privata
+#define N_MIO_C		1		// numero entrate modulo IO/condivisa
+#define N_UTN_C	  128	// numero entrate utente/convidisa
+#define N_UTN_P	  128	// numero entrate utente/privata
+\end{lstlisting}
 
 Le uniche cose che vanno quindi create da zero ogni volta che si crea un processo sono la \textbf{pila sistema} in memoria sistema privata e la \textbf{pila utente} in memoria utente privata.
 
 Avremo quindi che alla creazione di un nuovo processo dovremo creare una \textit{nuova} tabella di livello 4, che puntera alle tabelle di livello 3 delle parti condivise (memoria utente e sistema condivisa), già esistenti, e che creerà nuove tabelle di livello 3, e quindi di livello 2, ecc... per le parti private (pila utente e pila sistema).
 
-\subsection{Creazione di processi}
-Possiamo quindi vedere più nel dettaglio la creazione di processi.
+\subsection{Creazione di processi in memoria}
+Possiamo quindi vedere più nel dettaglio la creazione di processi, in particolare riguardo alla memoria e alle tabelle e traduzioni create.
 
 \subsubsection{Albero di traduzione}
 Abbiamo detto avevamo bisogno di creare nuove tabelle di livello 4 per ogni processo.
@@ -473,9 +620,17 @@ void init_root_tab(paddr dest) {
 	copy_des(pdir, dest, I_MIO_C, N_MIO_C);
 	copy_des(pdir, dest, I_UTN_C, N_UTN_C);
 }
-\end{lstlisting} # quali sono? scrivi anche sopra penso
+\end{lstlisting}
 
-# ha la duale clear_root_tab
+Questa ha una duale, che semplicemente libera le entrate create:
+\begin{lstlisting}[language=C++, style=codestyle]	
+void clear_root_tab(paddr dest) {
+	// eliminiamo le entrate create da init_root_tab()
+	set_des(dest, I_SIS_C, N_SIS_C, 0);
+	set_des(dest, I_MIO_C, N_MIO_C, 0);
+	set_des(dest, I_UTN_C, N_UTN_C, 0);
+}
+\end{lstlisting}
 
 \subsubsection{Pila}
 Veniamo quindi all'inizializzazione della pila.
@@ -488,6 +643,8 @@ bool crea_pila(paddr root_tab, vaddr bottom, natq size, natl liv)
 		bottom,
 		BIT_RW | (liv == LIV_UTENTE ? BIT_US : 0),
 		[](vaddr) { return alloca_frame(); });
+
+	// caso di errore
 	if (v != bottom) {
 		unmap(root_tab, bottom - size, v,
 			[](vaddr, paddr p, int) { rilascia_frame(p); });
@@ -496,12 +653,11 @@ bool crea_pila(paddr root_tab, vaddr bottom, natq size, natl liv)
 	return true;
 }
 \end{lstlisting}
-# che fa cose
+che ottiene una pila di una dimensione prestabilita allocando i frame necessari.
 
-Questa ha ancora la duale, \lstinline|distruggi_pila()|:
+Questa ha ancora una duale, \lstinline|distruggi_pila()|:
 \begin{lstlisting}[language=C++, style=codestyle]	
-void distruggi_pila(paddr root_tab, vaddr bottom, natq size)
-{
+void distruggi_pila(paddr root_tab, vaddr bottom, natq size) {
 	unmap(
 		root_tab,
 		bottom - size,
@@ -509,9 +665,76 @@ void distruggi_pila(paddr root_tab, vaddr bottom, natq size)
 		[](vaddr, paddr p, int) { rilascia_frame(p); });
 }
 \end{lstlisting}
+che si limita a liberare i frame usati.
 
-# commenta anche lei
+Dal punto di vista della \lstinline|crea_processo()|, quindi, vogliamo prima inizializzare la pila sistema, e poi:
+\begin{itemize}
+	\item Se siamo in contesto utente:
+		\begin{enumerate}
+			\item Inizializzare la pila sistema;
+			\item Creare la pila utente;
+			\item Inizializzare la pila utente.
+		\end{enumerate}
+	\item Se invece siamo in contesto sistema, ci limitiamo ad inizializzare la pila sistema.
+\end{itemize}
 
-# capisci discorso pila utente / pila sistema
+Questo in codice si traduce come:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// creazione della pila sistema
+static_assert(DIM_SYS_STACK > 0 && (DIM_SYS_STACK & 0xFFF) == 0);
+
+// siamo in un altro processo, quindi dobbiamo accedere alla pila sistema tramite la finestra FM
+pila_sistema = trasforma(p->cr3, fin_sis_p - 1) + 1;
+
+// convertiamo a puntatore a natq, per accedervi piu' comodamente
+pl = ptr_cast<natq>(pila_sistema);
+
+if (liv == LIV_UTENTE) {
+	// processo di livello utente
+	// inizializzazione della pila sistema
+	pl[-5] = int_cast<natq>(f);	    		// RIP (codice utente)
+	pl[-4] = SEL_CODICE_UTENTE;	    		// CS (codice utente)
+	pl[-3] = BIT_IF;	    	    				// RFLAGS
+	pl[-2] = fin_utn_p - sizeof(natq);  // RSP
+	pl[-1] = SEL_DATI_UTENTE;	    			// SS (pila utente)
+
+	// eseguendo una IRET da questa situazione, il processo
+	// passera' ad eseguire la prima istruzione della funzione f,
+	// usando come pila la pila utente (al suo indirizzo virtuale)
+
+	// creazione della pila utente
+	static_assert(DIM_USR_STACK > 0 && (DIM_USR_STACK & 0xFFF) == 0);
+
+	// inizialmente, il processo si trova a livello sistema, come
+	// se avesse eseguito una istruzione INT, con la pila sistema
+	// che contiene le 5 parole quadruple preparate precedentemente
+	p->contesto[I_RSP] = fin_sis_p - 5 * sizeof(natq);
+
+	p->livello = LIV_UTENTE;
+
+	// dal momento che usiamo traduzioni diverse per le parti sistema/private
+	// di tutti i processi, possiamo inizializzare p->punt_nucleo con un
+	// indirizzo (virtuale) uguale per tutti i processi
+	p->punt_nucleo = fin_sis_p;
+
+	// tutti gli altri campi valgono 0
+} else {
+	// processo di livello sistema
+	// inizializzazione della pila sistema
+	pl[-6] = int_cast<natq>(f);				 // RIP (codice sistema)
+	pl[-5] = SEL_CODICE_SISTEMA;  		 // CS (codice sistema)
+	pl[-4] = BIT_IF;  	        			 // RFLAGS
+	pl[-3] = fin_sis_p - sizeof(natq); // RSP
+	pl[-2] = 0;			        					 // SS
+	pl[-1] = 0;			        					 // ind. rit.
+
+	// inizializzazione del descrittore di processo
+	p->contesto[I_RSP] = fin_sis_p - 6 * sizeof(natq);
+
+	p->livello = LIV_SISTEMA;
+
+	// tutti gli altri campi valgono 0
+}
+\end{lstlisting}
 
 \end{document}

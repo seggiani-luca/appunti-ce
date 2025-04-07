@@ -265,10 +265,13 @@ dove quindi si tiene conto di:
 	\item Infine, un puntatore al \textbf{prossimo processo}, in quanto intendiamo organizzare questi processi in linked liste ordinate per precedenza decrescente.
 \end{itemize}
 
+\noindent
+\begin{minipage}{\textwidth}
 Ogni processo ha quindi un ciclo di vita che rispetta l'andamento del seguente grafico:
 \begin{center}
 	\includegraphics[scale=0.3]{../figures/schema_proc.png}
 \end{center}
+\end{minipage}
 
 Vediamo nel dettaglio il significato delle diverse fasi.
 In fase di creazione del proesso, il suo descrittore viene posto in una struttura dati che ne consente \textbf{schedulazione} e \textbf{dispatch}:
@@ -393,5 +396,35 @@ Alla creazione del processo, quindi, vogliamo svolgere le seguenti azioni in mod
 			\item L'\textbf{IOPL}, \textit{IO Privilege Level}, che specifica la possibilità o meno del processo di accedere all'IO.
 		\end{itemize}
 \end{itemize}
+
+\subsubsection{Vista riassuntiva dei processi}
+Possiamo quindi riassumere brevemente l'intero meccanismo dei processi come definiti (e spesso sovrapposti) con la loro definizione in 10.1, che interagiscono col sistema attraverso le \textit{primitive} (che vedremo più nel dettaglio alla prossima lezione), attraverso il meccanismo introdotto alla 10.2, sfruttando le interruzioni e i layout di pila descritti in 8.1.6.
+
+\par\bigskip
+
+\noindent
+\begin{minipage}{\textwidth}
+Il tutto può essere spiegato bene dal seguente schema:
+\begin{center}
+	\includegraphics[scale=0.7]{../figures/des_proc_struct.png}
+\end{center}
+\end{minipage}
+
+\par\bigskip
+
+Tralasciando per adesso la \lstinline|proc_table|, che non abbiamo visto, vediamo come la lista pronti punta alla radice di una lista di processi, dove manteniamo i campi dati notati sopra:
+\begin{itemize}
+	\item L'\textit{indice}, \lstinline|id|; 
+	\item Il \textit{livello di privilegio}, \lstinline|livello|, che può essere \lstinline|liv_utente| o \lstinline|liv_sistema|; 
+	\item La \textit{precedenza}, \lstinline|precedenza|; 
+	\item Un puntatore alla \textit{pila sistema}, \lstinline|punt_nucleo|;
+	\item Il \textit{contesto}, \lstinline|contesto|, del processo. Dallo schema, in particolare, si nota come il campo \lstinline|I_RSP|, cioè il registro \lstinline|RSP| salvato al momento della gestione dell'interruzione di primitiva, punta effettivamente alla pila sistema: per ottenere un riferimento alla pila utente bisogna prendere l'elemento dopo il \lstinline|CS| l'\lstinline|RFLAGS| salvati in pila sistema.
+		Questo significa che avremo effettivamente due campi, \lstinline|contesto[I_RSP]| e \lstinline|punt_nucleo|, che puntano alla pila sistema: rispettivamente, il primo alla cima del'ultimo frame (quello allocato in fase di gestione dell'ultima interruzione), quindi alla cima della pila, e il secondo alla base di tutta la pila sistema. 
+
+		Tutto questo comportamento deriva sostanzialmente dal fatto che parte dell'informazione che ci serve riguardo al processo nel caso di gestione di un interruzione di primitiva è salvata automaticamente dal processore al momento del salto da pila utente a pila sistema, con annesso cambio di contesto, proprio nella pila sistema, mentre l'altra informazione (i registri operativi operativi, ecc...) devono essere salvati manualmente dal kernel.
+	\item Il puntatore al \textit{prossimo processo}, \lstinline|puntatore|.
+\end{itemize}
+
+Infine, notiamo come \lstinline|esecuzione| punta al processo attualmente in esecuzone (non in contemporanea al kernel, ma che riprenderà l'esecuzione nel momento in cui si fara ritorno dalla primitiva con \lstinline|IRETQ|).
 
 \end{document}

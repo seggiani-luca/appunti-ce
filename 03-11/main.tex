@@ -231,7 +231,7 @@
 \pagestyle{fancy}
 
 % testo
-Riprendiamo la trattazione dell controllore di interruzini APIC.
+Riprendiamo la trattazione dell controllore di interruzioni APIC.
 
 \subsubsection{Interruzione di livello o di fronte}
 Vediamo un dettaglio sul comportamento dell'APIC: questo può rilevare, in base alla sua configurazione, i \textbf{livelli} o i \textbf{fronti} delle variabili in ingresso.
@@ -298,6 +298,54 @@ Un interruzione particolare è quella rappresentata da \lstinline|INT3|, l'inter
 Attraverso questa, un \textit{debugger} è capace di interrompere l'esecuzione di un programma ad un certo indirizzo del suo codice macchina.
 
 Un'altra interruzione di debug è data dalla single step, che viene lanciata ad ogni istruzione quando è attivo un certo flag (appunto, il flag single step). Questo permette al debugger di eseguire il programma in modalità \textit{passo singolo}, cioè eseguendo un istruzione e interrompendo, permettendo al programmatore di osservare il suo andamento passo per passo.
+
+\par\smallskip
+
+Possiamo sfruttare queste interruzioni di debug per realizzare il meccanismo dei \textbf{breakpoint}, cioè per interrompere un programma arbitrario ad una sua istruzione qualsiasi, per poi riprendere l'esecuzione esattamente da tale istruzione.
+Vediamo due esempi specifici:
+\begin{itemize}
+	\item \textbf{Breakpoint con la sola \sffamily{INT3}}: prendiamo la seguente funzione C/C++:
+\begin{lstlisting}[language=C++, style=codestyle]	
+void foo(){
+    printf("sono la funzione foo\n");
+}
+\end{lstlisting}
+che disassembla in:
+\begin{lstlisting}[language=assembler, style=codestyle]	
+	 0:	55                   	push   %rbp								# prologo
+   1:	48 89 e5             	mov    %rsp,%rbp
+   4:	bf 00 00 00 00       	mov    $0x0,%edi				  # chiama printf
+   9:	b8 00 00 00 00       	mov    $0x0,%eax
+   e:	e8 00 00 00 00       	call   13 <_Z3foov+0x13>
+  13:	5d                   	pop    %rbp								# ritorna
+  14:	c3                   	ret
+\end{lstlisting}
+L'obiettivo potrebbe essere quello di interrompere la funzione nella fase di prologo, cioè all'istruzione \lstinline|PUSH %RBP| di codifica \lstinline|55|.
+L'idea è quella di prendere tale istruzione, salvarla da qualche parte per poterla reintrodurre in seguito, e sostituirla con una \lstinline|INT3|, in modo che si possa prestabilire un gestore dell'eccezione da questa lanciata che metta in pausa il programma e rimetta a posto il byte modificato.
+Potremo allora usare il seguente codice:
+\lstset{style=codestyle, language=c++}
+\lstinputlisting{../code/interrupts/debugger/debugger_int3/debug1.cpp}
+La variabile \lstinline|saved_byte| conterrà il byte da reinserire dopo l'interruzione.
+\lstset{style=codestyle, language=assembler}
+La funzione \lstinline|add_breakpoint()| si occuperà allora di salvare il byte giusto e sostituirlo con l'istruzione \lstinline|INT3| (codice \lstinline|0xcc|).
+A questo punto la funzione \lstinline|a_debug()|, che avrà il compito mettere a primo argomento (registro \lstinline|RDI| secondo l'ABI di System V) il puntatore allo stack di chiamare la \lstinline|c_debug()|, che metterà in pausa l'esecuzione, rimetterà a posto \lstinline|saved_byte| e decrementerà l'instruction pointer (ricordiamo che la \lstinline|INT3| è di tipo \textit{fault}, quindi salva l'instruction pointer \textit{dopo} l'ultima istruzione eseguita).
+
+Il funzionamento della parte assembler, cioè della \lstinline|a_debug()|, si riduce a:
+\lstinputlisting{../code/interrupts/debugger/debugger_int3/debug1.s}
+dove l'offset di 120 è dato dai registri, salvati dalla macro \lstinline|salva_registri|, che occupano 120 byte sullo stack.
+
+	\item \textbf{Breakpoint con \sffamily{INT3} e single step}: un problema dell'esempio precedente è che, come si riporta anche nei commenti, dopo la prima interruzione non si interrompe più in quanto il contenuto del byte d'istruzione interessato viene ristabilito e non più toccato.
+Potremmo invece voler rimettere la \lstinline|INT3| dopo la sua esecuzione, così da permettere interruzioni ogni volta che si torna sull'istruzione (che è come funzionano i breakpoint di programmi reali come \textit{GDB}).
+Facciamo questo sfruttando la modalità \textit{single-step}: al momento dell'interruzione, la attiviamo, facciamo un singolo passo e rimettiamo la \lstinline|INT3| sull'istruzione.
+Per fare ciò, salviamo l'indirizzo dell'istruzione, che non è altro dell'indirizzo precedente all'instruction pointer corrente al momento della gestione dell'interruzione \lstinline|INT3|.
+In codice abbiamo quindi:
+\lstset{style=codestyle, language=c++}
+\lstinputlisting{../code/interrupts/debugger/debugger_int3_ss/debug1.cpp}
+Le funzioni assembler (\lstinline|a_debug()| e \lstinline|a_sstep()|) modificano il registro \lstinline|RFLAGS| per attivare e disattivare, rispettivamente, la modalità single-step, come segue: 
+\lstset{style=codestyle, language=assembler}
+\lstinputlisting{../code/interrupts/debugger/debugger_int3_ss/debug1.s}
+
+\end{itemize}
 
 \subsection{Riassunto sui tipi di interruzioni}
 Abbiamo quindi visto tutti i tipi di interruzione, di cui riportiamo una lista completa:
