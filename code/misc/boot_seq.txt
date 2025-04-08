@@ -1,0 +1,64 @@
+INF	-	Boot loader di Calcolatori Elettronici, v1.0
+INF	-	Memoria totale: 32 MiB, heap: 636 KiB
+INF	-	Argomenti: /home/luca/CE/lib/ce/boot.bin 
+INF	-	Il boot loader precedente ha caricato 3 moduli:
+INF	-	- mod[0]: start=10d000 end=117ba0 file=boot/0-sistema
+INF	-	 . seg[1]: off      0 vaddr           200000 size   6973 memsize   6973
+INF	-	 . seg[2]: off   7000 vaddr           207000 size   2f24 memsize   2f24
+INF	-	 . seg[3]: off   a000 vaddr           20a000 size    180 memsize  17404
+INF	-	- mod[1]: start=118000 end=11e5d8 file=boot/1-io
+INF	-	 . seg[1]: off      0 vaddr      10000000000 size   3ddf memsize   3ddf
+INF	-	 . seg[2]: off   4000 vaddr      10000004000 size   19ac memsize   19ac
+INF	-	 . seg[3]: off   6000 vaddr      10000006000 size    190 memsize    200
+INF	-	- mod[2]: start=11f000 end=1224b0 file=boot/2-utente
+INF	-	 . seg[1]: off      0 vaddr ffff800000000000 size   1a69 memsize   1a69
+INF	-	 . seg[2]: off   2000 vaddr ffff800000002000 size    974 memsize    974
+INF	-	 . seg[3]: off   3000 vaddr ffff800000003000 size     60 memsize   1690
+INF	-	Copio mod[0] agli indirizzi specificati nel file ELF:
+INF	-	- copiati   6973 byte da   10d000 a   200000
+INF	-	- copiati   2f24 byte da   114000 a   207000
+INF	-	- copiati    180 byte da   117000 a   20a000
+INF	-	- azzerati ulteriori 17284 byte
+INF	-	- entry point 20569b
+INF	-	Creata finestra sulla memoria centrale:  [            1000,          2000000)
+INF	-	Creata finestra per memory-mapped-IO:    [         2000000,        100000000)
+INF	-	Inizializzo l'APIC
+INF	-	Inizializzo video e tastiera
+INF	-	Attivo la modalita' a 64 bit e cedo il controllo a mod[0]...
+INF	0	Nucleo di Calcolatori Elettronici, v8.2
+INF	0	Numero di frame: 546 (M1) 7646 (M2)
+INF	0	Suddivisione della memoria virtuale:
+INF	0	- sis/cond [               0,       8000000000)
+INF	0	- sis/priv [      8000000000,      10000000000)
+INF	0	- io /cond [     10000000000,      18000000000)
+INF	0	- usr/cond [ffff800000000000, ffffc00000000000)
+INF	0	- usr/priv [ffffc00000000000,                0)
+INF	0	Carico il modulo I/O
+INF	0	- segmento sistema read-only  mappato a [     10000000000,      10000004000)
+INF	0	- segmento sistema read-only  mappato a [     10000004000,      10000006000)
+INF	0	- segmento sistema read/write mappato a [     10000006000,      10000007000)
+INF	0	- heap:                                 [     10000007000,      10000107000)
+INF	0	- entry point: _start [io.s:17]
+INF	0	Carico il modulo utente
+INF	0	- segmento utente  read-only  mappato a [ffff800000000000, ffff800000002000)
+INF	0	- segmento utente  read-only  mappato a [ffff800000002000, ffff800000003000)
+INF	0	- segmento utente  read/write mappato a [ffff800000003000, ffff800000005000)
+INF	0	- heap:                                 [ffff800000005000, ffff800000105000)
+INF	0	- entry point: _start [utente.s:15]
+INF	0	Frame liberi: 7116 (M2)
+INF	0	Heap del modulo sistema: aggiunto [100000, 200000)
+INF	0	Attivo il timer (DELAY=59659)
+INF	0	Creo il processo main I/O
+INF	0	Attendo inizializzazione modulo I/O...
+INF	1	Heap del modulo I/O: 100000B [0x10000007000, 0x10000107000)
+INF	1	Inizializzo la console (kbd + vid)
+INF	1	estern=2 entry=estern_kbd(unsigned long) [io.cpp:197](0) prio=1104 (tipo=50) liv=0 irq=1
+INF	1	kbd: tastiera inizializzata
+INF	1	vid: video inizializzato
+INF	1	Inizializzo la gestione dell'hard disk
+INF	1	bm: 00:01.1
+INF	1	estern=3 entry=estern_hd(unsigned long) [io.cpp:557](0) prio=1120 (tipo=60) liv=0 irq=14
+INF	1	Processo 1 terminato
+INF	0	Creo il processo main utente
+INF	0	Cedo il controllo al processo main utente...
+INF	4	Heap del modulo utente: 100000B [0xffff800000004690, 0xffff800000104690)

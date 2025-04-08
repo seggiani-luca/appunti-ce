@@ -506,6 +506,8 @@ e quindi mappando diverse regioni di memoria in base al loro scopo:
 	}
 
 	flog(LOG_INFO, "Creata finestra sulla memoria centrale:  [%16llx, %16llx)", DIM_PAGINA, mem_tot);
+	
+	// qui la memoria e' finita, tutto quello che segue interessa al bus PCI
 
 	// mappiamo tutti gli altri indirizzi, fino a 4GiB, settando sia PWT che PCD.
 	// questa zona di indirizzi e' utilizzata in particolare dall'APIC per mappare i propri registri.

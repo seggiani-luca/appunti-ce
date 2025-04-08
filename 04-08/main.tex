@@ -258,38 +258,64 @@ A ogni bus è associato un numero su 8 bit, col bus principale che si prende il 
 Per indirizzare un dispositivo usiamo invece 16 bit, disposti come:
 \begin{table}[H]
 	\center 
-	\begin{tabular} { c | c }
-		\bfseries Scopo & \bfseries Bit \\
+	\begin{tabular} { c | c c }
+		\bfseries Scopo & \bfseries Bit & \bfseries Max \\
 		\hline 
-		\textit{Bus} & 8 bit \\
-		\textit{Device} & 5 bit \\
-		\textit{Function} & 3 bit
+		\textit{Bus} & 8 bit & 256 \\
+		\textit{Device} & 5 bit & 32\\
+		\textit{Function} & 3 bit & 8
 	\end{tabular}
 \end{table}
 dove il numero di bus è lo stesso di prima.
-Il numero di funzione è reso necessario da schede che implementano più funzionalità, quali ad esempio le schede grafiche moderne, che si occupano anche dell'audio.
+
+Il numero di dispositivo differisce dal \textit{Device ID}, che vedremo fra poco, e deriva dalla posizione fisica del dispositivo nel bus.
+
+Il numero di funzione, invece, è reso necessario da schede che implementano più funzionalità, quali ad esempio le schede grafiche moderne, che si occupano anche dell'audio.
 In ogni caso, la funzione 0 deve essere implementata obbligatoriamente.
+
+Come vediamo dalla tabella, poi, si possono avere direttamente dalle codifiche fino a 256 bus diversi, con 32 dispositivi ciascuno e 8 funzioni per dispositivo.
 
 \subsubsection{Operazioni coi dispositivi}
 Veniamo quindi a come funzionano le operazioni più semplici sul Bus PCI.
 Ogni operazione sul PCI viene detta \textbf{transazione}, ed ha un \textbf{iniziatore} e un \textbf{obiettivo}, cioè il dispositivo che inizia la transazione e il dispositivo che gli risponde.
-L'iniziatore, notiamo, non sarà più il processore, ma il ponte ospite-PCI.
+
+L'iniziatore delle richieste che il nostro programma invia all'I/O, notiamo, non sarà più il processore, ma il ponte ospite-PCI.
+Inoltre, il bus PCI permette in verità che anche dispositivi esterni al ponte ospite-PCI facciano da iniziatori per transazioni, rendendo possibili meccanismi come il \textbf{DMA} (\textit{Direct Memory Access}). 
 
 Sul bus vero e proprio troviamo quindi:
 \begin{itemize}
 	\item La linea di \textbf{clock}, che tutte le interfacce vedono, originariamente intorno ai 33 MHz.
 		Sul fronte di salita del clock tutte le interfacce (idealmente) campionano i segnali sul bus;
-	\item \textbf{FRAME\#}, che "incornicia" la transazione corrente;
+	\item \textbf{FRAME\#}, che "incornicia" la transazione corrente: l'iniziatore lo alza quando la transazione è finita. Al massimo, a handshake avvenuto si possono avere un numero indefinito di cili di trasmissione da 4 byte: il FRAME si alza ad avvenuta trasmissione dell'ultimo fra questi;
 	\item \textbf{AD}, la linea \textit{condivisa} di indirizzo o dati, a 32 bit;
 	\item \textbf{C/BE\#}, \textit{controllo} e \textit{byte-enable}, codificano il tipo di operazione in fase di indirizzamento e fanno da byte-enable nel trasferimento dati;
-	\item \textbf{IRDY\#} e \textbf{TRDY\#}, supportano l'handshake nella fase di scambio dati;
-	\item \textbf{DEVSEL\#}, viene attivato dal dispositivo che riconosce, controllando \textbf{C} e l'indirizzo su \textbf{AD}, una chiamata a sé stesso, quindi dal presunto \textit{obiettivo}; 
+	\item \textbf{IRDY\#} e \textbf{TRDY\#}, rispettivamente \textit{Initiator Ready} e \textit{Target Ready}, supportano l'handshake nella fase di scambio dati: l'iniziatore abbassa IRDY quando è pronto a ricevere dati o quando inizia a scriverli, mentre l'obiettivo abbassa TRDY quando inizia a inviare dati o a riceverli;
+	\item \textbf{DEVSEL\#}, viene attivato dal dispositivo che riconosce, controllando C/BE e l'indirizzo su AD, una chiamata a sé stesso, quindi dal presunto \textit{obiettivo}; 
 	\item \textbf{STOP\#}, viene attivato dall'\textit{obiettivo} per terminare prematuramente una transazione.
 \end{itemize}
+dove il \# indica \textit{attivi bassi}.
 
-# screen transazione
+\newpage
 
-\subsubsection{Configurazione di dispositivi}
+Vediamo nel dettaglio due transazioni complete, di lettura e scrittura a 4 byte sequenziali, per capire a pieno la politica di handshake:
+\begin{itemize}
+	\item \textbf{Lettura:} 
+	\begin{center}
+		\includegraphics[scale=0.5]{../figures/pci_read.png}
+	\end{center}
+	Abbiamo che l'iniziatore come prima cosa porta il FRAME in basso e scrive l'indirizzo in AD e la modalità di indirizzamento in C/BE (qui \lstinline|0110|, che significa memoria).
+	L'obiettivo risponde abbassando DEVSEL, al cui l'iniziatore risponde abbassando IRDY. 
+	Fra l'abbassamento di IRDY e l'inizio della trasmissione (l'abbassamento di TRDY) c'è un ciclo di clock a vuoto, detto \textit{ciclo di turnaround}, che permette all'iniziatore di rilasciare AD e C/BE perchè l'obiettivo possa assumerne il controllo.
+	Si trasmettono quindi 16 byte in mandate da 4, con FRAME che torna alto al quarto byte per segnalare la fine dell'operazione, e le linee di handshake (IRDY, TRDY e DEVSEL) tornano alte.
+
+	\item \textbf{Scrittura:} 
+	\begin{center}
+		\includegraphics[scale=0.5]{../figures/pci_write.png}
+	\end{center}
+	Le cose si svolgono in maniera pressoché identica, con la differenza che non si necessita di un ciclo di turnaround in quanto l'iniziatore sarà l'unico a scrivere su AD e C/BE. Inoltre, possiamo immaginare che C/BE venga effettivamente modificato nel corso della scrittura, in quanto magari non vogliamo impattare tutti i byte ad ogni ciclo di scrittura.
+\end{itemize}
+
+\subsubsection{Spazio di configurazione}
 Per poter lavorare con il bus PCI, poi, introduciamo un nuovo spazio indirizzabile, quello di \textbf{configurazione}.
 Avremo quindi che il processore può indirizzare:
 \begin{itemize}
@@ -297,29 +323,24 @@ Avremo quindi che il processore può indirizzare:
 	\item \textbf{I/O};
 	\item \textbf{Configurazione}.
 \end{itemize}
-Questo spazio è rilevante solo all'avvio del calcolatore (all'esecuzione del BIOS), appunto per effettuare la configurazione delle interfacce PCI installate nel sistema.
+Questo spazio è rilevante solo all'avvio del calcolatore (all'esecuzione del BIOS, o come definito originariamente dallo standard, \textit{PCI BIOS}), appunto per effettuare la configurazione delle interfacce PCI installate nel sistema.
+Ogni bus PCI trasporta quindi messaggi in uno qualsiasi di questi 3 spazi, e si discrimina lo spazio specifico controllando cosa l'iniziatore mette in C/BE.
 
 Useremo lo spazio di I/O come sempre, ma i segnali del processore viaggeranno attraverso i vari ponti fino all'interfaccia desiderata.
-Per quanto riguarda i dispositivi mappati in memoria (si pensi al video), invece, ossiamo immaginare che all'avvio il ponte ospite-PCI deve solo sapere la dimensione della memoria RAM installata, in modo da rispondere da lì in poi solo agli indirizzi \textit{di memoria} posti al di \textit{sotto} di essa.
+Per quanto riguarda i dispositivi mappati in memoria (si pensi al video), invece, possiamo assumere che all'avvio il ponte ospite-PCI deve solo sapere la dimensione della memoria RAM installata, in modo da rispondere da lì in poi solo agli indirizzi \textit{di memoria} posti al di \textit{sotto} di essa.
+Avevamo visto questo meccanismo nella sezione 17.2, vedendo come il bootloader ignora la zona di memoria superiore alla RAM e dedicata al bus PCI.
 
-Tutto è comunque strutturato per essere trasparente al processore, e quindi invisibile lato software.
+Notiamo che tutto questo sistema è comunque strutturato per essere trasparente al processore, e quindi invisibile lato software.
 
-Ogni dispositivo sul bus è obbligato a fornire, per ogni funzione e ad una certa locazione predefinita, un numero di registri a righe da 32 bit, che devono contenere informazioni di configurazione.
-I primi due dati, su 16 bit (qunidi una riga), saranno il \textbf{Vendor ID} e il \textbf{Device ID}.
+\subsubsection{Configurazione dei dispositivi}
+Ogni dispositivo sul bus è obbligato a fornire, per ogni funzione e ad una certa locazione predefinita, un numero di registri che formano 64 righe da 32 bit, che devono contenere informazioni di configurazione.
+I primi due dati, su 16 bit (quindi una riga), saranno il \textbf{Vendor ID} e il \textbf{Device ID}, seguiti da altri dati che non ci sono immediatamente rilevanti:
 
-\begin{table}[h!]
-	\center 
-	\begin{tabular} { c | c c }
-		Device ID & Vendor ID & 0 \\
-		//& // & 4 \\
-		/	& // & 8 \\
-		... & ... & ...
-	\end{tabular}
-\end{table}
+\begin{center}
+	\includegraphics[scale=0.5]{../figures/config_space.png}
+\end{center}
 
-# c'è una tabella completa nella dispensa
-
-Il Vendor ID è determinato da un'autorità centrale (la \textit{PCI-SIG}): ad eesempio, il vendor ID della Intel è \lstinline|0x8086|.
+Il Vendor ID è determinato da un'autorità centrale (la \textit{PCI-SIG}): ad esempio, il vendor ID della Intel è \lstinline|0x8086|.
 
 Per permettere quindi alla CPU di configurare i dispositivi, cioè accedere ai loro registri di configurazione, il ponte ospite-PCI rende disponibili alla CPU due registri, entrambi su 32 bit:
 \begin{itemize}
@@ -328,21 +349,32 @@ Per permettere quindi alla CPU di configurare i dispositivi, cioè accedere ai l
 \end{itemize}
 Le operazioni effettuate dalla CPU attraverso questi due registri verranno trasformate automaticamente dal ponte ospite-PCI in operazioni di configurazione sui bus PCI.
 
+La posizione di questi registri in memoria è la seguente:
+\begin{table}[h!]
+	\center
+	\begin{tabular} { c | p{7cm} }
+		\lstinline|0xcf8| & \textbf{CAP}, \textit{Configuration Address Port} \\
+		\lstinline|0xcfc| & \textbf{CDP}, \textit{Configuration Data Port}	
+	\end{tabular}
+\end{table}
+
 Vediamo quindi cosa deve fare il BIOS per la configurazione dei dispositivi PCI, cioè per collocarne nello spazio di I/O o in memoria eventuali registri o porzioni di memoria, rispettivamente.
 Ogni dispositivo ha una \textbf{dimensione naturale} che occupa nello spazio, sia questo di memoria o di I/O.
 Fornisce quindi al processore un registro, detto \textbf{BAR} (\textit{Base Address Register}), che è scrivibile solo in parte: la parte meno significativa, infatti, è fissa a 0 e determina la dimensione naturale della regione che questo occuperà.
-Per rilevare la dimensione naturale, quindi, basta scrivere tutti 1 sul BAR e controllare quai bit vengono effettivamente modificati.
+Per rilevare la dimensione naturale, quindi, basta scrivere tutti 1 sul BAR e controllare quali bit vengono effettivamente modificati.
 
-Il \textbf{PCI BIOS} dovrà quindi controllare il BAR di tutte le interfacce, determinarne la dimensione naturale e trovare una regione libera nello spazio di I/O o in memoria, a seconda del tipo di dispositivo, dove collocarle.
+Il PCI BIOS dovrà quindi, attraverso i registri CAP e CDP, controllare il BAR di tutte le interfacce, determinarne la dimensione naturale e trovare una regione libera nello spazio di I/O o in memoria, a seconda del tipo di dispositivo, dove collocarle.
 
 \subsubsection{Interruzioni PCI}
 Per la gestione delle interruzioni, lo standard si ferma al dire che ogni dispositivo deve specificare per ogni funzione quale, di quattro linee di interruzione, tale funzione usa, in un apposito registro di configurazione.
 Queste linee sono dette \textbf{INTA}, \textbf{INTB}, \textbf{INTC} e \textbf{INTD}, e lo spazio di configurazione della funzione contiene il dato rispetto a quale linea usa in \textit{Intr. Pin}, con 0 che significa nessuna interruzione, 1 \textit{INTA}, e così via.
 
-# capisci sopra e ruzza con QEMU (dispositivi + fase di bootloader e caricamento nucleo)
-
 \subsection{I/O nel kernel}
-Vediamo quindi com'è implementata la gestione dell'I/O da parte del kernel.
+La maggior parte delle modifiche allo spazio di I/O apportate introducendo il bus PCI, abbiamo detto, sono effettivamente trasparenti al processore, se non per l'introduzione dei registri CAP e CDP, che devono essere comunque usati una volta sola nel PCI BIOS per la configurazione dei dispositivi.
+Possiamo quindi sfruttare la maggior parte delle funzioni definite in \lstinline|libce.h| per l'input/output senza particolari problemi.
+
+Vediamo quindi com'è implementata la gestione dell'I/O da parte del \textit{kernel}.
+
 Avevamo detto che la motivazione principale dietro lo sviluppo del sistema multiprogrammato era che questa permetteva l'interruzione in qualsiasi momento di un \textit{processo} in esecuzione, per permettere al processore di effettuare altre operazioni.
 Le interruzioni sollevate da i dispositivi esterni, vediamo, possono essere gli eventi che provocano tale cambio di contesto, e quindi la gestione del segnale in ingresso al sistema.
 
@@ -351,6 +383,6 @@ A questo punto, il sistema lo metterà in attesa e si occuperà di altro, riempi
 Una volta che il buffer sia riempito dal numero di caratteri richiesti dal processo, potrà quindi rimettere il processo in esecuzione, o nella lista pronti, e proseguire.
 
 Per tenere conto di più processi che possono voler leggere contemporaneamente, poi, ci dotiamo di un semaforo che tenga conto di chi sta usando quella risorsa in un certo momento.
-Un problema qui sarà come usare i semafori da lato sistema. Prossima lezione.
+Un problema qui sarà come usare i semafori da lato sistema, e verrà discusso nella prossima lezione.
 
 \end{document}

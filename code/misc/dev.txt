@@ -1,0 +1,5 @@
+00:00.0   8086:1237 [bridge device]							% ponte ospite-PCI
+00:01.0   8086:7000 [bridge device]							% ponte PCI-ISA			% southbridge PIIX3/4
+00:01.1   8086:7010 [mass storage controller]		% ponte PCI-ATA
+00:01.3   8086:7113 [bridge device]							% altre funzioni PIIX4
+00:02.0   1234:1111 [display controller]				% scheda VGA virtuale
