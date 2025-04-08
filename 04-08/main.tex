@@ -369,6 +369,40 @@ Il PCI BIOS dovrà quindi, attraverso i registri CAP e CDP, controllare il BAR d
 Per la gestione delle interruzioni, lo standard si ferma al dire che ogni dispositivo deve specificare per ogni funzione quale, di quattro linee di interruzione, tale funzione usa, in un apposito registro di configurazione.
 Queste linee sono dette \textbf{INTA}, \textbf{INTB}, \textbf{INTC} e \textbf{INTD}, e lo spazio di configurazione della funzione contiene il dato rispetto a quale linea usa in \textit{Intr. Pin}, con 0 che significa nessuna interruzione, 1 \textit{INTA}, e così via.
 
+\subsubsection{Struttura di un bus PCI}
+Per fissare i concetti di quest'ultima sezione, cerchiamo di esporre la struttura del calcolatore emulato su cui abbiamo studiato finora.
+Scriviamo quindi un programma che cerchi tutti i dispositivi presenti nella configurazione attuale, sfruttando le funzioni per la gestione dello spazio di configurazione definite in \lstinline|libce.h| (\lstinline|read_conf...()|):
+\lstset{style = codestyle, language=c++}
+\lstinputlisting{../code/pci/pci.cpp}
+e vediamo cosa stampa:
+\lstinputlisting{../code/misc/dev.txt}
+dove i commenti sono stati aggunti successivamente.
+
+\par\medskip
+
+Vediamo quindi che abbiamo 3 dispositivi, tutti sul bus 0 (bus principale):
+\begin{enumerate}
+	\item[0:] Il ponte ospite-PCI;
+	\item[1:] Un dispositivo che fornisce altri bus, che possiamo individuare nel \textit{southbridge} Intel \textbf{PIIX3} (\textit{PCI IDE ISA Xcelerator}). Questi sono:
+		\begin{enumerate}
+			\item[0:] Un bus ISA accessibile attraverso il ponte PCI-ISA, che emula le interfacce di tastiera e di timer dell'ISA;
+			\item[2:] Un bus ATA accessibile attraverso il ponte PCI-ATA, che permette l'interazione con il disco rigido (hard disk);
+			\item[3:] L'interfaccia \textbf{ACPI} (\textit{Advanced Configuration and Power Interface}), non di interesse a questo corso.
+		\end{enumerate}
+		Il southbridge si interfaccia poi con altri componenti, quali ad esempio l'APIC (ed emula il PIC sul bus ISA).
+	\item[2:] La scheda video VGA emulata di \textit{bochs}, un emulatore precedente a QEMU.
+\end{enumerate}
+
+\noindent
+\begin{minipage}{\textwidth}
+La struttura complessiva sarà quindi la seguente:
+
+\begin{center}
+	\includegraphics[scale=0.55]{../figures/pci_space.png}
+\end{center}
+
+\end{minipage}
+
 \subsection{I/O nel kernel}
 La maggior parte delle modifiche allo spazio di I/O apportate introducendo il bus PCI, abbiamo detto, sono effettivamente trasparenti al processore, se non per l'introduzione dei registri CAP e CDP, che devono essere comunque usati una volta sola nel PCI BIOS per la configurazione dei dispositivi.
 Possiamo quindi sfruttare la maggior parte delle funzioni definite in \lstinline|libce.h| per l'input/output senza particolari problemi.

@@ -593,6 +593,134 @@ Le uniche cose che vanno quindi create da zero ogni volta che si crea un process
 
 Avremo quindi che alla creazione di un nuovo processo dovremo creare una \textit{nuova} tabella di livello 4, che puntera alle tabelle di livello 3 delle parti condivise (memoria utente e sistema condivisa), già esistenti, e che creerà nuove tabelle di livello 3, e quindi di livello 2, ecc... per le parti private (pila utente e pila sistema).
 
+\subsubsection{Sequenza di boot}
+Possiamo quindi vedere nel dettaglio la sequenza di boot e avvio del kernel, anticipando alcuni dettagli sull I/O che verranno meglio spiegati nella sezione 18.
+Abbiamo che il processo di boot si autodocumenta stampando messaggi sulla porta seriale (attraverso la funzione di \lstinline|libce.h| chiamata \lstinline|flog()|).
+Vediamo quindi l'intero processo dividendolo in fasi e controllando cosa viene stampato.
+\begin{enumerate}
+	\item \textbf{Bootloader:}
+\begin{lstlisting}[language={},style=codestyle]	
+INF	-	Boot loader di Calcolatori Elettronici, v1.0
+INF	-	Memoria totale: 32 MiB, heap: 636 KiB
+INF	-	Argomenti: ~/CE/lib/ce/boot.bin 
+INF	-	Il boot loader precedente ha caricato 3 moduli:
+INF	-	- mod[0]: start=10d000 end=117ba0 file=boot/0-sistema
+INF	-	 . seg[1]: off      0 vaddr           200000 size   6973 memsize   6973
+INF	-	 . seg[2]: off   7000 vaddr           207000 size   2f24 memsize   2f24
+INF	-	 . seg[3]: off   a000 vaddr           20a000 size    180 memsize  17404
+INF	-	- mod[1]: start=118000 end=11e5d8 file=boot/1-io
+INF	-	 . seg[1]: off      0 vaddr      10000000000 size   3ddf memsize   3ddf
+INF	-	 . seg[2]: off   4000 vaddr      10000004000 size   19ac memsize   19ac
+INF	-	 . seg[3]: off   6000 vaddr      10000006000 size    190 memsize    200
+INF	-	- mod[2]: start=11f000 end=1224b0 file=boot/2-utente
+INF	-	 . seg[1]: off      0 vaddr ffff800000000000 size   1a69 memsize   1a69
+INF	-	 . seg[2]: off   2000 vaddr ffff800000002000 size    974 memsize    974
+INF	-	 . seg[3]: off   3000 vaddr ffff800000003000 size     60 memsize   1690
+INF	-	Copio mod[0] agli indirizzi specificati nel file ELF:
+INF	-	- copiati   6973 byte da   10d000 a   200000
+INF	-	- copiati   2f24 byte da   114000 a   207000
+INF	-	- copiati    180 byte da   117000 a   20a000
+INF	-	- azzerati ulteriori 17284 byte
+INF	-	- entry point 20569b
+INF	-	Creata finestra sulla memoria centrale:  [            1000,          2000000)
+INF	-	Creata finestra per memory-mapped-IO:    [         2000000,        100000000)
+INF	-	Inizializzo l'APIC
+INF	-	Inizializzo video e tastiera
+INF	-	Attivo la modalita' a 64 bit e cedo il controllo a mod[0]...
+\end{lstlisting}
+
+Inizia il bootloader, definito in \lstinline|libce.h|.
+Questo non è il primo bootloader che viene lanciato sulla macchina virtuale: QEMU dispone infatti del suo bootloader, che si occupa di ottenere informazioni di base sulla memoria (che vengono visualizzate alla riga 2) e caricare dal disco le immagini dei moduli da caricare (riga 3).
+
+Questi moduli sono, nel dettaglio:
+\begin{itemize}
+	\item Il modulo sistema, contenuto in \lstinline|mod[0]|;
+	\item Il modulo di I/O, contenuto in \lstinline|mod[1]|;
+	\item Il modulo utente, contenuto in \lstinline|mod[2]|.
+\end{itemize}
+Ogni modulo si porta dietro le sue sezioni definite nell'\textbf{ELF} (\textit{Executable and Linkable Format}), divise in 3 \textit{segmenti}:
+\begin{enumerate}
+	\item[1)] Il primo segmento è di tipo \textbf{testo} e contiene il codice del modulo, quindi va caricato in sola lettura;
+	\item[2)] Il secondo segmento è di tipo \textbf{dati in sola lettura}, quindi va caricato in sola lettura;
+	\item[3)] Il terzo segmento è di tipo \textbf{dati} (variabili inizializzate, fra cui lo spazio da dedicare a tutte le varie tabelle di descrittori, da cui la grande quantità di spazio \lstinline|memsize| da liberare senza scrivere), quindi va caricato in lettura/scrittura.
+\end{enumerate}
+
+Il bootloader si occupa quindi di caricare solo il primo modulo, quello sistema, da \lstinline|200000| in poi (righe 17-22), in quanto non sa come questo vorrà gestire I/O e utente.
+
+Procede quindi alla creazione della finestra FM, come abbiamo visto dalla \lstinline|crea_finestra_FM()| (righe 23 e 24).
+Infine, inizializza l'APIC alla riga 25, video e tastiera alla riga 26, semplicemente configurando i registri giusti (ad esempio attiva le interruzioni tastiera e disattiva il PIC), attiva la paginazione e cede il controllo a \lstinline|mod[0]|, cioè al modulo sistema, alla riga 27.
+
+\newpage
+
+\item \textbf{Kernel:}
+\begin{lstlisting}[language={}, style=codestyle]	
+INF	0	Nucleo di Calcolatori Elettronici, v8.2
+INF	0	Numero di frame: 546 (M1) 7646 (M2)
+INF	0	Suddivisione della memoria virtuale:
+INF	0	- sis/cond [               0,       8000000000)
+INF	0	- sis/priv [      8000000000,      10000000000)
+INF	0	- io /cond [     10000000000,      18000000000)
+INF	0	- usr/cond [ffff800000000000, ffffc00000000000)
+INF	0	- usr/priv [ffffc00000000000,                0)
+INF	0	Carico il modulo I/O
+INF	0	- segmento sistema read-only  mappato a [     10000000000,      10000004000)
+INF	0	- segmento sistema read-only  mappato a [     10000004000,      10000006000)
+INF	0	- segmento sistema read/write mappato a [     10000006000,      10000007000)
+INF	0	- heap:                                 [     10000007000,      10000107000)
+INF	0	- entry point: _start [io.s:17]
+INF	0	Carico il modulo utente
+INF	0	- segmento utente  read-only  mappato a [ffff800000000000, ffff800000002000)
+INF	0	- segmento utente  read-only  mappato a [ffff800000002000, ffff800000003000)
+INF	0	- segmento utente  read/write mappato a [ffff800000003000, ffff800000005000)
+INF	0	- heap:                                 [ffff800000005000, ffff800000105000)
+INF	0	- entry point: _start [utente.s:15]
+INF	0	Frame liberi: 7116 (M2)
+INF	0	Heap del modulo sistema: aggiunto [100000, 200000)
+INF	0	Attivo il timer (DELAY=59659)
+INF	0	Creo il processo main I/O
+INF	0	Attendo inizializzazione modulo I/O...
+\end{lstlisting}
+
+Il kernel prende quindi il controllo della macchina.
+A questo punto ha accesso alla finestra FM, quindi può controllare il numero di frame liberi e creare la partizione di memoria è l'albero sistema come definito in 17.3 (righe da 2 a 8).
+Notiamo come le regione che crea coincidono con la dimensione delle entrate di livello 4 (512 GiB ciascuna),
+Inoltre, notiamo il salto alla prima tabella utente, da $M_1$ a $M_2$ (indirizzi che iniziano con \lstinline|0xffff...|).
+
+Si inizia quindi il caricamento del modulo I/O (riga 9), mappato nella regione I/O condivisa, e del modulo utente (riga 15), mappato nella memoria utente condivisa.
+
+Si sceglie poi l'entry point del modulo utente (riga 20), si aumenta la dimensione dell'heap sistema (inizializzato dal primo bootloader) (riga 22), si attiva il timer (riga 23) e si crea il processo I/O (riga 24), che da qui in poi prenderà il controllo.
+
+\item \textbf{I/O:}
+\begin{lstlisting}[language={}, style=codestyle]	
+INF	1	Heap del modulo I/O: 100000B [0x10000007000, 0x10000107000)
+INF	1	Inizializzo la console (kbd + vid)
+INF	1	estern=2 entry=estern_kbd(unsigned long) [io.cpp:197](0) prio=1104 (tipo=50) liv=0 irq=1
+INF	1	kbd: tastiera inizializzata
+INF	1	vid: video inizializzato
+INF	1	Inizializzo la gestione dell'hard disk
+INF	1	bm: 00:01.1
+INF	1	estern=3 entry=estern_hd(unsigned long) [io.cpp:557](0) prio=1120 (tipo=60) liv=0 irq=14
+INF	1	Processo 1 terminato
+\end{lstlisting}
+
+Il modulo di I/O fa un pò di configurazione aggiuntiva: inizializza la console avviando il processo \lstinline|estern_kbd| (riga 3).
+In seguito, deve \textit{trovare} l'unico dispositivo finora non considerato, cioè l'hard disk (riga 6) che trova sul bus principale al dispositivo 1, funzione 1 (vedremo in seguito che questo corrisponde al bus PCI-ATA del PIIX3).
+Una volta trovato l'hard disk, lo attiva gestendolo col processo \lstinline|estern_hd| (riga 8).
+
+In seguito, termina e restituisce il controllo al kernel.
+
+\item \textbf{Utente:}
+\begin{lstlisting}[language={}, style=codestyle]	
+INF	0	Creo il processo main utente
+INF	0	Cedo il controllo al processo main utente...
+INF	4	Heap del modulo utente: 100000B [0xffff800000004690, 0xffff800000104690)
+\end{lstlisting}
+
+L'ultimo a prendere il controllo è l'utente, attraverso il kernel che lo attiva dall'entry point trovato prima.
+Da qui in poi ad eseguire è il codice che definiamo noi, interfacciandosi con le primitive di kernel e i processi di I/O.
+
+\end{enumerate}
+
 \subsection{Creazione di processi in memoria}
 Possiamo quindi vedere più nel dettaglio la creazione di processi, in particolare riguardo alla memoria e alle tabelle e traduzioni create.
 
