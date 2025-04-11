@@ -1,0 +1,336 @@
+
+\documentclass[a4paper,11pt]{article}
+\usepackage[a4paper, margin=8em]{geometry}
+
+% usa i pacchetti per la scrittura in italiano
+\usepackage[french,italian]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\frenchspacing 
+
+% usa i pacchetti per la formattazione matematica
+\usepackage{amsmath, amssymb, amsthm, amsfonts}
+
+% usa altri pacchetti
+\usepackage{gensymb}
+\usepackage{hyperref}
+\usepackage{standalone}
+
+\usepackage{colortbl}
+
+\usepackage{xstring}
+\usepackage{karnaugh-map}
+
+% imposta il titolo
+\title{Appunti Calcolatori Elettronici}
+\author{Luca Seggiani}
+\date{2025}
+
+% imposta lo stile
+% usa helvetica
+\usepackage[scaled]{helvet}
+% usa palatino
+\usepackage{palatino}
+% usa un font monospazio guardabile
+\usepackage{lmodern}
+
+\renewcommand{\rmdefault}{ppl}
+\renewcommand{\sfdefault}{phv}
+\renewcommand{\ttdefault}{lmtt}
+
+% circuiti
+\usepackage{circuitikz}
+\usetikzlibrary{babel}
+
+% testo cerchiato
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+            \node[shape=circle,draw,inner sep=2pt] (char) {#1};}}
+
+% disponi il titolo
+\makeatletter
+\renewcommand{\maketitle} {
+	\begin{center} 
+		\begin{minipage}[t]{.8\textwidth}
+			\textsf{\huge\bfseries \@title} 
+		\end{minipage}%
+		\begin{minipage}[t]{.2\textwidth}
+			\raggedleft \vspace{-1.65em}
+			\textsf{\small \@author} \vfill
+			\textsf{\small \@date}
+		\end{minipage}
+		\par
+	\end{center}
+
+	\thispagestyle{empty}
+	\pagestyle{fancy}
+}
+\makeatother
+
+% disponi teoremi
+\usepackage{tcolorbox}
+\newtcolorbox[auto counter, number within=section]{theorem}[2][]{%
+	colback=blue!10, 
+	colframe=blue!40!black, 
+	sharp corners=northwest,
+	fonttitle=\sffamily\bfseries, 
+	title=Teorema~\thetcbcounter: #2, 
+	#1
+}
+
+% disponi definizioni
+\newtcolorbox[auto counter, number within=section]{definition}[2][]{%
+	colback=red!10,
+	colframe=red!40!black,
+	sharp corners=northwest,
+	fonttitle=\sffamily\bfseries,
+	title=Definizione~\thetcbcounter: #2,
+	#1
+}
+
+% disponi codice
+\usepackage{listings}
+\usepackage[table]{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{codestyle}{
+		backgroundcolor=\color{black!5}, 
+		commentstyle=\color{codegreen},
+		keywordstyle=\bfseries\color{magenta},
+		numberstyle=\sffamily\tiny\color{black!60},
+		stringstyle=\color{green!50!black},
+		basicstyle=\ttfamily\footnotesize,
+		breakatwhitespace=false,         
+		breaklines=true,                 
+		captionpos=b,                    
+		keepspaces=true,                 
+		numbers=left,                    
+		numbersep=5pt,                  
+		showspaces=false,                
+		showstringspaces=false,
+		showtabs=false,                  
+		tabsize=2
+}
+
+\lstdefinestyle{shellstyle}{
+		backgroundcolor=\color{black!5}, 
+		basicstyle=\ttfamily\footnotesize\color{black}, 
+		commentstyle=\color{black}, 
+		keywordstyle=\color{black},
+		numberstyle=\color{black!5},
+		stringstyle=\color{black}, 
+		showspaces=false,
+		showstringspaces=false, 
+		showtabs=false, 
+		tabsize=2, 
+		numbers=none, 
+		breaklines=true
+}
+
+
+\lstdefinelanguage{assembler}{ 
+  keywords={AAA, AAD, AAM, AAS, ADC, ADCB, ADCW, ADCL, ADD, ADDB, ADDW, ADDL, AND, ANDB, ANDW, ANDL,
+        ARPL, BOUND, BSF, BSFL, BSFW, BSR, BSRL, BSRW, BSWAP, BT, BTC, BTCB, BTCW, BTCL, BTR, 
+        BTRB, BTRW, BTRL, BTS, BTSB, BTSW, BTSL, CALL, CBW, CDQ, CLC, CLD, CLI, CLTS, CMC, CMP,
+        CMPB, CMPW, CMPL, CMPS, CMPSB, CMPSD, CMPSW, CMPXCHG, CMPXCHGB, CMPXCHGW, CMPXCHGL,
+        CMPXCHG8B, CPUID, CWDE, DAA, DAS, DEC, DECB, DECW, DECL, DIV, DIVB, DIVW, DIVL, ENTER,
+        HLT, IDIV, IDIVB, IDIVW, IDIVL, IMUL, IMULB, IMULW, IMULL, IN, INB, INW, INL, INC, INCB,
+        INCW, INCL, INS, INSB, INSD, INSW, INT, INT3, INTO, INVD, INVLPG, IRET, IRETD, JA, JAE,
+        JB, JBE, JC, JCXZ, JE, JECXZ, JG, JGE, JL, JLE, JMP, JNA, JNAE, JNB, JNBE, JNC, JNE, JNG,
+        JNGE, JNL, JNLE, JNO, JNP, JNS, JNZ, JO, JP, JPE, JPO, JS, JZ, LAHF, LAR, LCALL, LDS,
+        LEA, LEAVE, LES, LFS, LGDT, LGS, LIDT, LMSW, LOCK, LODSB, LODSD, LODSW, LOOP, LOOPE,
+        LOOPNE, LSL, LSS, LTR, MOV, MOVB, MOVW, MOVL, MOVSB, MOVSD, MOVSW, MOVSX, MOVSXB,
+        MOVSXW, MOVSXL, MOVZX, MOVZXB, MOVZXW, MOVZXL, MUL, MULB, MULW, MULL, NEG, NEGB, NEGW,
+        NEGL, NOP, NOT, NOTB, NOTW, NOTL, OR, ORB, ORW, ORL, OUT, OUTB, OUTW, OUTL, OUTSB, OUTSD,
+        OUTSW, POP, POPL, POPW, POPB, POPA, POPAD, POPF, POPFD, PUSH, PUSHL, PUSHW, PUSHB, PUSHA, 
+				PUSHAD, PUSHF, PUSHFD, RCL, RCLB, RCLW, MOVSL, MOVSB, MOVSW, STOSL, STOSB, STOSW, LODSB, LODSW,
+				LODSL, INSB, INSW, INSL, OUTSB, OUTSL, OUTSW
+        RCLL, RCR, RCRB, RCRW, RCRL, RDMSR, RDPMC, RDTSC, REP, REPE, REPNE, RET, ROL, ROLB, ROLW,
+        ROLL, ROR, RORB, RORW, RORL, SAHF, SAL, SALB, SALW, SALL, SAR, SARB, SARW, SARL, SBB,
+        SBBB, SBBW, SBBL, SCASB, SCASD, SCASW, SETA, SETAE, SETB, SETBE, SETC, SETE, SETG, SETGE,
+        SETL, SETLE, SETNA, SETNAE, SETNB, SETNBE, SETNC, SETNE, SETNG, SETNGE, SETNL, SETNLE,
+        SETNO, SETNP, SETNS, SETNZ, SETO, SETP, SETPE, SETPO, SETS, SETZ, SGDT, SHL, SHLB, SHLW,
+        SHLL, SHLD, SHR, SHRB, SHRW, SHRL, SHRD, SIDT, SLDT, SMSW, STC, STD, STI, STOSB, STOSD,
+        STOSW, STR, SUB, SUBB, SUBW, SUBL, TEST, TESTB, TESTW, TESTL, VERR, VERW, WAIT, WBINVD,
+        XADD, XADDB, XADDW, XADDL, XCHG, XCHGB, XCHGW, XCHGL, XLAT, XLATB, XOR, XORB, XORW, XORL},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{\#},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\lstset{language=assembler, style=codestyle}
+
+% disponi sezioni
+\usepackage{titlesec}
+
+\titleformat{\section}
+	{\sffamily\Large\bfseries} 
+	{\thesection}{1em}{} 
+\titleformat{\subsection}
+	{\sffamily\large\bfseries}   
+	{\thesubsection}{1em}{} 
+\titleformat{\subsubsection}
+	{\sffamily\normalsize\bfseries} 
+	{\thesubsubsection}{1em}{}
+
+% tikz
+\usepackage{tikz}
+
+% float
+\usepackage{float}
+
+% grafici
+\usepackage{pgfplots}
+\pgfplotsset{width=10cm,compat=1.9}
+
+% disponi alberi
+\usepackage{forest}
+
+\forestset{
+	rectstyle/.style={
+		for tree={rectangle,draw,font=\large\sffamily}
+	},
+	roundstyle/.style={
+		for tree={circle,draw,font=\large}
+	}
+}
+
+% disponi algoritmi
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\makeatletter
+\renewcommand{\ALG@name}{Algoritmo}
+\makeatother
+
+% disponi numeri di pagina
+\usepackage{fancyhdr}
+\fancyhf{} 
+\fancyfoot[L]{\sffamily{\thepage}}
+
+\makeatletter
+\fancyhead[L]{\raisebox{1ex}[0pt][0pt]{\sffamily{\@title \ \@date}}} 
+\fancyhead[R]{\raisebox{1ex}[0pt][0pt]{\sffamily{\@author}}}
+\makeatother
+
+\begin{document}
+% sezione (data)
+\section{Lezione del 11-04-25}
+
+% stili pagina
+\thispagestyle{empty}
+\pagestyle{fancy}
+
+% testo
+Riprendiamo il discorso dell'I/O nel kernel.
+
+\subsection{Primitive di I/O}
+L'ipotesi generale è che una primitiva di I/O vuole trasferire dati da e alla memoria o da e allo spazio di I/O.
+La forma generica della primitive che vorremo fornire all'utente sarà quindi del tipo:
+\begin{itemize}
+	\item \textbf{Lettura:}
+\begin{lstlisting}[language=C++, style=codestyle]
+read_n(id, char* buf, natq quanti);
+\end{lstlisting}
+dove prendiamo la periferica \lstinline|id|, e leggiamo \lstinline|quanti| byte nel buffer \lstinline|buf|;
+	\item \textbf{Scrittura:}
+\begin{lstlisting}[language=C++, style=codestyle]
+write_n(id, const char* buf, natq quanti);
+\end{lstlisting}
+dove prendiamo la periferica \lstinline|id|, e scriviamo \lstinline|quanti| byte dal buffer \lstinline|buf|.
+\end{itemize}
+
+Avremo quindi che un certo processo $P_1$, a qualche punto della sua esecuzione, chiama una primitiva di I/O.
+A questo punto il controllo passa al kernel, che si occupa quindi di gestire l'operazione, sfruttando prima di tutto le istruzioni privilegiate a cui ha accesso \lstinline|IN|, \lstinline|OUT|, ecc... e le possibilità di scheduling di cui dispone per eseguire, mentre attende per la sincronia col dispositivo, altri processi (mettendo quindi quello che aveva chiamato la primitiva in attesa).
+Quando $P_1$ viene rimesso in esecuzione, non vede niente di diverso nel suo contesto privato, se non il fatto che il buffer contiene adesso l'input desiderato.
+
+Le primitive di sistema che gestiscono un certo dispositivo prendono il nome, abbiamo detto, di \textbf{driver}.
+
+Per realizzare il meccanismo di \textbf{sincronizzazione} sfruttiamo \textit{semaforo}: vogliamo che il processo chiami la \lstinline|sem_wait()| al momento dell'inizio dell'operazione di I/O, e che la \lstinline|sem_signal()| venga chiamata sullo stesso semaforo alla fine dell'operazione per segnalare che l'operazione è finita.
+
+Per realizzare invece la \textbf{mutua esclusione} si sfrutta il procedimento inverso: si parte con un semaforo inizializzato a \lstinline|sem_wait()|, e successivamente ogni processo che inizia un'operazione di I/O ne prende un \textit{"gettone"}, restituendolo a termine operazione, così che nessun'altro processo possa iniziare una operazione di I/O contemporaneamente a un altro.
+
+\subsubsection{Primitive nel kernel}
+Avevamo visto che il problema era usare le \lstinline|sem_wait()| e le \lstinline|sem_signal()| lato kernel, in quanto queste effettivamente interrompono routine sistema e ne violano l'atomicità.
+
+Vediamo però che, se ci limitiamo a non manipolare le strutture dati sistema nelle primitive \lstinline|read_n()| e \lstinline|write_n()|, non incappiamo nei rischi per cui avevamo introdotto l'atomicità delle routine sistema in primo luogo (le uniche a manipolare la lista processi saranno le \lstinline|read_n()| e \lstinline|write_n()|).
+
+L'unico problema resterà il discorso del contesto, che verrebbe salvato così 2 volte.
+Rimuoviamo allora le \lstinline|salva_stato| e \lstinline|carica_stato|.
+
+Trasformiamo quindi le primitive di I/O in primitive effettivamente \textit{non atomiche}, che eseguono nello stesso contesto (a livello di registri) del processo chiamante.
+
+\subsubsection{Driver}
+Vediamo come si svolge la situazione lato driver.
+Potremmo pensare iniziatutto di sfruttare un certo descrittore di \textit{dispositivo}, \lstinline|des_io|, realizzato ad esempio come:
+\begin{lstlisting}[language=C++, style=codestyle]	
+des_io {
+	char* buf;
+	natq quanti;
+
+	// semafori
+	natl mutex;
+	natl sync;
+};
+\end{lstlisting}
+cioè contenente tutte le informazioni necessarie al driver per soddisfare la richiesta del processo che ha richiesto l'I/O, scrivendo i dati ottenuti nel buffer \lstinline|buf| giusto all'indice \lstinline|quanti| (che incrementerà o decrementerà da solo) giusto.
+
+Notiamo che in ogni caso il buffer rappresenta i dati lato utente, cioè come vedremo contenuti nella memoria condivisa dei processi, e nulla riguardo al dispositivo vero e proprio: i suoi dati verranno ottenuti, a controllo d'interruzione, dalla primitiva stessa attraverso i suoi procedimenti specifici.
+In particolare, il buffer della \lstinline|read_n| sarà quello dove il driver dovrà scrivere cosa legge così che il processo lo veda, mentre il buffer (costante) della \lstinline|write_n| sarà quello dove il driver dovrà leggere per restituire poi al dispositivo.
+
+La domanda è se il driver può chiamare le primitive semaforo che gestiscono i semafori di indice \lstinline|mutex| e \lstinline|sync|.
+In particolare, avevamo detto che il driver avrà il compito di chiamare la \lstinline|sem_signal(sync)| per segnalare al processo che l'operazione di I/O è finita.
+Abbiamo però il problema della \lstinline|salva_stato|, che andrà a sovrascrivere, quando chiamata da una routine sistema (e quindi anche da un driver) il contesto del processo in \lstinline|esecuzione| (che potrebbe essere arbitrario) con i valori correnti della routine sistema, facendo evidentemente danni. 
+
+Potremmo allora pensare di usare direttamente la sua implementazione, cioè la \lstinline|c_sem_signal()|.
+Il problema sarà che la \lstinline|c_sem_signal()| usa la \lstinline|sem_valido()| per controllare la validità del semaforo cercato, usando la \lstinline|liv_chiamante()|, che non sarebbe significativa se chiamata senza passare da un interruzione (sfrutta il CS salvato presumibilmente in pila dalla \lstinline|INT|).
+Saremo quindi costretti a replicare in qualche modo la \lstinline|c_sem_signal()| nel codice del driver.
+
+In questo modo, il codice del driver sarà effettivamente atomico.
+Questo potrebbe essere problematico in quanto ci impedisce di gestire interruzioni innestate a priorità più alta.
+
+Altre questioni di sicurezza potrebbero riguardare i cosiddetti \textbf{cavalli di Troia}: un utente potrebbe sfruttare la \lstinline|write_n()| per scrivere in locazioni di memoria arbitrarie, dove lui da solo non avrebbe potuto scrivere.
+Si rende quindi necessario controllare gli indirizzi passati alle primitive di I/O lato software.
+Vediamo che, a causa della grande quantità di problemi che questo controllo solleva (ad esempio, indirizzi che potrebbero fare wraparound, indirizzi virtuali non cointigui che potrebbero passare per traduzioni livello sistema, o addirittura indirizzi non tradotti che causerebbero page fault e quindi eccezioni che non possiamo gestire in routine sistema, ecc...), siamo costretti a controllare tutte le traduzioni.
+
+Inoltre, vogliamo controllare di non accedere allo spazio di memoria privata del processo, in quanto quando il driver sarà in esecuzione questo conterrà la memoria privata del processo attualmente in esecuzione, e non del processo che ha effettivamente chiamato la primitiva.
+
+Notiamo che questa era comunque una necessità, in quanto vogliamo che il processo passi per forza un buffer corrispondente ad un indirizzo in memoria condivisa, appunto perchè chiedere alla primitiva driver di scrivere nel suo spazio privato sarebbe complesso (a meno di non passare un indirizzo fisico, e quindi passare dalla finestra FM, cosà però abbastanza complicata dal punto di vista dei controlli).
+
+Scriveremo quindi una funzione di controllo del buffer del genere:
+\begin{lstlisting}[language=C++, style=codestyle]	
+extern "C" bool c_access(vaddr begin, natq dim, bool writeable, bool shared = true)
+{
+	esecuzione->contesto[I_RAX] = false;
+
+	if (!tab_iter::valid_interval(begin, dim))
+		return false;
+
+	if (shared && (!in_utn_c(begin) || (dim > 0 && !in_utn_c(begin + dim - 1))))
+		return false;
+
+	// usiamo un tab_iter per percorrere tutto il sottoalbero relativo
+	// alla traduzione degli indirizzi nell'intervallo [begin, begin+dim).
+	for (tab_iter it(esecuzione->cr3, begin, dim); it; it.next()) {
+		tab_entry e = it.get_e();
+
+		// interrompiamo il ciclo non appena troviamo qualcosa che non va
+		if (!(e & BIT_P) || !(e & BIT_US) || (writeable && !(e & BIT_RW)))
+			return false;
+	}
+	esecuzione->contesto[I_RAX] = true;
+	return true;
+}
+\end{lstlisting}
+che fa prima i controlli detti su intervallo e regione processi, e poi percorre l'intero albero di traduzione, controllando che ogni traduzione sia scrivibile.
+
+\end{document}
