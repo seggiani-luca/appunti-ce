@@ -241,23 +241,29 @@ La forma generica della primitive che vorremo fornire all'utente sarà quindi de
 \begin{lstlisting}[language=C++, style=codestyle]
 read_n(id, char* buf, natq quanti);
 \end{lstlisting}
-dove prendiamo la periferica \lstinline|id|, e leggiamo \lstinline|quanti| byte nel buffer \lstinline|buf|;
+dove prendiamo la periferica \lstinline|id|, e la usiamo per leggere \lstinline|quanti| byte e inserirli nel buffer (in memoria condivisa) \lstinline|buf|;
 	\item \textbf{Scrittura:}
 \begin{lstlisting}[language=C++, style=codestyle]
 write_n(id, const char* buf, natq quanti);
 \end{lstlisting}
-dove prendiamo la periferica \lstinline|id|, e scriviamo \lstinline|quanti| byte dal buffer \lstinline|buf|.
+dove prendiamo la periferica \lstinline|id|, e ci scriviamo \lstinline|quanti| byte dal buffer (in memoria condivisa) \lstinline|buf|.
 \end{itemize}
 
 Avremo quindi che un certo processo $P_1$, a qualche punto della sua esecuzione, chiama una primitiva di I/O.
 A questo punto il controllo passa al kernel, che si occupa quindi di gestire l'operazione, sfruttando prima di tutto le istruzioni privilegiate a cui ha accesso \lstinline|IN|, \lstinline|OUT|, ecc... e le possibilità di scheduling di cui dispone per eseguire, mentre attende per la sincronia col dispositivo, altri processi (mettendo quindi quello che aveva chiamato la primitiva in attesa).
 Quando $P_1$ viene rimesso in esecuzione, non vede niente di diverso nel suo contesto privato, se non il fatto che il buffer contiene adesso l'input desiderato.
 
+\par\smallskip
+
 Le primitive di sistema che gestiscono un certo dispositivo prendono il nome, abbiamo detto, di \textbf{driver}.
 
-Per realizzare il meccanismo di \textbf{sincronizzazione} sfruttiamo \textit{semaforo}: vogliamo che il processo chiami la \lstinline|sem_wait()| al momento dell'inizio dell'operazione di I/O, e che la \lstinline|sem_signal()| venga chiamata sullo stesso semaforo alla fine dell'operazione per segnalare che l'operazione è finita.
+\begin{enumerate}
+	\item 
+Per realizzare il meccanismo di \textbf{sincronizzazione} sfruttiamo \textit{semaforo}: vogliamo che il la primitiva di I/O chiami la \lstinline|sem_wait()| al momento dell'inizio dell'operazione di I/O, e che la \lstinline|sem_signal()| venga chiamata sullo stesso semaforo alla fine dell'operazione per segnalare che l'operazione è finita (dal driver stesso).
 
-Per realizzare invece la \textbf{mutua esclusione} si sfrutta il procedimento inverso: si parte con un semaforo inizializzato a \lstinline|sem_wait()|, e successivamente ogni processo che inizia un'operazione di I/O ne prende un \textit{"gettone"}, restituendolo a termine operazione, così che nessun'altro processo possa iniziare una operazione di I/O contemporaneamente a un altro.
+	\item
+Per realizzare invece la \textbf{mutua esclusione} si sfrutta il procedimento inverso: si parte con un semaforo inizializzato a \lstinline|sem_wait()|, e successivamente ogni processo che inizia un'operazione di I/O ne prende un \textit{"gettone"}, restituendolo a termine operazione, così che nessun processo possa iniziare una operazione di I/O contemporaneamente a un altro.
+\end{enumerate}
 
 \subsubsection{Primitive nel kernel}
 Avevamo visto che il problema era usare le \lstinline|sem_wait()| e le \lstinline|sem_signal()| lato kernel, in quanto queste effettivamente interrompono routine sistema e ne violano l'atomicità.
@@ -284,37 +290,179 @@ des_io {
 \end{lstlisting}
 cioè contenente tutte le informazioni necessarie al driver per soddisfare la richiesta del processo che ha richiesto l'I/O, scrivendo i dati ottenuti nel buffer \lstinline|buf| giusto all'indice \lstinline|quanti| (che incrementerà o decrementerà da solo) giusto.
 
+\begin{itemize}
+	\item \lstinline|buf| e \lstinline|quanti| vengono forniti alla primitiva di I/O e cambiano per ogni richiesta da parte dei processi.
+	\item \lstinline|mutex| e \lstinline|sync| sono gli indici dei semafori e vengono inizializzati una sola volta per ogni dispositivo.
+		In particolare, stando a quanto abbiamo detto nello scorso paragrafo, vorremo:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// sync si inizializza a 0
+if ( (ce->sync = sem_ini(0)) == 0xFFFFFFFF) { 
+	flog(LOG_WARN, "ce%d: impossibile allocare sync", next_ce);
+	break;
+}
+// mutex si inizializza a 1
+if ( (ce->mutex = sem_ini(1)) == 0xFFFFFFFF) { 
+	flog(LOG_WARN, "ce%d: impossibile allocare mutex", next_ce);
+	break;
+}
+\end{lstlisting}
+\end{itemize}
+
 Notiamo che in ogni caso il buffer rappresenta i dati lato utente, cioè come vedremo contenuti nella memoria condivisa dei processi, e nulla riguardo al dispositivo vero e proprio: i suoi dati verranno ottenuti, a controllo d'interruzione, dalla primitiva stessa attraverso i suoi procedimenti specifici.
 In particolare, il buffer della \lstinline|read_n| sarà quello dove il driver dovrà scrivere cosa legge così che il processo lo veda, mentre il buffer (costante) della \lstinline|write_n| sarà quello dove il driver dovrà leggere per restituire poi al dispositivo.
 
+Chiamando \lstinline|proc| la primitiva che si occupa di realizzare la richiesta I/O (nell'esempio in 19.1, potrebbe essre sia \lstinline|read_n| che \lstinline|write_n|), e \lstinline|driver| la primitiva del driver, si ha che i semafori di un certo descrittore \lstinline|ce| si evolvono quindi come segue (in relazione alla lista di 19.1):
+\begin{enumerate}
+	\item 
+	\lstinline|proc| aspetta che arrivi \lstinline|ce->mutex| (2);
+	\item
+	\lstinline|proc| prende \lstinline|ce->sync| e viene messo in attesa (1);
+	\item
+	\lstinline|driver| restituisce \lstinline|ce->sync| (1);
+	\item
+	\lstinline|proc| restituisce \lstinline|ce->mutex| (2)
+\end{enumerate}
+e che quindi \lstinline|proc| e \lstinline|driver| sono strutturati pressappoco come segue, prima \lstinline|proc|:
+\begin{lstlisting}[language=C++, style=codestyle]	
+extern "C" void proc(natl id, ...) {
+	// ottieni ce
+	sem_wait(ce->mutex); // (2)
+	sem_wait(ce->sync); // (1)
+	
+	// qui saremo messi in attesa, e' compito di driver restituire ce->sync
+	
+	sem_signal(ce->mutex); // (2)
+}
+\end{lstlisting}
+e poi \lstinline|driver|:
+\begin{lstlisting}[language=C++, style=codestyle]	
+extern "C" void driver() {
+	// ottieni ce
+
+	// intanto restituirai un byte
+	ce->quanti--;
+
+	if(ce-quanti == 0) {
+		// appunto, restituiamo
+		c_sem_signal(ce->sync); (1)
+	}
+
+	// qui gestiamo l'interruzione esterna del dispositivo
+	// e restituiamo effettivamente il byte
+}
+\end{lstlisting}
+
+Nei prossimi paragrafi andremo via via a definire i dettagli tecnici e raffinare l'implementazione.
+
+\subsubsection{Driver e primitive}
 La domanda è se il driver può chiamare le primitive semaforo che gestiscono i semafori di indice \lstinline|mutex| e \lstinline|sync|.
 In particolare, avevamo detto che il driver avrà il compito di chiamare la \lstinline|sem_signal(sync)| per segnalare al processo che l'operazione di I/O è finita.
 Abbiamo però il problema della \lstinline|salva_stato|, che andrà a sovrascrivere, quando chiamata da una routine sistema (e quindi anche da un driver) il contesto del processo in \lstinline|esecuzione| (che potrebbe essere arbitrario) con i valori correnti della routine sistema, facendo evidentemente danni. 
 
-Potremmo allora pensare di usare direttamente la sua implementazione, cioè la \lstinline|c_sem_signal()|.
+Potremmo allora pensare di usare direttamente la sua implementazione, cioè chiamare la \lstinline|c_sem_signal()|.
 Il problema sarà che la \lstinline|c_sem_signal()| usa la \lstinline|sem_valido()| per controllare la validità del semaforo cercato, usando la \lstinline|liv_chiamante()|, che non sarebbe significativa se chiamata senza passare da un interruzione (sfrutta il CS salvato presumibilmente in pila dalla \lstinline|INT|).
-Saremo quindi costretti a replicare in qualche modo la \lstinline|c_sem_signal()| nel codice del driver.
+In particolare, vediamo che si ha:
+\begin{lstlisting}[language=C++, style=codestyle]	
+extern "C" void c_sem_signal(natl sem)
+{
+	// una primitiva non deve mai fidarsi dei parametri
+	if (!sem_valido(sem)) {
+		flog(LOG_WARN, "semaforo errato: %u", sem);
+		c_abort_p();
+		return;
+	}
 
-In questo modo, il codice del driver sarà effettivamente atomico.
+	// corpo di esecuzione effettiva, alla 11.2.1 
+}
+\end{lstlisting}
+percorrendo il backtrace al contrario:
+\begin{lstlisting}[language=C++, style=codestyle]	
+bool sem_valido(natl sem)
+{
+	// dal momento che i semafori non vengono mai deallocati,
+	// un semaforo e' valido se e solo se il suo indice e' inferiore
+	// al numero dei semafori allocati
+
+	int liv = liv_chiamante(); // qui vogliamo distinguere il contesto
+	return sem < sem_allocati_utente ||
+		(liv == LIV_SISTEMA && sem - MAX_SEM < sem_allocati_sistema);
+}
+\end{lstlisting}
+e infine:
+\begin{lstlisting}[language=C++, style=codestyle]	
+int liv_chiamante()
+{
+	// (ci aspettiamo che) salva_stato ha salvato il puntatore 
+	// alla pila sistema subito dopo l'invocazione della INT
+	natq* pila = ptr_cast<natq>(esecuzione->contesto[I_RSP]);
+
+	// -> peccato che nessuno ha chiamato la salva_stato!
+	//    siamo passati da c_sem_signal() e non a_sem_signal()
+
+	// la seconda parola dalla cima della pila contiene il livello
+	// di privilegio che aveva il processore prima della INT
+	return pila[1] == SEL_CODICE_SISTEMA ? LIV_SISTEMA : LIV_UTENTE;
+}
+\end{lstlisting}
+
+Saremo quindi costretti a replicare in qualche modo la \lstinline|c_sem_signal()| nel codice del driver, cioè dire:
+\begin{lstlisting}[language=C++, style=codestyle]	
+extern "C" void c_driver() {
+	// ottieni ce
+
+	// intanto restituirai un byte
+	ce->quanti--;
+
+	if(ce-quanti == 0) {
+		// qui (!) facciamo la sem_signal()
+		des_sem *s = &array_dess[ce->sync];
+
+		s->counter = 0;
+		des_proc* lavoro = rimozione_lista(s->pointer);
+		inspronti();	// preemption
+		inserimento_lista(pronti, lavoro);
+		schedulatore();	// preemption
+	}
+
+	// qui gestiamo l'interruzione esterna del dispositivo
+	// e restituiamo effettivamente il byte
+}
+\end{lstlisting}
+
+In questo modo, il codice del driver dovrà essere effettivamente atomico (\lstinline|c_sem_signal()| manipola le liste di processi, che sono strutture dati sensibili).
 Questo potrebbe essere problematico in quanto ci impedisce di gestire interruzioni innestate a priorità più alta.
+Decidiamo di continuare con questa limitazione.
 
+\subsubsection{Cavalli di Troia}
 Altre questioni di sicurezza potrebbero riguardare i cosiddetti \textbf{cavalli di Troia}: un utente potrebbe sfruttare la \lstinline|write_n()| per scrivere in locazioni di memoria arbitrarie, dove lui da solo non avrebbe potuto scrivere.
 Si rende quindi necessario controllare gli indirizzi passati alle primitive di I/O lato software.
-Vediamo che, a causa della grande quantità di problemi che questo controllo solleva (ad esempio, indirizzi che potrebbero fare wraparound, indirizzi virtuali non cointigui che potrebbero passare per traduzioni livello sistema, o addirittura indirizzi non tradotti che causerebbero page fault e quindi eccezioni che non possiamo gestire in routine sistema, ecc...), siamo costretti a controllare tutte le traduzioni.
 
-Inoltre, vogliamo controllare di non accedere allo spazio di memoria privata del processo, in quanto quando il driver sarà in esecuzione questo conterrà la memoria privata del processo attualmente in esecuzione, e non del processo che ha effettivamente chiamato la primitiva.
+Vediamo i problemi che vogliamo controllare:
+\begin{itemize}
+	\item Gli indirizzi potrebbero fare wraparound, costringendo il driver a saltare da $M_2$ a $M_1$, e quindi sovrascrivendo più memoria di quanta probabilmente si voleva impattare;
+	\item Regioni di indirizzi virtuali (di per sé contigue) che potrebbero avere flag di scrivibilità non contigui (cioè si potrebbero incontrare flag di traduzioni modalità sistema o sola lettura);
+	\item Indirizzi virtuali non tradotti, che quindi causerebbero page fault (e visto che abbiamo detto il driver deve essere atomico, non possiamo permetterci nessuna eccezione);
+	\item Non vogliamo accedere alla memoria privata del processo richiedente l'I/O, perché l'albero di traduzione caricato al momento dell'esecuzione del driver non sarà sicuramente il suo (è stato messo in attesa dalla primitiva), ma quello di un altro processo (quello in \lstinline|esecuzione|) con la sua memoria privata (che sicuramente non vogliamo toccare). 
+\end{itemize}
 
+L'unica regione valida resta quindi quella che avevamo già detto, cioè la \textbf{memoria condivisa}.
 Notiamo che questa era comunque una necessità, in quanto vogliamo che il processo passi per forza un buffer corrispondente ad un indirizzo in memoria condivisa, appunto perchè chiedere alla primitiva driver di scrivere nel suo spazio privato sarebbe complesso (a meno di non passare un indirizzo fisico, e quindi passare dalla finestra FM, cosà però abbastanza complicata dal punto di vista dei controlli).
 
-Scriveremo quindi una funzione di controllo del buffer del genere:
+Per tutti questi controlli, quindi, siamo quindi costretti a controllare tutte le traduzioni.
+
+Scriveremo quindi un'apposita funzione di controllo del buffer del tipo:
 \begin{lstlisting}[language=C++, style=codestyle]	
+// restituisce true (nell'I_RAX del contesto) se la regione va bene,
+// false altrimenti
 extern "C" bool c_access(vaddr begin, natq dim, bool writeable, bool shared = true)
 {
 	esecuzione->contesto[I_RAX] = false;
 
+	// l'intervallo e' valido?
 	if (!tab_iter::valid_interval(begin, dim))
 		return false;
 
+	// siamo nella regione di memoria utente condivisa?
 	if (shared && (!in_utn_c(begin) || (dim > 0 && !in_utn_c(begin + dim - 1))))
 		return false;
 
@@ -332,5 +480,128 @@ extern "C" bool c_access(vaddr begin, natq dim, bool writeable, bool shared = tr
 }
 \end{lstlisting}
 che fa prima i controlli detti su intervallo e regione processi, e poi percorre l'intero albero di traduzione, controllando che ogni traduzione sia scrivibile.
+
+\subsubsection{Implementazione di un driver}
+Vediamo quindi l'implementazione di un semplice driver per un dispositivo fasullo cioè il dispositivo \textit{CE}, dotato di soli 3 registri (e relative porte):
+\begin{table}[h!]
+	\center
+	\begin{tabular} { p{1.5cm} | p{7cm} }
+		\lstinline|0x?? + 0| & \textbf{CTL}, \textit{Control Register} \\
+		\lstinline|0x?? + 4| & \textbf{STR}, \textit{Status Register} \\
+		\lstinline|0x?? + 8| & \textbf{RBR}, \textit{Receive Buffer Register} \\
+	\end{tabular}
+\end{table}
+
+Il \lstinline|0x??| è dato dal fatto che il dispositivo è montato sul bus PCI, ergo per disporre i suoi registri nello spazio di I/O bisogna regolarne il \textbf{BAR}.
+
+In ogni caso, il funzionamento del dispositivo è banale: si limita a controllare periodicamente CTL, e quando vi trova 1, stampare un carattere alfanumerico.
+
+Disponiamo per tale dispositivo il descrittore:
+\begin{lstlisting}[language=C++, style=codestyle]	
+struct des_ce {
+	// i registri, variabili perche in PCI
+	ioaddr iCTL, iSTS, iRBR;
+
+	// gia' visto
+	char *buf;
+	natl quanti;
+	natl sync;
+	natl mutex;
+};
+\end{lstlisting}
+
+Avremo quindi una funzione \lstinline|ce_init()|, che viene lanciata all'avvio del kernel, e che si occupa di impostare il BAR e i descrittori dispositivo. 
+
+A questo punto, forniremo all'utente la primitiva \lstinline|c_ceread_n()|, per la lettura:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// questa non può toccare i descrittori di processo, praticamente e' una chiamata di funzione,
+// quindi e' interrompibile (non atomica)
+extern "C" void c_ceread_n(natl id, char *buf, natl quanti)
+{
+	if (id == id_ce) {
+		flog(LOG_WARN, "ce non riconosciuto: %d", id);
+		abort_p(); // e' quella normale, nessuno ha ancora chiamato salva_stato
+	}
+
+	if (!quanti)
+		return;
+
+	if (!c_access(reinterpret_cast<vaddr>(buf), quanti, true, false)) {
+		flog(LOG_WARN, "buf non valido\n");
+		abort_p();
+	}
+
+	des_ce *ce = ce;
+	sem_wait(ce->mutex);
+	ce->buf = buf;
+	ce->quanti = quanti;
+	outputb(1, ce->iCTL); // qui attivi 
+	sem_wait(ce->sync);
+	sem_signal(ce->mutex);
+}
+\end{lstlisting}
+
+mentre imposteremo nella IDT una funzione assembly che chiama il seguente gestore per l'interruzione esterna associata a \textit{CE}:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// questa e' atomica, e reimplementa in qualche modo sem_signal()
+extern "C" void c_driver_ce(int id)
+{
+	// qui otteniamo il descrittore di dispositivo
+	des_ce *ce = ce;
+	ce->quanti--;
+
+	// qui si termina se si e' finito
+	if (ce->quanti == 0) {
+		// qui disattiviamo le interruzioni
+		outputb(0, ce->iCTL);
+		
+		// qui (!) facciamo la sem_signal()
+		des_sem *s = &array_dess[ce->sync];
+
+		s->counter = 0;
+		des_proc* lavoro = rimozione_lista(s->pointer);
+		inspronti();	// preemption
+		inserimento_lista(pronti, lavoro);
+		schedulatore();	// preemption
+	}
+
+	// qui gestiamo effettivamente il dispositivo 
+
+	// questa va fatta dopo che disattivi le interruzioni,
+	// altrimenti potresti avere un'altra interruzione sotto (nell'IRR)
+	char b = inputb(ce->iRBR);
+	*ce->buf = b;
+	ce->buf++;
+}
+\end{lstlisting}
+dove notiamo il dettaglio che la gestione del dispositivo si fa dopo aver disattivato, eventualmente, il dispositivo impostando CTL a 0.
+In caso contrario, si potrebbe ottenere una nuova interruzione, messa in IRR dall'APIC, che andrebbe erroneamente a richiamare il driver una volta di troppo rispetto a quelle previste.
+
+Lato assembler, il driver verrà impostato come segue:
+\begin{lstlisting}[language=assembler, style=codestyle]	
+% setup IDT
+carica_gate	INTR_TIPO_CE	a_driver_ce	LIV_SISTEMA
+\end{lstlisting}
+dove la \lstinline|a_driver_ce| è:
+\begin{lstlisting}[language=assembler, style=codestyle]	
+a_driver_ce:
+	call salva_stato
+	movq $0, %rdi
+	call c_driver_ce
+	call apic_send_EOI
+	call carica_stato
+	iretq
+\end{lstlisting}
+
+La \lstinline|c_ceread_n()| avrà invece la controparte assembler:
+\begin{lstlisting}[language=assembler, style=codestyle]	
+	.extern	c_ceread_n
+a_ceread_n:
+	% qui nessuno chiama salva_stato
+	call c_ceread_n
+	% qui nessuno chiama carica_stato
+	iretq
+\end{lstlisting}
+Dove notiamo ancora meglio che praticamente si ha una semplice chiamata di funzione che ritorna con la \lstinline|IRETQ| invece che con la \lstinline|RET|. 
 
 \end{document}
