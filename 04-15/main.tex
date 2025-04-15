@@ -231,47 +231,337 @@
 \pagestyle{fancy}
 
 % testo
-\subsection{Gestione di primitive di I/O quasi atomiche nel kernel reale}
-Abbiamo che quanto abbiamo visto finora sulle primitive di I/O non corrisponde propriamente al kernel reale: avevamo infatti il problema di dover realizzare primitive \textit{"quasi"} atomiche, nel senso che potevano essere interrotte
-dalle primitive semaforiche (che usavano per sincronizzazione e mutua esclusione), ma avevano anche accesso alle strutture dati sistema (in particolare le code processi), per cui bisogna fare attenzione nella loro implementazione di non toccare parti sensibili, in modo da evitare errori di difficile rilevazione.
+Avevamo quindi visto come si era introdotto un nuovo modulo, il modulo di I/O, che aveva il compito di gestire da gestire l'I/O da livello sistema, fornendo primitive di I/O e processi (driver) al modulo utente e sfruttando primitive, sia accessibili a livello utente che accessibili a livello sistema (quindi solo a lui) del sistema.
 
-Possiamo migliorare leggermente questa architettura separando il \textbf{modulo} sistema (inteso come un insieme di file compilati e collegati insieme) dal modulo di I/O, cioè stabilendo la seguente distinzione:
+\subsubsection{Cambi di contesto a processi esterni}
+Avremo quindi che in un dato momento sulla macchina sono in esecuzione i processi utente ($P_1$, $P_2$, ecc...) e i processi \textit{esterni} di I/O.
+Assumiamo per adesso di avere un solo processo di I/O, chiamato appunto $IO$.
+
+Nel momento in cui uno dei processi utente (diciamo $P_1$) chiama una primitiva di I/O, come ad esempio la \lstinline|read_n()| già nominata, viene messo in attesa e si mettono in esecuzione altri processi.
+Di qui in poi, all'arrivo di un'interruzione esterna relativa all'operazione di I/O corrente, viene eseguito l'handler (definito in sistema) e quindi da questo messo in esecuzione il processo $IO$, che riempie ad ogni chiamata il buffer, e all'ultima chiamata rimette in lista pronti (attraverso i meccanismi implementati coi semafori visti in 19.1.5) il processo $P_1$.
+
+\subsubsection{Implementazione degli handler}
+Un'idea di base potrebbe essere quella di dedicare un \textit{processo esterno} ad ogni tipo di interruzione esterna nell'IDT.
+Abbiamo visto come l'APIC supporta 24 piedini di interruzione esterna (\lstinline|IREQ|), il cui tipo di interruzione nell'IDT può essere scelto via software modificando appositi registri.
+Vorremo quindi creare l'associazione:
+$$
+\text{piedino di interruzione} \rightarrow \text{processo esterno}
+$$
+cioè all'arrivo dell'interruzione esterna, il processore deve eseguire l'handler corretto come definito nella IDT, e questa deve mettere in esecuzione il processo corrente.
+
+Servira quindi anche un \textit{handler} per ogni tipo di interruzione esterna, corrispondente al suo processo esterno (definiremo quindi \lstinline|handler_0|, \lstinline|handler_1|, ..., \lstinline|handler_23|).
+
+La struttura di un handler generico sarà la seguente:
+\begin{lstlisting}	
+handler_i:
+	# gestiamo l'interruzione
+	call salva_stato
+
+	# sospensdiamo il processo in esecuzione
+	call inspronti
+
+	# trova il processo esterno corrispondente
+	mov a_p+i*8, %rax
+	# e mettilo in esecuzione
+	movq %rax, esecuzione
+
+	call carica_stato
+	iretq
+\end{lstlisting}
+
+\lstinline|a_p| conterrà l'indirizzo della prima entrata di una lista di puntatori ai descrittori dei processi esterni:
+\begin{center}
+	\begin{tabular}{ p{.4cm} c }
+& \lstinline|a_p|
+\end{tabular}
+
+\begin{tabular}{c |c|}
+	0 & Processo esterno 0 \\ 
+	$\vdots$ & // \\ 
+	23 & Processo esterno 23
+\end{tabular}
+\end{center}
+
+Questa si definisce nel sistema come:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// MAX_IRQ e' il numero di linee di interruzione (24)
+des_proc* a_p[apic::MAX_IRQ];
+\end{lstlisting}
+
+\subsubsection{Implementazione dei processi esterni}
+I processi esterni avranno quindi struttura simile.
+Di base, avremo bisogno (come abbiamo visto) di descrittori associati a periferiche che tengono conto dei tipi specifici alle periferiche, e delle informazioni riguardanti l'ultima richiesta di I/O:
+\begin{lstlisting}[language=C++, style=codestyle]	
+des_io array_des_io[MAX_DES_IO];
+\end{lstlisting}
+
+Avremo quindi che un processo esterno è implementato come:
+\begin{lstlisting}[language=C++, style=codestyle]	
+void estern_i(natq id) {
+	des_io *d = &array_des_io[id];
+	// non servono controlli, id e' fidato
+
+	// i processi esterni non terminano mai, quindi facciamo un ciclo infinito
+	for(;;) {
+		// qui si gestisce l'interruzione
+		// ...
+		
+		// aspetta prossima interruzione
+		wfi();
+	}
+}
+\end{lstlisting}
+
+Notiamo che chiaramente non possiamo chiamare, finita la gestione, \lstinline|schedulatore()|, in quanto questo processo (non atomico) non deve avere accesso a strutture dati sensibili, e proprio per questo è stato messo nel modulo di I/O.
+
+Si rende quindi disponibile un'altra di quelle primitive non accessibili all'utente, cioè la \lstinline|wfi()| (\textit{Wait For Interrupt}), che appunto sospende il processo mettendolo in attesa fino alla prossima interruzione di sua competenza, e mettendo in esecuzione un altro processo (cioè facendo la chiamata a \lstinline|schedulatore()| che volevamo fare in primo luogo).
+
+Possiamo vedere l'implementazione, in assembler, della \lstinline|wfi()|:
+\begin{lstlisting}	
+a_wfi:
+	call salva_stato
+	
+	# intanto rispondiamo all'APIC
+	call apic_send_EOI
+
+	# non dobbiamo fare niente col processo esterno, 
+	# e' gia' nella tabella a_p
+	
+	call schedulatore
+
+	call carica_stato
+	iretq
+\end{lstlisting}
+
+Vediamo quindi il dettaglio di poter usare, questa volta, le primitive semaforiche all'interno del processo esterno (in quanto il processo deve essere interrompibile), cioè dire:
+\begin{lstlisting}[language=C++, style=codestyle]	
+extern "C" void estern_i(natq id)
+{
+	des_io *d = &array_des_io[id];
+	// non servono controlli, id e' fidato
+
+	for (;;) {
+		// gestisci l'interruzione
+
+		if (d->quanti == 0) {
+			sem_signal(ce->sync); // qui puoi usare la sem_signal()
+		}
+
+		wfi(); // ecco la wfi() per il ritorno
+	}
+}
+\end{lstlisting}
+
+Infine, vediamo a scopo di esempio il processo esterno per una periferica nota, la \textit{CE} del 19.1.5:
+\begin{lstlisting}[language=C++, style=codestyle]	
+extern "C" void estern_ce(natq id)
+{
+	// trova il descrittore
+	des_ce *ce = &array_ce[id];
+
+	for (;;) {
+		// gestisci l'interruzione
+		ce->quanti--;
+		if (ce->quanti == 0) {
+			outputb(0, ce->iCTL);
+		}
+		char b = inputb(ce->iRBR);
+		*ce->buf = b;
+		ce->buf++;
+
+		if (ce->quanti == 0) {
+			sem_signal(ce->sync); // qui puoi usare la sem_signal()
+		}
+
+		wfi(); // ecco la wfi() per il ritorno
+	}
+}
+\end{lstlisting}
+
+Tastiera e hard disk dispongono di processi esterni simili, definiti rispettivamente in \lstinline|estern_kbd()| e \lstinline|estern_hd()|.
+
+Vediamo un dettaglio: durante l'esecuzione di un processo esterno, non potrà accadere che questo viene interrotto da un interruzione esterna relativa allo stesso processo: questo perchè le interruzioni esterne relative a quel dispositivo sono effettivamente disattivate fino alla chiamata di \lstinline|wfi()|, cioè quando viene chiamata la \lstinline|apic_send_EOI()| (e non si può interrompere la \lstinline|wfi()| perchè è una primitiva di sistema, quindi atomica).
+
+Esiste invece la possibilità che un interruzione di livello più alto nella IDT vada ad interrompere il processo esterno (quindi si metta in esecuzione il processo esterno relativo a \textit{quella} interruzione), ma questo è desiderabile in quanto corrisponde in maniera naturale alla priorità di gestione delle interruzioni esterne secondo l'APIC.
+
+\subsubsection{Creazione di processi esterni}
+Vediamo quindi nel dettaglio la \lstinline|activate_pe()|, di uso concesso solo al modulo di I/O, che viene usata per creare i processi esterni.
+Questa sarà diversa dalla comune \lstinline|activate_p()|, in quanto dovrà anche impostare la tabella \lstinline|a_p| per gli handler.
+
+La funzione avrà quindi firma: \lstinline|activate_pe(void (*f)(natq), natq id, natl prio, nat livello, natb irq)|, cioè si specifica:
 \begin{itemize}
-	\item \textbf{Modulo sistema}, implementato in \lstinline|sistema.cpp| e \lstinline|sistema.s| (parti C++ e assembler);
-	\item \textbf{Modulo di I/O}, implementato in \lstinline|io.cpp| e \lstinline|io.s| (come sopra).
+	\item La \textbf{funzione} (\lstinline|f|) che realizza il processo stesso;
+	\item L'\textbf{indice} (\lstinline|id|) di processo;
+	\item La \textbf{priorità} (\lstinline|prio|) del processo (che per i processi determinerà anche il tipo di interruzione nell'IDT);
+	\item Il \textbf{livello} (\lstinline|livello|) del processo, fin qui tutto normale;
+	\item La \textbf{linea di interruzione} (\lstinline|IRQ|) che tale processo esterno gestisce.
 \end{itemize}
 
-Avremo quindi che la parte I/O dipenderà dalla parte sistema, ma non avrà accesso a tutte le sue struttura dati: ad esempio non avra accesso alle code processi.
-Si andrà quindi a creare la seguente struttura:
+Come anticipato, un discorso importante va fatto sulla priorità di questi processi.
+Abbiamo infatti la priorità \textit{da noi} definita, cioè \lstinline|prio|, e la priorità nell'APIC (quindi nella IDT), data dal codice di interruzione assegnato ad una linea \lstinline|IRQ|.
+Questa seconda priorità, che chiamiamo \textbf{tipo}, viene ricavata direttamente dalla proprietà \lstinline|prio| secondo la seguente formula:
+$$
+\text{\lstinline|prio|} = \text{\lstinline|MAX_PRIO_UTENTE|} + \text{\lstinline|tipo|}
+$$
 
-\begin{center}
-	\includegraphics[scale=0.35]{../figures/moduli_sys_io.png}
-\end{center}
-dove le frecce nere indicano primitive accessibili a livello utente e le frecce grigie indicano primitive accessibili a livello sistema.
+Da qui in poi, le parti di creazione vera e propria del processo potranno essere messe in comune con la \lstinline|activate_p()|, e la \lstinline|activate_pe()| avrà il solo compito aggiuntivo di predisporre un handler, con relativo setup dell'APIC e caricamento dell'handler nell'IDT.
 
-Prima di capire il perché di questa distinzione vediamo di capire a quale livello lavora il modulo di I/O.
+\subsubsection{Implementazione del modulo I/O}
+Vediamo quindi la struttura generaled del modulo I/O stesso.
+Questo dispone delle sue primitive, che definisce per l'utente e carica nella IDT attraverso la primitiva sistema \lstinline|fill_gate()| (potrebbe farlo da sé, in quanto gira a livello utente, ma non lo fa per \textit{"educazione"} nei confronti del modulo sistema, cioè si centralizza la gestione dell'IDT per evitare errori).
 
-Abbiamo visto in 8.1.1 come il registro CS ci permette di definire 4 livelli, o \textit{ring}, e di come storicamente i ring intermedi (1 e 2) venivano usati per i driver (quindi, per i nostri scopi, i moduli di I/O):
-\begin{table}[h!]
-	\center \rowcolors{2}{white}{black!10}
-	\begin{tabular} { c | c | c }
-		\bfseries CS & \bfseries Ring & \bfseries Tipo \\
-		\hline 
-		00 & Ring 0 & Kernel (sistema) \\
-		01 & Ring 1 & Driver  \textit{(non più supportato)}\\
-		10 & Ring 2 &  / / \\
-		11 & Ring 3 & Utente \\
-	\end{tabular}
-\end{table}
-Oggi, però, questa distinzione non esiste più (assieme alla memoria segmentata, si perde anche questa funzionalità del registro CS), e gli unici livelli permessi sono 0 (che abbiamo assunto come livello sistema) e 3 (che abbiamo assunto come livello utente).
+Le primitive definite gestiscono quindi essenzialmente tastiera, video ed hard disk, cioè si dispone delle primitive:
+\begin{lstlisting}[language=assembler, style=codestyle]	
+# inserimento delle primitive di I/O nell'IDT
+fill_io_gate	IO_TIPO_HDR			a_readhd_n
+fill_io_gate	IO_TIPO_HDW			a_writehd_n
+fill_io_gate	IO_TIPO_DMAHDR	a_dmareadhd_n
+fill_io_gate	IO_TIPO_DMAHDW	a_dmawritehd_n
+fill_io_gate	IO_TIPO_RCON		a_readconsole
+fill_io_gate	IO_TIPO_WCON		a_writeconsole
+fill_io_gate	IO_TIPO_INIC		a_iniconsole
+fill_io_gate	IO_TIPO_GMI			a_getiomeminfo
+\end{lstlisting}
 
-Dovremo quindi porre il modulo di I/O in livello sistema, in modo che questo possa avere accesso alle funzioni privilegiate di cui vogliamo privare l'utente.
-L'unico vantaggio dell'architettura adottata sarà quindi quello di impedire al modulo di I/O di intaccare le strutture dati sensbili lato sistema.
-Ad esempio, non si potranno nemmeno usare erroneamente le \lstinline|salva_stato()| o \lstinline|carica_stato()| nelle primtive di I/O, in quanto queste non saranno nemmeno definite nel modulo di I/O.
+I processi esterni per le periferiche (tastiera e hard disk) sono quindi definiti come nel paragrafo precedente, cioè si ha:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// processo esterno associato alla tastiera
+void estern_kbd(natq) {
+	// ...
+}
 
-\subsubsection{Processi driver}
-Avremo quindi che i driver saranno rappresentati da processi, detti \textbf{processi esterni}: le primitivi accessibili solo da livello sistema dal modulo di I/O saranno appunto le primitive per la creazione di processi esterni (la \lstinline|activate_pe()|), e altre primitive utili al modulo di I/O (a cui l'utente non dovrà avere accesso).
-Queste saranno
-Il sistema avrà quindi il compito di definire, su richiesta del modulo di I/O \textbf{handler} caricati nella IDT, che si occuperanno di gestire le interruzioni esterne semplicemente indirizzandole ai processi di I/O relativi, creati anch'essi dal modulo di I/O.
+// processo esterno per le richieste di interruzione dell'hard disk
+void estern_hd(natq) {
+	// ...
+}
+\end{lstlisting}
+
+\subsubsection{Inizializzazione del modulo I/O}
+Possiamo quindi vedere un ulteriore dettaglio riguardo alla sequenza di boot, cioè quella che riguarda l'inizializzazione dell'I/O.
+
+Avremo infatti nel \lstinline|main()| del modulo sistema la seguente chiamata all'entry point del modulo I/O:
+\begin{lstlisting}[language=C++, style=codestyle]	
+extern "C" void main(natq) {
+	flog(LOG_INFO, "Creo il processo main I/O");
+	main_io = crea_processo(mio_entry, int_cast<natq>(&io_init_done), MAX_EXT_PRIO, LIV_SISTEMA);
+	if (main_io == nullptr) {
+		flog(LOG_ERR, "impossibile creare il processo main I/O");
+		goto error;
+	}
+	processi++;
+	flog(LOG_INFO, "Attendo inizializzazione modulo I/O...");
+
+	// cediamo il controllo al modulo I/O e aspettiamo che setti
+	// la variable io_init_done
+	cedi_controllo(main_io);
+
+	// sostanzialmente una sorta di sem_wait()
+	while (!io_init_done) 
+		halt();	// abilita temporaneamente le interruzioni esterne
+}
+\end{lstlisting}
+dove la funzione \lstinline|cedi_controllo()| ha il compito di salvare lo stato corrente del kernel in pila in modo che vi si possa ritornare dopo l'esecuzione del \textit{processo di inizializzazione} (è proprio un processo) di un altro modulo.
+
+A questo punto il modulo di I/O prenderà il controllo dal suo entry point:
+\begin{lstlisting}[language=C++, style=codestyle]	
+extern "C" void main_io(natq p)
+{
+	// questo e' il flag che sta guardando il main() di sistema
+	int *p_io_init_done = ptr_cast<int>(p);
+
+	// riempi la IDT delle primitive di I/O
+	fill_io_gates();
+
+	// inizializza l'heap
+	ioheap_mutex = sem_ini(1);
+	if (ioheap_mutex == 0xFFFFFFFF) {
+		flog(LOG_ERR, "impossible creare semaforo ioheap_mutex");
+		abort_p();
+	}
+	char* end_ = allinea_ptr(_end, DIM_PAGINA);
+	heap_init(end_, DIM_IO_HEAP);
+	flog(LOG_INFO, "Heap del modulo I/O: %llxB [%p, %p)", DIM_IO_HEAP,
+			end_, end_ + DIM_IO_HEAP);
+
+	// inizializza la console (tastiera + video)
+	flog(LOG_INFO, "Inizializzo la console (kbd + vid)");
+	if (!console_init()) {
+		flog(LOG_ERR, "inizializzazione console fallita");
+		abort_p();
+	}
+
+	// inizializza l'hard disk
+	flog(LOG_INFO, "Inizializzo la gestione dell'hard disk");
+	if (!hd_init()) {
+		flog(LOG_ERR, "inizializzazione hard disk fallita");
+		abort_p();
+	}
+
+	// avverti main che hai finito
+	*p_io_init_done = 1;
+
+	// termina
+	terminate_p();
+}
+\end{lstlisting}
+
+Abbiamo quindi una serie di funzioni (\lstinline|heap_init()|, \lstinline|console_init()|, \lstinline|hd_init()|, ...) che hanno il compito di inizializzare ogni dispositivo.
+Queste, oltre ad inizializzare tutte le informazioni relative al descrittore di dispositivo, hanno il compito di creare il processo esterno di gestione di tale dispositivo.
+
+Ad esempio, riguardo alle periferiche di tipo \textit{CE} descritte in 19.1.5 (e ammesso quindi di avere più periferiche dello stesso tipo nel bus), potremmo definire la funzione di inizializzazione:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// trova le periferiche CE installate e crea i rispettivi processi esterni
+bool ce_init()
+{
+	// scansiona il bus PCI per le periferiche di tipo CE
+	for (natb bus = 0, dev = 0, fun = 0;
+	     pci::find_dev(bus, dev, fun, 0xedce, 0x1234);
+	     pci::next(bus, dev, fun))
+	{
+		if (next_ce >= MAX_CE) {
+			flog(LOG_WARN, "troppi dispositivi ce");
+			break;
+		}
+
+		// crea il descrittore
+		des_ce *ce = &array_ce[next_ce];
+
+		// configuralo
+		ioaddr base = pci::read_confl(bus, dev, fun, 0x10);
+		base &= ~0x1;
+		ce->iCTL = base;
+		ce->iSTS = base + 4;
+		ce->iRBR = base + 8;
+
+		if ( (ce->sync = sem_ini(0)) == 0xFFFFFFFF ) {
+			flog(LOG_WARN, "ce%d: impossibile allocare semaforo sync", next_ce);
+			break;
+		}
+		if ( (ce->mutex = sem_ini(1)) == 0xFFFFFFFF ) {
+			flog(LOG_WARN, "ce%d: impossibile allocare semaforo mutex", next_ce);
+			break;
+		}
+
+		// trova la linea di interruzione del dispositivo
+		natb irq = pci::read_confb(bus, dev, fun, 0x3c);
+
+		// attiva il procsso esterno
+		if (activate_pe(estern_ce, next_ce, MIN_EXT_PRIO + 0x80, LIV_SISTEMA, irq) == 0xFFFFFFFF) {
+			flog(LOG_WARN, "ce%d: impossibile attivare processo esterno", next_ce);
+			break;
+		}
+		// log...
+
+		next_ce++;
+	}
+
+	// restituisci true se non sei riuscito ad inizializzare
+	return next_ce != 0;
+}
+\end{lstlisting}
+
+Implementazioni simili si trovano per la \lstinline|console_init()|, che chiama a sua volta \lstinline|vid_init()| e \lstinline|kbd_init()|, e la \lstinline|hd_init()|.
+
+Come ultimo dettaglio, ricordiamo che il timer è comunque gestito da sistema, utilizzando i driver come definiti in \lstinline|19.1.5| (in particolare, \lstinline|driver_td()|). 
 
 \end{document}
