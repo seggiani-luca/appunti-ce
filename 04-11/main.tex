@@ -514,7 +514,7 @@ Avremo quindi una funzione \lstinline|ce_init()|, che viene lanciata all'avvio d
 
 A questo punto, forniremo all'utente la primitiva \lstinline|c_ceread_n()|, per la lettura:
 \begin{lstlisting}[language=C++, style=codestyle]	
-// questa non può toccare i descrittori di processo, praticamente e' una chiamata di funzione,
+// questa non puo' toccare i descrittori di processo, praticamente e' una chiamata di funzione,
 // quindi e' interrompibile (non atomica)
 extern "C" void c_ceread_n(natl id, char *buf, natl quanti)
 {
