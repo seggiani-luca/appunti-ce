@@ -279,7 +279,7 @@ Supponiamo ad esempio che la cache adotti una politica \textit{write-through}, e
 
 		Per ovviare a tale problema abbiamo effettivamente due soluzioni:
 		\begin{itemize}
-			\item La prima soluzione è \textit{lato hardware}, e consiste nel dotare la cache della possibilità di fare \textit{snooping} del bus, cioè capire a quali indirizzi il DMA sta accedendo, farne un lookup esattamente nella maniera in cui si farebbe lookup degli indirizzi richiesti dalla CPU, e procedere ricopiando i dati modificati (\textit{snurfing} #?) o direttamente invalidando tale porzione di cache (soluzione adottata dall'architettura Intel x86);
+			\item La prima soluzione è \textit{lato hardware}, e consiste nel dotare la cache della possibilità di fare \textit{snooping} del bus, cioè capire a quali indirizzi il DMA sta accedendo, farne un lookup esattamente nella maniera in cui si farebbe lookup degli indirizzi richiesti dalla CPU, e procedere ricopiando i dati modificati (\textit{snarfing}) o direttamente invalidando tale porzione di cache (soluzione adottata dall'architettura Intel x86);
 			\item La seconda soluzione è \textit{lato software}, e consiste nel dotare il controllore di cache di un'apposita istruzione per l'invalidazione di cache.
 				Utilizzeremo quindi questa istruzione per invalidare i buffer forniti per la lettura da dispositivo al DMA, idealmente alla fine dell'operazione di trasferimento.
 
@@ -343,7 +343,7 @@ Questo potrebbe dare dei problemi per quanto riguarda la sincronizzazione fra in
 
 		Possiamo anticipare che nei processori moderni gli interrupt si inviano attraverso scritture in regioni specifiche di memoria, che l'apparato CPU riconosce autonomamente come interruzione.
 		Questo corrisponde in un delay naturale fra i trasferimenti e l'invio di interruzioni da una stessa interfaccia.
-	\item # lato software nulla?
+
 \end{itemize}
 
 Notiamo che entrambe le soluzioni richiedono che il ponte adotti una politica FIFO alla gestione dei trasferimenti.
