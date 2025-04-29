@@ -223,33 +223,25 @@
 \makeatother
 
 \begin{document}
+% sezione (data)
+\section{Lezione del 29-04-25}
 
-\pagestyle{fancy}
+% stili pagina
 \thispagestyle{empty}
-\renewcommand{\thispagestyle}[1]{}
+\pagestyle{fancy}
 
-\maketitle
-\input{../02-24/main.tex}
-\input{../02-25/main.tex}
-\input{../03-03/main.tex}
-\input{../03-04/main.tex}
-\input{../03-07/main.tex}
-\input{../03-10/main.tex}
-\input{../03-11/main.tex}
-\input{../03-17/main.tex}
-\input{../03-18/main.tex}
-\input{../03-21/main.tex}
-\input{../03-24/main.tex}
-\input{../03-25/main.tex}
-\input{../03-28/main.tex}
-\input{../03-31/main.tex}
-\input{../04-01/main.tex}
-\input{../04-04/main.tex}
-\input{../04-07/main.tex}
-\input{../04-08/main.tex}
-\input{../04-11/main.tex}
-\input{../04-14/main.tex}
-\input{../04-15/main.tex}
-\input{../04-28/main.tex}
-\input{../04-29/main.tex}
+% testo
+Riprendiamo il discorso del DMA nella prospettiva di un esempio concreto.
+
+\subsection{Hard disk e DMA}
+Fra i dispositivi visti finora solo l'hard disk è quello capace di fare DMA.
+Dentro la macchina virtuale QEMU è disponibile un'emulazione dell'hard disk del PC AT (l'HD ATA visto in 4.1).
+Questo non era capace di fare DMA in autonomia, ma era bensì collegato ad un controllore DMA.
+
+Fra i comandi disponibili per comunicare con l'hard disk ci sono quindi comandi dedicati a letture e scritture in DMA.
+Quando tali comandi vengono inviati all'hard disk, questo si occupa di coinvolgere il controllore DMA.
+
+Questa non è più la situazione odierna: l'hard disk ATA con cui comunica la macchina emulata è situato sul bus ATA, che si collega al bus PCI con un ponte PCI-ATA.
+E' quindi il ponte a comportarsi come il controllore DMA, lato bus ATA.
+
 \end{document}
