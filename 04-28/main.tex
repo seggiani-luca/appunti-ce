@@ -248,28 +248,38 @@ Se è l'interfaccia stessa a compiere l'operazione di trasferimento, al processo
 
 Aggiungiamo quindi un \textbf{controllore DMA} al bus visto finora.
 Questo sarà di base dotato di due registri, uno per il buffer corrente (\textbf{B}) e uno per la sua dimensione (\textbf{N}), e potrà accedere in lettura e scrittura allo spazio di memoria al pari di come farebbe la CPU.
-Notiamo che non c'è bisogno che la RAM distingua fra operazioni CP o DMA, in quanto per questa sono equivalenti.
+Notiamo che non c'è bisogno che la RAM distingua fra operazioni effettuate da CPU o DMA, in quanto per questa sono equivalenti.
 
-Dotiamo quindi il controllore DMA di due linee di handshake \lstinline|HOLD| e \lstinline|HOLDA|. 
-Al momento dell'inizio di un'operazione DMA, il controllore alza \lstinline|HOLD|, e la CPU risponde con \lstinline|HOLDA|.
+Dotiamo quindi il controllore DMA di due linee di handshake \lstinline|HOLD| e \lstinline|HOLDA| che lo connettono alla CPU:
+
+\begin{center}
+	\includegraphics[scale=0.5]{../figures/dma_base.png}
+\end{center}
+
+Al momento dell'inizio di un'operazione DMA, il controllore alza \lstinline|HOLD|, e la CPU risponde alzando \lstinline|HOLDA| e portando i suoi pin di uscita in alta impedenza.
 Da qui in poi il controllore lavora sul bus, in regime di \lstinline|cycle-stealing|, cioè "rubando" cicli di accesso alla CPU.
 Finita l'operazione, il controllore abbassa nuovamente \lstinline|HOLD|, a cui la CPU risponde abbassando \lstinline|HOLDA| e riprendendo a scrivere sul bus.
 
-Storicamente questo meccanismo era utile per interfacce più veloci della CPU stessa (così era la RAM, ed erano ad esempio i controllori video, che si dividevano circa la metà del tempo RAM).
-Oggi, lo stesso discorso vale ad esempio per interfacce di rete, che raggiungono velocità del Gigabit al secondo.
+Storicamente questo meccanismo era utile per interfacce più veloci della CPU stessa (così era la RAM, ed erano ad esempio i controllori video, che si dividevano circa la metà del tempo RAM con la CPU).
+Oggi, lo stesso discorso vale nel senso opposto, ad esempio per le interfacce di rete, che raggiungono velocità del Gigabit al secondo (quindi molto più veloci della CPU).
 
 \subsubsection{DMA e cache}
 Vediamo di reintrodurre nel bus così modificato la cache.
-Innanzitutto, i contendenti al bus non saranno più CPU e controllore DMA, ma cache e controllore BUS, per cui le linee di \lstinline|HOLD| e \lstinline|HOLDA| saranno fra questi due.
+Innanzitutto, i contendenti al bus non saranno più CPU e controllore DMA, ma cache e controllore DMA, per cui le linee di \lstinline|HOLD| e \lstinline|HOLDA| saranno fra questi due:
+
+\begin{center}
+	\includegraphics[scale=0.5]{../figures/dma_cache.png}
+\end{center}
 
 Il vantaggio immediato che abbiamo è che probabilmente la maggior parte dei dati necessari alla CPU saranno in cache, per cui il regime di cycle-stealing non sarà troppo dannoso all'attività della CPU (ricordiamo che la cache accede al bus solamente quando si ha una \textit{miss}).
 
 Un problema potrebbe invece essere che la cache potrebbe perdersi gli aggiornamenti effettuati dal controllore DMA.
+Vediamo nel dettaglio quali problemi possono apparire, e quali soluzioni si possono adottare. in regime di \textit{write-through} e \textit{write-back}.
 
 \par\smallskip
 \noindent
 \textbf{\sffamily{Write-through}} \\
-Supponiamo ad esempio che la cache adotti una politica \textit{write-through}, e che chiaramente il programmatore si impegni a non toccare il buffer per tutto il tempo del trasferimento.
+Supponiamo quindi come primo esempio che la cache adotti una politica \textit{write-through}, e che chiaramente il programmatore si impegni a non toccare il buffer per tutto il tempo del trasferimento.
 
 \begin{itemize}
 	\item 
@@ -280,7 +290,7 @@ Supponiamo ad esempio che la cache adotti una politica \textit{write-through}, e
 		Per ovviare a tale problema abbiamo effettivamente due soluzioni:
 		\begin{itemize}
 			\item La prima soluzione è \textit{lato hardware}, e consiste nel dotare la cache della possibilità di fare \textit{snooping} del bus, cioè capire a quali indirizzi il DMA sta accedendo, farne un lookup esattamente nella maniera in cui si farebbe lookup degli indirizzi richiesti dalla CPU, e procedere ricopiando i dati modificati (\textit{snarfing}) o direttamente invalidando tale porzione di cache (soluzione adottata dall'architettura Intel x86);
-			\item La seconda soluzione è \textit{lato software}, e consiste nel dotare il controllore di cache di un'apposita istruzione per l'invalidazione di cache.
+			\item La seconda soluzione è \textit{lato software}, e consiste nell'introdurre un'apposita istruzione per forzare il controllore di cache ad effettuare l'invalidazione di cache.
 				Utilizzeremo quindi questa istruzione per invalidare i buffer forniti per la lettura da dispositivo al DMA, idealmente alla fine dell'operazione di trasferimento.
 
 				Nel frattempo chiaramente non vorremmo toccare nessuna delle cacheline impegnate dal buffer, che possono definire una regione anche maggiore in dimensioni del buffer stesso.
@@ -291,11 +301,11 @@ Supponiamo ad esempio che la cache adotti una politica \textit{write-through}, e
 \par\smallskip
 \noindent
 \textbf{\sffamily{Write-back}} \\
-Fatta l'ipotesi di \textit{write-trough}, cioè di scritture effettuate in differita dalla cache, che mantiene le modifiche temporaneamente nella sua memoria, avremo problemi sia in lettura che in scrittura.
+Fatta invece l'ipotesi di \textit{write-back}, cioè di scritture effettuate in differita dalla cache alla RAM da parte del controllore di cache, che mantiene le modifiche temporaneamente nella sua memoria, avremo problemi sia in lettura che in scrittura.
 
 \begin{itemize}
 	\item 
-		In scrittura su dispositivo avremo chiaramente che il buffer in RAM potrebbe non essere stato aggiornato con le modifiche in RAM al momento dell'inizio dell'operazione da parte del controllore DMA.
+		In scrittura su dispositivo avremo chiaramente che il buffer in RAM potrebbe non essere stato aggiornato con le modifiche in cache al momento dell'inizio dell'operazione da parte del controllore DMA.
 		\begin{itemize}
 			\item Qui la soluzione \textit{lato hardware} è di definire un protocollo per cui il controllore DMA deve prima parlare con la cache, fornendo l'indirizzo a cui intende accedere (questa fase viene detta sempre di \textit{snooping}).
 				In questo caso la cache ha il tempo di controllare l'indirizzo e quindi capire se la cacheline corrispondente è \textit{dirty}, e quindi in RAM ce n'è una versione obsoleta.
@@ -304,11 +314,11 @@ Fatta l'ipotesi di \textit{write-trough}, cioè di scritture effettuate in diffe
 		\end{itemize}
 	\item
 		In lettura da dispositivo avremo invece che il controllore DMA potrebbe intaccare zone di memoria per cui la cache stava pianificando scritture in differita.
-	\begin{itemize}
-		\item In questo caso il chipset PIIX3 emulato da QEMU, ad esempio, ottiene dalla cache la versione più aggiornata (se questa esiste in cache), effettua il merge internamente al controllore DMA, che provvede poi ad effettuare la scrittura in RAM;
-		Per cacheline complete, abbiamo che il DMA può adottare anche il protocollo \textit{write invalidate}, per cui la cache attraverso un'operazione di snooping può verificare che un intera cacheline è stata modificata ed invalidarla;
-	\item La stessa istruzione di pulizia di cui abbiamo parlato nel caso precedente vale anche per risolvere questo problema \textit{lato software}, sempre prima dell'operazione di trasferimento (in modo che la versione dei dati in RAMsia la più recente, cioè quella ottenuta dal controllore DMA).
-\end{itemize}
+		\begin{itemize}
+			\item In questo caso il chipset PIIX3 emulato da QEMU, ad esempio, ottiene dalla cache la versione più aggiornata, che viene invalidata (se questa esiste in cache), effettua il \textit{merge} fra questa e quanto ottenuto dal dispositivo internamente al controllore DMA, che provvede poi ad effettuare la scrittura in RAM;
+				Per cacheline complete, abbiamo che il DMA può adottare anche il protocollo \textit{write invalidate}, per cui la cache attraverso un'operazione di snooping può verificare che un intera cacheline è stata modificata e limitarsi ad invalidarla: ci si aspetterà che il controllore DMA la modificherà integralmente e non ci sarà bisogno di merge;
+			\item La stessa istruzione di pulizia di cui abbiamo parlato nel caso precedente vale anche per risolvere questo problema \textit{lato software}, sempre prima dell'operazione di trasferimento (in modo che la versione dei dati in RAM sia la più recente, cioè quella ottenuta dal controllore DMA).
+		\end{itemize}
 \end{itemize}
 
 \subsubsection{DMA e MMU}
@@ -324,28 +334,36 @@ Vogliamo quindi che i buffer che passiamo al controllore DMA non superino i conf
 
 \par\smallskip
 
-Infine, vorremo che il kernel si impegni a mantenere costante l'impiego dei buffer forniti al controllore DMA, cioè non effettui swap in o swap out dei processi che li forniscono mentre l'operazione di trasferimento è ancora in corso, in quanto il controllore non ha modo di rilevare tali variazioni.
+Infine, vorremo che il kernel si impegni a mantenere costante l'impiego delle regioni di memoria dedicate ai buffer forniti al controllore DMA, cioè non effettui swap in o swap out dei processi che li forniscono mentre l'operazione di trasferimento è ancora in corso, in quanto il controllore non ha modo di rilevare tali variazioni e potrebbe continuare operazioni di scrittura o lettura con effetti disastrosi.
 
 \subsubsection{DMA nel bus PCI}
 Inseriamo quindi il controllore DMA nel bus PCI.
 
-In questo caso sarà il ponte ospite-PCI ad occuparsi del DMA.
+In questo caso sarà il ponte ospite-PCI ad occuparsi del DMA sul bus principale, secondo le regole e le linee di connessione col controllore di cache appena viste.
 
-Avremo quindi bisogno che nei singoli bus PCI ogni interfaccia abbia la possibilità di prendere il controllo del bus, secondo il cosiddetto \textbf{bus mastering}.
-Il bus mastering nei bus PCI viene gestito da un \textbf{arbitro}, che è collegato con linee \lstinline|REQ| e \lstinline|ACK| ad ogni interfaccia.
-Le interfacce richiedono quindi accesso al bus attraverso la \lstinline|REQ|, mentre questo gli risponde attraverso la \lstinline|ACK|.
+Avremo quindi bisogno che nei singoli bus PCI ogni interfaccia abbia la possibilità di prendere il controllo del bus, secondo il cosiddetto meccanismo di \textbf{bus mastering} (avevamo già visto come ogni interfaccia, e anzi più propriamente ogni \textit{funzione} PCI poteva iniziare transazioni sul bus PCI nella sezione 18.1).
 
-Le operazioni potranno essere poi \textit{bufferizzate} dal ponte ospite-PCI, cioè questo potrà memorizzare le modifiche in RAM ottenute lato bus PCI, per poi riportarle in differita alla RAM vera e propria.
+\noindent
+\begin{minipage}{\textwidth}
 
-Questo potrebbe dare dei problemi per quanto riguarda la sincronizzazione fra interfacce e CPU, in quanto un'interfaccia potrebbe inviare un segnale di termine operazione attraverso l'APIC, quando essa \textit{crede} l'operazione sia finita (e lo farà perche lato bus PCI questa effettivamente lo è), mentre lato bus locale il ponte non ha ancora attualizzato i dati in RAM.
-\begin{itemize}
-	\item La soluzione \textit{lato hardware} sarà quella di collegare l'APIC al ponte, in modo da poter ritardare le interruzioni esterne alla fine delle operazioni di trasferimento.
+	Il bus mastering nei bus PCI viene gestito da un \textbf{arbitro}, che è collegato con linee \lstinline|REQ| e \lstinline|GNT| ad ogni interfaccia:
 
-		Possiamo anticipare che nei processori moderni gli interrupt si inviano attraverso scritture in regioni specifiche di memoria, che l'apparato CPU riconosce autonomamente come interruzione.
-		Questo corrisponde in un delay naturale fra i trasferimenti e l'invio di interruzioni da una stessa interfaccia.
+	\begin{center}
+		\includegraphics[scale=0.55]{../figures/dma_pci.png}
+	\end{center}
 
-\end{itemize}
+\end{minipage}
 
-Notiamo che entrambe le soluzioni richiedono che il ponte adotti una politica FIFO alla gestione dei trasferimenti.
+Le interfacce richiedono quindi accesso al bus attraverso la \lstinline|REQ|, mentre questo gli risponde attraverso la \lstinline|GNT|.
+Una volta ottenuta la conferma su \lstinline|GNT|, il dispositivo in bus mastering può comportarsi come se si trovasse sul bus principale (passando attraverso il ponte ospite-PCI).
+Le operazioni che questo svolge potranno essere poi \textit{bufferizzate} dal ponte ospite-PCI, cioè questo potrà memorizzare le modifiche in RAM ottenute lato bus PCI, per poi riportarle in differita alla RAM vera e propria.
+
+Questo ultimo dettaglio potrebbe dare dei problemi per quanto riguarda la sincronizzazione fra interfacce e CPU, in quanto un'interfaccia potrebbe inviare un segnale di termine operazione attraverso l'APIC, quando essa \textit{crede} l'operazione sia finita (e lo farà perche lato bus PCI questa effettivamente lo è), mentre lato bus locale il ponte non ha ancora attualizzato i dati in RAM.
+La soluzione  sarà quella di collegare l'APIC al ponte, in modo da poter ritardare le interruzioni esterne alla fine delle operazioni di trasferimento.
+
+Infine, possiamo anticipare che nei processori moderni gli interrupt si inviano attraverso scritture in regioni specifiche di memoria, che l'apparato CPU riconosce autonomamente come interruzione.
+Questo corrisponde in un delay naturale fra i trasferimenti e l'invio di interruzioni da una stessa interfaccia.
+
+Notiamo che entrambe le soluzioni richiedono che il ponte adotti una politica strettamente FIFO alla gestione dei trasferimenti: il primo trasferimento iniziato e completato lato bus PCI è il primo trasferimento a essere riportato dal buffer interno al ponte in RAM.
 
 \end{document}
