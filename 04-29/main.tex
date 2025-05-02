@@ -297,6 +297,25 @@ A questo punto basterà definire i passaggi di un operazione di trasferimento:
 	\item In risposta all'interruzione, si resetta il bit 0 del registro BMCMD, e si legge lo stato dal controllore e dal disco per capire se l'operazione è andata a buon fine.
 \end{enumerate}
 
+\par\smallskip
+
+Vediamo quindi un semplice programma, che reinterpreta effettivamente quanto fatto in 4.1, usando il controllore DMA anzichè il controllo programma per effettuare gli accessi al disco rigido.
+Altre modifiche sono state fatte rispetto all'esempio in 4.1 per usare il più possibile le utilità fornite da \lstinline|libce|.
+\lstset{language=C++,style=codestyle}
+\lstinputlisting{../code/interfaces/bm_disk/bm_disk.cpp}
+
+La tabella PRD e il buffer hanno dei prerequisiti particolari sui confini che possono attraversare:
+\begin{itemize}
+	\item Le entrate PRD devono essere di 8 byte allineate ai 4 byte;
+	\item Il buffer deve essere allineato ai 2 byte, e non attraversare confini allineati ai 64 KiB.
+\end{itemize}
+Per questo motivo li definiamo in un file a parte, in assembler, \lstinline|buffer.s|:
+\lstset{language=assembler,style=codestyle}
+\lstinputlisting{../code/interfaces/bm_disk/buffer.s}
+
+Infine, definiamo a parte anche la parte assembler del gestore d'interuzione \lstinline|a_int|:
+\lstinputlisting{../code/interfaces/bm_disk/bm_disk.s}
+
 \subsubsection{Controller IDE su bus PCI}
 Per l'inserzione di un controllore di questo tipo in un bus PCI dobbiamo renderci conto di alcuni dettagli:
 Nei registri dello spazio di configurazione del dispositivo si devono attivare dei flag particolari per segnalare la possibilità che questo lavori in bus mastering.
@@ -339,28 +358,48 @@ Per fare questo, e tenere conto di buffer in memoria che iniziano potenzialmente
 \begin{lstlisting}[language=C++, style=codestyle]	
 bool prepare_prd(des_ata *d, natb* vett, natb quanti)
 {
+	// ottieni il numero di byte da trasferire
 	natq n = quanti * DIM_BLOCK;
+
 	int i = 0;
 
+	// scorri
 	while (n && i < MAX_PRD) {
+		// ottieni l'indirizzo fisico dell'indirizzo corrente
 		paddr p = trasforma(vett);
+
+		// otteni il numero di byte nella pagina corrente
+		// sarebbe dimensione_pagina - scarto
 		natq  r = DIM_PAGINA - (p % DIM_PAGINA);
+		
+		// se eccede il numero di byte, taglia
 		if (r > n)
 			r = n;
+
+		// imposta l'entrata PRD
 		d->prd[i] = p;
 		d->prd[i + 1] = r;
-
+		
+		// rimuovi da n il numero di byte presi
 		n -= r;
+		// avanza il vettore del numero di byte presi
 		vett += r;
+
+		// passa alla prossima entrata PRD
 		i += 2;
 	}
+
+	// se non hai coperto tutti i byte e' errore
 	if (n)
 		return false;
-	// il bit end of table
+	
+	// imposta il bit end of table
 	d->prd[i - 1] |= 0x80000000;
 	return true;
 }
 \end{lstlisting}
+Un dettaglio interessante è che si usa la \lstinline|trasforma()| per ogni entrata PRD che si va a generare, in quanto chiaramente ognuna di queste avrà bisogno di un nuovo indirizzo fisico.
+Per questo motivo si mantiene oltre al numero di byte mancanti anche l'indirizzo corrente all'interno del vettore (in \lstinline|vett|).
 
 A questo punto si possono fornire all'utente primitive per l'accesso all'hard disk sia a controllo interruzione (come avevamo già visto, implementato in \lstinline|libce|) sia in DMA.
 Queste saranno:
