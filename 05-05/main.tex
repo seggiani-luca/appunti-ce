@@ -266,10 +266,12 @@ Se ognuna di queste fasi è svolta da una certa circuiteria, possiamo far passar
 Questo approccio chiaramente non modifica il tempo necessario ad eseguire una istruzione (e anzi vedremo lo aumenta un po'), ma di contro permette di aumentare la frequenza delle istruzioni eseguite, per l'esattezza di un fattore pari al numero di fasi in cui si divide l'esecuzione (qui 5).
 
 Realizzaremo infatti questo tipo di struttura frapponendo fra ogni blocco funzionale un registro, che campiona sul rising edge del clock, rallentando leggermente la velocità della pipeline per accomodare il tempo di setup dei registri.
-
 Inoltre, il periodo del clock dovrà essere determinato dal più lungo dei percorsi (in termini temporali) $\Delta_1$, $\Delta_2$, ..., $\Delta_5$ fra un registro e un altro, cioè dall'elemento più lento della pipeline.
-
-Di base, questo risulterà comunque un'accelerazione del clock.
+Si avrà quindi una configurazione del tipo:
+\begin{center}
+	\includegraphics[scale=0.6]{../figures/pipeline.png}
+\end{center}
+Di base, questa configurazione risulterà comunque un'accelerazione del clock.
 Infatti, se l'intera pipeline richiedeva prima un tempo $\Delta$, ci aspettiamo che ogni componente in cui la dividiamo richieda un tempo nell'ordine di $\sim \frac{\Delta}{5}$, ed esattamente $\frac{\Delta}{5}$ se ogni circuiteria ha lo stesso tempo di attraversamento, per cui il clock può essere accelerato di un fattore di $5$.
 
 Il bottleneck è però chiaro per la fase di esecuzione, che potrebbe andare dalla somma naturale alla divisione in virgola mobile, con evidenti differenze in tempo di esecuzione.
@@ -287,9 +289,9 @@ Altri problemi sono dati dalle \textbf{alee}, cioè legati ai salti condizionali
 
 \begin{itemize}
 	\item 
-		Questi problemi possono sempre essere risolti dall'introduzione di \textbf{bolle}: si modificano i registri intermedi perché possano conservare il loro stato, e in caso una certa rete di controllo rilevi situazioni a rischio di alee, si introducono nella pipeline \textit{bolle}, cioè istruzioni senza effetto.
+		Questi problemi possono sempre essere risolti dall'introduzione di \textbf{bolle}: si modificano i registri intermedi perché possano conservare il loro stato, e in caso una certa rete di controllo rilevi situazioni a rischio di alee, si introducono nella pipeline \textit{bolle}, cioè si lasciano stadi di elaborazione vuoti, o se vogliamo si introducono istruzioni \lstinline|nop|, a effetto nullo (che chiaramente rappresentano throughput spreacto).
+		I registri che alimentano gli stadi rimasti in attesa manterranno quindi una copia dell'istruzione allo scorso ciclo di clock, e invieranno invece avanti istruzioni nulle.
 		In questo modo si torna effettivamente al processore prima della pipeline.
-
 	\item 
 		Un'altra soluzione per alee dati e alee strutturali può essere quella di dotare l'ultima fase della pipeline di una linea di \textbf{bypass}, che porti il risultato a termine esecuzione a fronte della fase di esecuzione: un istruzione che richiede un operando non ancora scritto dall'istruzione precedente può ottenerlo direttamente da questa, attraverso il bypass.
 

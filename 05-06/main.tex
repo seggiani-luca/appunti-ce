@@ -238,7 +238,7 @@ Abbiamo che l'\textit{ordinamento totale} delle istruzioni del programma è solo
 
 Le istruzioni si trovano infatti solo in un \textit{ordinamento parziale}, dove solo alcune istruzioni hanno bisogno, per motivi di sincronia, di essere eseguite successivamente ad altre.
 
-Prendiamo quindi l'esempio \lstinline|op1, src1, sec2, dst|, con sintassi simile all'assembly ARM (e in generale delle istruzioni RISC, dove ricordiamo gli operandi sono sempre registri). # da qualche parte fai un discorso ARM - RISC
+Prendiamo quindi l'esempio \lstinline|op1, src1, sec2, dst|, con sintassi simile all'assembly ARM (e in generale delle istruzioni RISC, dove ricordiamo gli operandi sono sempre registri). 
 Una volta che i sorgenti \lstinline|src1| e \lstinline|src2| sono definiti, questa può essere eseguita.
 
 Ipotizziamo quindi un'architettura dove sono previste un numero arbitrario di ALU, preceduta da componenti che denominiamo \textbf{stazioni di prenotazione}, fondamentalmente registri capaci di contenere la codifica macchina di una istruzione.
@@ -302,10 +302,15 @@ Per risolvere questo tipo di dipendenze si controlla il flag associato al regist
 
 Possiamo dire che, date due istruzioni $j$, $i$ da eseguire in quest'ordine, le dipendenze si classificano come nel seguente schema:
 
-#    j   R    W
-# i      
-# R      --   dati
-# W      anti uscita
+\begin{table}[h!]
+	\center
+	\begin{tabular} { c | c  c  }
+		& $j$ in scrittura & $j$ in lettura \\ 
+		\hline
+		$i$ in scrittura & // & Dipendenza sui dati \\ 
+		$i$ in lettura & Antidipendenza & Dipendenza in uscita
+	\end{tabular}
+\end{table}
 
 Le dipendenze sul \textbf{controllo} si verificano quando istruzioni possono o meno essere eseguito sulla base dell'esito di istruzioni di salto.
 Ad esempio, preso:
@@ -375,7 +380,7 @@ dove \textit{libero} significa non usati per niente, quindi non puntati e con co
 
 Notiamo che questa fase di traduzione si svolge \textit{dopo} la fase di traduzione in RISC effettuata nei componenti addetti alla fetch e decode, e quindi solo in fase di emissione.
 
-Abbiamo quindi rimosso tutti gli stalli necessari alle dipendenze fra i nomi, in quanto ogni istruzione emessa ha come destinazione un registro fisico libero.
+Abbiamo quindi rimosso tutti gli stalli necessari alle dipendenze fra i nomi (le cosiddette \textit{false dipendenze}), in quanto ogni istruzione emessa ha come destinazione un registro fisico libero.
 
 Un'istruzione che ha già avuto i suoi registri logici sorgenti tradotti in registri fisici non si preoccupa di ulteriori aggiornamenti ai registri sorgenti, in quanto queste verranno fatte su altri registri, liberi, e non su quelli che lei ha scelto.
 
