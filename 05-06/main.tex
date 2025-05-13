@@ -389,7 +389,7 @@ Un'istruzione che ha già avuto i suoi registri logici sorgenti tradotti in regi
 Vediamo quindi come usare il meccanismo di ridenominazione dei registri per risolvere anche gli stalli sulle dipendenze di controllo.
 
 Avevamo già introdotto l'esecuzione speculativa delle istruzioni.
-Nella terminologia Intel, questa viene eseguita attraverso un \textbf{Reorder Buffer}.
+Nella terminologia Intel, questa viene eseguita attraverso un \textbf{ROB}, \textit{Reorder Buffer}.
 All'interno del Reorder Buffer viene mantenuta una lista ordinata delle istruzioni, assieme ad un flag che indica che quell'istruzione è terminata (ma non che il risultato è stato scritto!).
 
 Prima di un'istruzione di salto, si possono eseguire e ritirare tutte le istruzioni.
