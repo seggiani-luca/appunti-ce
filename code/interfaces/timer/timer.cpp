@@ -19,7 +19,11 @@ void set_divisor(natw divisor, ioaddr addr) {
 
 // leggi il conteggio di un timer
 natl read_timer(ioaddr addr) {
-	// comando di latch
+	// teoricamente vogliamo leggere il timer 0,
+	// quindi dovremmo inviare la Read Back Word
+	// 0100_0111 (ottieni stato t. 0)
+	// questa pero' non sembra essere supportata,
+	// quindi usiamo il comando di latch 0x00
 	outputb(0x00, cwr_addr);
 
 	natb low = inputb(addr);

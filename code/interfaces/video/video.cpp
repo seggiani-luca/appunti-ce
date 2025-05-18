@@ -3,8 +3,8 @@
 #define SIZE 4000
 
 namespace vid {
-	// dichiara l'array video di libce
-	extern volatile natw* video;
+	// dichiara l'array di memoria video
+	volatile natw* video = reinterpret_cast<natw*>(0xB8000);
 }
 
 #define video vid::video

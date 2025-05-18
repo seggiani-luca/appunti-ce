@@ -274,6 +274,8 @@ Le scritture vengono quindi eseguite inserie:
 	\item Poi inserendo i \textbf{dati} da scrivere a tale indirizzo.
 \end{itemize}
 
+La memoria video vera è propria è invece mappata nello spazio di indirizzamento a partire dall'indirizzo \lstinline|0xb8000|, che per 4 KiB definisce la regione da \lstinline|0xb8000| a \lstinline|0xb9000| primo indirizzo non compreso.
+
 \par\smallskip
 
 Vediamo quindi un programma di esempio che sfrutta l'adattatore grafico in modalita testo a 25 $\times$ 80 caratteri.
