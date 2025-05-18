@@ -248,8 +248,31 @@ Non appena gli operandi saranno pronti, l'istruzione potrà quindi essere messa 
 
 Viene da sé che questa architettura ci permette di ottenere un'esecuzione delle istruzioni che è \textit{fuori ordine} e in \textit{parallelo}.
 
+\par\smallskip
+
+Vediamo quindi nel dettaglio lo schema funzionale del Pentium Pro:
+\begin{center}
+	\includegraphics[scale=.33]{../figures/ppro_hilevel.png}
+\end{center}
+
+I 3 blocchi funzionali si occupano rispettivamente di:
+\begin{enumerate}
+	\item \textbf{Fetch/Decode} Unit: come abbiamo detto in 24.1.3, si occupa di convertire le istruzioni CISC in micro-operazioni RISC da 4 KiB ciascuna.
+		Le istruzioni CISC più complesse fornite dall'instruction set x86 vengono tradotte in 2 o più micro-operazioni.
+		
+		Le micro-operazioni vengono poi introdotte nella cosiddetta \textbf{instruction pool}, cioè una struttura che mantiene le micro-operazioni decodificate.
+		L'instruction pool viene riempita con un certo grado di \textit{look-ahead}, cioè si ottengono, in maniera speculativa, istruzioni successive al punto di esecuzione corrente.
+
+		Infine, notiamo che nella pratica l'instruction pool viene implementata da un buffer detto \textbf{ROB}, \textit{Reorder Buffer};
+
+	\item \textbf{Dispatch/Execute} Unit: si occupa di prelevare le istruzoni dal ROB ed effettuarne il \textit{dispatch} (\textbf{emissione}) all'interno delle stazioni di prenotazione.
+		Queste si occupano quindi di eseguire l'istruzione ottenuta, secondo le regole sulle dipendenze che vedremo fra poco, e probabilmente attraverso l'arbitrio di una qualche unità di controllo superiore;
+
+	\item \textbf{Retire} Unit: questo è il componente finale della catena, che si occupa di prelevare dal ROB le istruzioni terminate, ed effettuarne il \textbf{ritiro} nell'ordine in cui sono state scritte dal programmatore.
+\end{enumerate}
+
 \subsubsection{Dipendenze}
-Chiaramente, però, resterà da definire le regole secondo le quali le istruzioni devono essere eseguite prima o dopo di altre.
+Chiaramente, resterà da definire le regole secondo le quali le istruzioni devono essere eseguite prima o dopo di altre nello schema di esecuzione fuori ordine.
 Chiamiamo queste condizioni \textbf{dipendenze}, fra cui distinguiamo:
 \begin{itemize}
 	\item Dipendenze \textbf{dati};
@@ -300,15 +323,15 @@ Ad esempio questo succede spesso per quanto riguarda il registro dei flag, che v
 Per risolvere questo tipo di dipendenze si controlla il flag associato al registro di uscita prima dell'emissione: in caso questo sia già preso in scrittura si mette l'istruzione in attesa (simile alle bolle che avevamo visto per la pipeline), per poi emetterla solo quando \lstinline|r3| è stato modificato. 
 \end{itemize}
 
-Possiamo dire che, date due istruzioni $j$, $i$ da eseguire in quest'ordine, le dipendenze si classificano come nel seguente schema:
+Possiamo dire che, date due istruzioni $a$, $b$ da eseguire in quest'ordine, le dipendenze si classificano come nel seguente schema:
 
 \begin{table}[h!]
 	\center
 	\begin{tabular} { c | c  c  }
-		& $j$ in scrittura & $j$ in lettura \\ 
+		& $a$ in scrittura & $a$ in lettura \\ 
 		\hline
-		$i$ in scrittura & // & Dipendenza sui dati \\ 
-		$i$ in lettura & Antidipendenza & Dipendenza in uscita
+		$b$ in scrittura & Dipendenza in uscita & Antidipendenza \\ 
+		$b$ in lettura & Dipendenza sui dati & // 
 	\end{tabular}
 \end{table}
 
@@ -395,5 +418,9 @@ All'interno del Reorder Buffer viene mantenuta una lista ordinata delle istruzio
 Prima di un'istruzione di salto, si possono eseguire e ritirare tutte le istruzioni.
 Dopo l'istruzione di salto, immaginiamo che le istruzioni successive vengano eseguite ma non ritirate (scritte nei registri fisici), secondo una predizione fatta come descritto in 24.1.2.
 A seguito del salto, potremmo quindi verificare se la predizione è stata corretta: in caso di hit, avremo che potremo ritirare le istruzioni già eseguite, altrimenti dovremo svuotare il Reorder Buffer.
+
+In ogni caso, informazioni più dettagliate sul funzionamento dell'esecuzione fuori ordine nel Pentium Pro si possono trovare nel manuale dello stesso, reperibile al link: \url{https://download.intel.com/design/PentiumII/manuals/24400101.pdf}.
+
+\newpage
 
 \end{document}

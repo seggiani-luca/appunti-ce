@@ -273,6 +273,8 @@ Con solo due vie, basterà memorizzare su $R$ l'ultima via usata, e quella su cu
 Con più di due vie sarebbe necessario mantenere l'ordine degli accessi, cioè per $n$ vie ricordare informazione necessaria a controllare $n!$ diverse possibilità.
 Nella pratica, però, conviene usare politiche approssimate.
 
+\newpage
+
 \subsubsection{Pseudo-LRU dell'80486}
 Vediamo una di queste politiche approssimate, implementata nella cache del processore Intel 486, che gestiva 4 insiemi attraverso 3 bit $b_0$, $b_1$ e $b_2$.
 Si usava un albero binario per la selezione di una delle vie, disposto come:

@@ -299,15 +299,35 @@ Altri problemi sono dati dalle \textbf{alee}, cioè legati ai salti condizionali
 		Per la gestione delle alee di controllo possiamo sfruttare la cosiddetta \textit{esecuzione predittiva}, in particolare \textbf{branch prediction}: si fa un ipotesi sul risultato dell'istruzione di salto condizionale, e si riempie la pipeline con istruzioni che provengono dalla regione corrispondente di programma.
 		Al momento della fase di esecuzione dell'istruzione di salto, si capisce quindi se l'ipotesi si è avverata o meno, e si procede ripulendola completamente introducendo bolle (in caso di \textit{miss}, pagando un prezzo pari al numero di fasi della pipeline) o non facendo nulla (in caso di \textit{hit}).
 
+		Esistono politiche leggermente diverse in caso di salti \textbf{diretti} (con indirizzo noto) o \textbf{indiretti} (ad indirizzi calcolati).
+
 		\begin{itemize}
 			\item 
-				Per quanto riguarda gli algoritmi di predizione, si ha che il primo salto viene scelto in maniera arbitraria, cioè si fa una predizione \textbf{statica}.
+				\textbf{Salti diretti}: in questo caso si fa una predizione \textbf{statica}, cioè si sceglie sostanzialmente a caso fra gli esiti del salto.
 				Esistono comunque alcune euristiche che possiamo usare: nel caso di salti \textit{all'indietro} ci si aspetta di entrare in un loop, e quindi si assume che il salto verrà eseguito; di contro per salti \textit{in avanti} l'ipotesi è meno forte e ci si aspetta che il salto non verrà eseguito. 
+
+				\newpage
+
+					Abbiamo quindi a grandi linee la struttura funzionale:
+					\begin{center}
+						\includegraphics[scale=.65]{../figures/branch_static.png}
+					\end{center}
+				dove una qualche rete di branch prediction valuta le regole appena valutate per ogni istruzione di salto decodificata dalla pipeline, e invia al primo stadio della pipeline stessa la prossima istruzione che ne ricava. 
+				Notiamo che il $+4$ corrisponde al calcolo dell'indirizzo della prossima istruzione sequenziale: si assume che l'architettura abbia istruzioni RISC fisse a 4 byte (vedremo che nelle architetture moderne la semplificazione non è inopportuna).
+
 			\item 
-				Da qui in poi ci si aspetta che i salti si comporteranno come si sono comportati in precedenza, cioè si fa una predizione \textbf{dinamica}.
+				\textbf{Salti indiretti:} Per questi ci si aspetta che i salti si comporteranno come si sono comportati in precedenza, cioè si fa una predizione \textbf{dinamica}.
 				Questo compito è associato ad una componente detta \textbf{BTB}, \textit{Branch Target Buffer}, che si occupa di capire se un salto verrà effettuato o meno sulla base della sua storia precedente, e a quale locazione si salterà, sempre basandosi sulla storia precedente, nel caso di salti indiretti.
 
 				Questi circuiti assumono essenzialmente la forma di cache, e visto che il loro insuccesso (\textit{miss}) risulta solo in un annullamento di un ciclo di pipeline, non si preoccupano di gestire le collisioni.
+		
+					In questo caso la struttura funzionale è del tipo:
+					\begin{center}
+						\includegraphics[scale=.65]{../figures/branch_dynamic.png}
+					\end{center}
+				cioè sostanzialmente analoga alla precedente ma dove l'ipotesi sul prossimo salto viene fatta dall'hit/miss della cache BTB.
+
+
 		\end{itemize}
 
 \end{itemize}
