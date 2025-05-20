@@ -308,10 +308,10 @@ Altri problemi sono dati dalle \textbf{alee}, cioè legati ai salti condizionali
 
 				\newpage
 
-					Abbiamo quindi a grandi linee la struttura funzionale:
-					\begin{center}
-						\includegraphics[scale=.65]{../figures/branch_static.png}
-					\end{center}
+				Abbiamo quindi a grandi linee la struttura funzionale:
+				\begin{center}
+					\includegraphics[scale=.65]{../figures/branch_static.png}
+				\end{center}
 				dove una qualche rete di branch prediction valuta le regole appena valutate per ogni istruzione di salto decodificata dalla pipeline, e invia al primo stadio della pipeline stessa la prossima istruzione che ne ricava. 
 				Notiamo che il $+4$ corrisponde al calcolo dell'indirizzo della prossima istruzione sequenziale: si assume che l'architettura abbia istruzioni RISC fisse a 4 byte (vedremo che nelle architetture moderne la semplificazione non è inopportuna).
 
@@ -320,14 +320,16 @@ Altri problemi sono dati dalle \textbf{alee}, cioè legati ai salti condizionali
 				Questo compito è associato ad una componente detta \textbf{BTB}, \textit{Branch Target Buffer}, che si occupa di capire se un salto verrà effettuato o meno sulla base della sua storia precedente, e a quale locazione si salterà, sempre basandosi sulla storia precedente, nel caso di salti indiretti.
 
 				Questi circuiti assumono essenzialmente la forma di cache, e visto che il loro insuccesso (\textit{miss}) risulta solo in un annullamento di un ciclo di pipeline, non si preoccupano di gestire le collisioni.
-		
-					In questo caso la struttura funzionale è del tipo:
-					\begin{center}
-						\includegraphics[scale=.65]{../figures/branch_dynamic.png}
-					\end{center}
+
+				In questo caso la struttura funzionale è del tipo:
+				\begin{center}
+					\includegraphics[scale=.65]{../figures/branch_dynamic.png}
+				\end{center}
 				cioè sostanzialmente analoga alla precedente ma dove l'ipotesi sul prossimo salto viene fatta dall'hit/miss della cache BTB.
 
-
+Si ha che nelle architetture moderne l'approccio adottato effettivamente è quello del BTB, sia per i salti diretti che i salti indiretti.
+Chiaramente ci saranno differenze strutturali specifiche per le informazioni che sarà necessario memorizzare per entrambi i tipi di salto: se per i salti indiretti è fondamentale ricordare l'indirizzo di arrivo, per i salti diretti basterà ricordare se il salto è stato effettuato o meno.
+In ogni caso, può essere utile conservare anche l'indirizzo di arrivo per questioni di ottimizzazione: l'indirizzo potrebbe sì essere ricavato dall'istruzione, ma questo richiederebbe la sua decodifica, mentre il prefetch può iniziare prima ricavando l'indirizzo di arrivo direttamente dall'indirizzod dell'istruzione.
 		\end{itemize}
 
 \end{itemize}
