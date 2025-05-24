@@ -263,10 +263,148 @@ Bisogna infatti:
 \end{itemize}
 
 Abbiamo quindi realizzato pienamente quanto ci eravamo posti di fare quando abbiamo iniziato a parlare di interruzione: la CPU è lasciata libera (nell'esempio specifico, esegue un loop infinito), e viene \textit{interrotta} dalla periferica tastiera quando questa ha un nuovo dato disponibile.
-Vediamo che in verità esiste un altra casistica di applicazione delle interruzioni che non abbiamo trattato, cioè quella delle \textit{eccezioni}.
+
+\par\medskip
+
+Forniamo un altro esempio correggendo il codice dell'esempio presentato nella sezione 3.2.1.
+Qui l'intenzione era di scorrere a intervalli regolari un vettore, e avevamo usato un approccio piuttosto inelegante per farlo: 
+\begin{lstlisting}[language=C++, style=codestyle]	
+// i tick svolti
+natl tick = 0;
+natl next_song_update = 0;
+
+natl last_value = read_timer(timer0_addr);
+
+while (true) {
+	natl current_value = read_timer(timer0_addr);
+
+	// se il valore corrente e' maggiore del valore precedente 
+	// si e' fatto un salto
+	if (current_value > last_value) {
+		tick++;
+	}
+
+	// aggiorna se necessario
+	if(tick > next_song_update) {
+		bool res = update_song();
+		if(!res) break;
+
+		// imposta il prossimo aggiornamento
+		next_song_update += TIMESTEP;
+	}
+
+	last_value = current_value;
+}
+\end{lstlisting}
+
+Adesso che siamo in possesso delle conoscenze necessarie a usare il timer 0 come originariamente inteso, cioè sfruttando la linea di interruzione, facciamolo.
+Introduciamo quindi una funzione \lstinline|c_handler()|, e modifichiamo il \lstinline|main()| come segue:
+\begin{lstlisting}[language=C++, style=codestyle]
+// temporizzazione
+natl tick = 0;
+natl next_song_update = 0;
+
+bool fine = false;
+
+// interruzioni
+#define TIM_VECT 0x20
+
+extern "C" void a_handler();
+extern "C" void c_handler() {
+	tick++;
+	
+	// aggiorna se necessario
+	if(tick > next_song_update) {
+		bool res = update_song();
+		if(!res) fine = true; 
+
+		// imposta il prossimo aggiornamento
+		next_song_update += TIMESTEP;
+	}
+
+	apic::send_EOI();
+}
+
+void main() {
+	// setup dei timer
+
+	// imposta l'APIC
+	apic::set_VECT(2, TIM_VECT);
+	apic::set_TRGM(2, false);
+	apic::set_MIRQ(2, false);
+
+	// imposta IDT
+	gate_init(TIM_VECT, a_handler);
+
+	while(!fine);
+}
+\end{lstlisting}
+
+L'implementazione di \lstinline|a_handler()| sarà data in un file assembly separato, e sarà ancora una volta la banale:
+\begin{lstlisting}[language=assembler, style=codestyle]
+#include <libce.h>
+
+.extern c_handler
+.global a_handler
+a_handler:
+	salva_registri
+	call c_handler
+	carica_registri
+	iretq
+\end{lstlisting}
+
+Eseguendo questo programa si ha effettivamente lo stesso funzionamento dell'esempio in 3.2.1, con la differenza fondamentale che la CPU non si trova in uno stato continuo di attesa dell'avanzamento del timer, ma può fare altro mentre questo avanza, come ad esempio controllare la tastiera per arrestare su comando l'esecuzione.
+
+In questo caso si reindirizza la linea di IREQ della tastiera ad un'interruzione di tipo diverso da quello del timer e gli si dedica un handler nell'IDT:
+\begin{lstlisting}[language=C++, style=codestyle]	
+// ricordiamo che si e' usato #define TIM_VECT 0x20
+#define KBD_VECT 0x21
+
+extern "C" void a_keyb();
+extern "C" void c_keyb() {
+	natb code = kbd::get_code();
+	
+	if(code == 0x01) fine = true;
+
+	apic::send_EOI();
+}
+
+void main() {
+	// imposta il timer 0
+	// outputb(0x36, cwr_addr); // modo 3
+	natl div = 0; // 0 significa 65536
+	set_divisor(div, timer0_addr);
+
+	// imposta il timer 2
+	outputb(0xB6, cwr_addr); // modo 3
+
+	// imposta l'APIC
+	// timer
+	apic::set_VECT(2, TIM_VECT);
+	apic::set_TRGM(2, false);
+	apic::set_MIRQ(2, false);
+	
+	// tastiera
+	apic::set_VECT(1, KBD_VECT);
+	apic::set_TRGM(1, false);
+	apic::set_MIRQ(1, false);
+
+	// imposta IDT
+	gate_init(TIM_VECT, a_timer);
+
+	kbd::enable_intr();
+	gate_init(KBD_VECT, a_keyb);
+
+	while(!fine);
+}
+\end{lstlisting}
+
+Il codice assmebly di \lstinline|a_keyb()| non viene riportato in quanto è esattamente analogo a quello appena visto per \lstinline|a_timer()|.
+
+Il risultato di questa configurazione è che il processore controlla contemporaneamente, in qualche modo, timer e tastiera, permettendo all'utente di arrestare la riproduzione anche a metà del brano.
 
 \subsection{Eccezioni}
-Ci rimangono da vedere le \textbf{eccezioni}.
+Vediamo quindi che esiste un altra casistica di applicazione delle interruzioni che non abbiamo trattato, cioè quella delle \textit{eccezioni}.
 Queste sono particolari errori logici che il processore potrebbe incontrare nel corso dell'esecuzione, come ad esempio la divisione per 0, il tentativo di eseguire un istruzione non riconosciuta, ecc...
 
 Una differenza fra le interruzioni esterne e le eccezioni è che le eccezioni possono essere sollevate \textit{durante} la lettura e esecuzione di un istruzione, quindi ad esempio mentre si stava interpetando un codice operativo (si pensi all'interruzione di operazione non riconosciuta).
