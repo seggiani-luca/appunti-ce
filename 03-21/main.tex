@@ -262,16 +262,18 @@ dove quindi si tiene conto di:
 	\item La \textbf{precedenza} del processo, la cui motivazione ci sarà chiara fra poco;
 	\item Un puntatore alla \textbf{pila sistema} del processo;
 	\item Il \textbf{contesto} del processo, inteso come la copia di tutti i registri del processore. 
-	\item Infine, un puntatore al \textbf{prossimo processo}, in quanto intendiamo organizzare questi processi in linked liste ordinate per precedenza decrescente.
+	\item Infine, un puntatore al \textbf{prossimo processo}, in quanto intendiamo organizzare questi processi in liste ordinate per precedenza decrescente.
 \end{itemize}
 
 \noindent
 \begin{minipage}{\textwidth}
 Ogni processo ha quindi un ciclo di vita che rispetta l'andamento del seguente grafico:
 \begin{center}
-	\includegraphics[scale=0.3]{../figures/schema_proc.png}
+	\includegraphics[scale=0.34]{../figures/schema_proc.png}
 \end{center}
 \end{minipage}
+
+\par\bigskip
 
 Vediamo nel dettaglio il significato delle diverse fasi.
 In fase di creazione del proesso, il suo descrittore viene posto in una struttura dati che ne consente \textbf{schedulazione} e \textbf{dispatch}:
@@ -378,22 +380,46 @@ Questo ci assicurerà di non trovarci mai una situazione dove nessun processo è
 \subsubsection{Inizializzazione di un processo}
 Un ulteriore dettaglio è quello dello stato del processo alla sua creazione.
 Non è infatti realistico pensare di controllare se quel processo richiede inizializzazione ogni volta che si ritorna da un interruzione gestita a livello sistema.
-Alla creazione del processo, quindi, vogliamo svolgere le seguenti azioni in modo che il processo venga eseguito per la prima volta già in uno stato completo:
+Alla creazione del processo, quindi, vogliamo svolgere alcune azioni in modo che il processo venga eseguito per la prima volta già in uno stato completo.
+Queste cambiano a seconda che il processo sia in modalità utente o in modalità sistema:
 \begin{itemize}
-	\item Allocare una \textbf{pila sistema} dedicata al processo;
-	\item Inizializzare la pila sistema. Questo consisterà nell'inizializzare a loro volta: 
+	\item Processo in \textbf{modalità utente}, si deve:
 		\begin{itemize}
-			\item RIP alla prima istruzione del processo;
-			\item CS al segmento livello utente dove si trova il processo;
-			\item RFLAG a quanto viene richiesto dallo standard C++ al momento di avvio (solitamente tutto a 0), con l'eccezione di IF a 1.
+			\item Allocare una \textbf{pila sistema} dedicata al processo;
+			\item Inizializzare la pila sistema. Questo consisterà nell'inizializzare a loro volta: 
+				\begin{itemize}
+					\item RIP alla prima istruzione del processo;
+					\item CS al segmento livello utente dove si trova il processo;
+					\item RFLAG a quanto viene richiesto dallo standard C++ al momento di avvio (solitamente tutto a 0), con l'eccezione di IF a 1.
+					\item RSP alla pila sistema;
+				\end{itemize}
+			\item Allocare la \textbf{pila utente} del processo;
+			\item Allocare il \textbf{descrittore} di processo, e mettere quel processo fra i processi pronti;
+			\item Inizializzare il descrittore. Questo consiste nell'inizializzare a loro volta:
+				\begin{itemize}
+					\item Un puntatore alla pila sistema appena definita;
+					\item Il contesto del processo;
+					\item L'\textbf{argomento} di chiamata del processo, utile al debug;
+					\item L'\textbf{IOPL}, \textit{IO Privilege Level}, che specifica la possibilità o meno del processo di accedere all'IO.
+				\end{itemize}
 		\end{itemize}
-	\item Allocare il \textbf{descrittore} di processo, e mettere quel processo fra i processi pronti;
-	\item Inizializzare il descrittore. Questo consiste nell'inizializzare a loro volta:
+	\item Processo in \textbf{modalità sistema}, si deve:
 		\begin{itemize}
-			\item Un puntatore alla pila sistema appena definita;
-			\item Il contesto del processo;
-			\item L'\textbf{argomento} di chiamata del processo, utile al debug;
-			\item L'\textbf{IOPL}, \textit{IO Privilege Level}, che specifica la possibilità o meno del processo di accedere all'IO.
+			\item Allocare la \textbf{pila sistema} del processo;
+			\item Inizializzare la pila sistema. Questo consisterà nell'inizializzare a loro volta: 
+				\begin{itemize}
+					\item RIP alla prima istruzione del processo;
+					\item CS al segmento livello utente dove si trova il processo;
+					\item RFLAG a quanto viene richiesto dallo standard C++ al momento di avvio (solitamente tutto a 0), con l'eccezione di IF a 1.
+				\end{itemize}
+			\item Allocare il \textbf{descrittore} di processo, e mettere quel processo fra i processi pronti;
+			\item Inizializzare il descrittore. Questo consiste nell'inizializzare a loro volta:
+				\begin{itemize}
+					\item Un puntatore alla pila sistema appena definita;
+					\item Il contesto del processo;
+					\item L'\textbf{argomento} di chiamata del processo, utile al debug;
+					\item L'\textbf{IOPL}, \textit{IO Privilege Level}, che specifica la possibilità o meno del processo di accedere all'IO.
+				\end{itemize}
 		\end{itemize}
 \end{itemize}
 

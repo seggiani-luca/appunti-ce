@@ -231,8 +231,9 @@
 \pagestyle{fancy}
 
 % testo
-Torniamo sull'argomento delle interruzioni, specificando il modo in cui dobbiamo definire dei \textit{gestori} per ogni interruzione.
+Torniamo sull'argomento delle interruzioni esterne, specificando il modo in cui dobbiamo definire dei \textit{gestori} per ogni interruzione, e come possiamo reindirizzare le interruzioni che riceviamo dall'hardware verso tali gestori.
 
+\subsection{Controllore delle interruzioni APIC}
 Il calcolatore visto finora dispone di 4 interfacce: \begin{itemize}
 	\item L'interfaccia \textit{tastiera}, letta finora in controllo di programma, valutando la validità di un bit FI sul registro di stato;
 	\item L'interfaccia \textit{timer}, dotata di 3 singoli timer, di cui abbiamo detto il primo viene usato per generare interruzioni, il secondo non è più usato, e il terzo e connesso al \textit{beeper speaker};
@@ -272,8 +273,6 @@ Un approccio più sicuro può essere ottenuto dotando il controllore delle inter
 	\item \textbf{IRR} (\textit{Interrupt Request Register}): indica con bit alti quali interruzioni sono state inviate dalle interfacce attualmente;
 	\item \textbf{ISR} (\textit{Interrupt Service Register}): indica con bit alti a quali interruzioni sta rispondendo il processore attualmente. In un processore single-threaded come quello che studiamo al più uno solo dei suoi bit sarà alto in un dato momento (escluso il caso della \textit{gestione annidata}).
 \end{itemize}
-
-\newpage
 
 Si avrà quindi la seguente organizzazione:
 \begin{table}[h!]

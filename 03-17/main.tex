@@ -283,14 +283,14 @@ Visto che non abbiamo ancora introdotto l'idea di \textit{memoria virtuale}, mod
 
 Abbiamo quindi l'immagine completa del meccanismo della protezione, che avevamo introdotto per privilegiare le sole istruzioni, ma ci rendiamo adesso conto deve consistere in:
 \begin{itemize}
-	\item Protezione delle \textbf{istruzioni} attraverso il loro privilegiamento al contesto sistema, come avevamo visto;
+	\item Protezione delle \textbf{istruzioni} attraverso il loro privilegio al contesto sistema, come avevamo visto;
 	\item Protezione della \textbf{memoria} definendo regioni accessibili in sola modalità sistema.
 \end{itemize}
 
 \subsubsection{Transizione da contesto utente a contesto sistema}
 Vediamo nel dettaglio come si passa dal contesto utente al contesto sistema.
 Per questo sfrutteremo l'istruzione x86 \lstinline|INT|, che permette di generare un interruzione software sulla base del tipo fornito come operando.
-Si potrà quindi implementare il meccanismo della \textit{chiamata a sistemo}, secondo una modalità del tipo:
+Si potrà quindi implementare il meccanismo della \textit{chiamata a sistema}, secondo una modalità del tipo:
 \begin{lstlisting}[language=assembler, style=codestyle]	
 mov $0x00, %eax # tipo chiamata
 int $0x80       # chiamata sistema (per x86, in x86-64 esiste syscall)
@@ -369,7 +369,7 @@ Noteremo fra poco come questa possibilità rivela delle falle di sicurezza che v
 \subsubsection{Transizione da contesto sistema a contesto utente}
 La transizione inversa a quella vista adesso viene fatta semplicemente ritornando dall'interruzione attraverso la \lstinline|IRETQ|.
 In questo caso si preleva dalla pila sistema (utente se eravamo in un interruzione a gestione livello utente) le informazioni che vi avevamo inserito al momento della chiamata dell'interruzione (RIP, CS ed EFLAGS) e si ristabilisce lo stato precedente al sollevamento dell'istruzione.
-Anche qui vi sono delle particolarità, che verranno spiegato, assieme a quelle annunciate in precedenza, nel paragrafo seguente.
+Anche qui vi sono delle particolarità, che verranno spiegate, assieme a quelle annunciate in precedenza, nel paragrafo seguente.
 
 \subsubsection{Particolarità della gestione delle interruzioni software}
 Notiamo una particolarità riguardo alla transizione di contesto in fase di chiamata dell'interruzione (nota osservando il contesto attuale e l'L dell'interruzione lanciata), e riguardo alla transizione di contesto in fase di ritorno dall'interruzione (nota osservando il contesto attuale e il contesto salvato in pila).

@@ -242,7 +242,7 @@ Se si usa una routine lanciata dal timer a interruzione di programma, e si confi
 
 Questo è chiaramente diverso dal comportamento desiderato, ed è quindi opportuno configurare l'APIC per rilevare i soli fronti di salita.
 
-\par\medskip
+\subsubsection{Tastiera a controllo interruzione}
 
 Abbiamo quindi notato praticamente tutte le caratteristiche che ci interessavano dell'APIC, e possiamo procedere ad implementare un esempio di gestione di un interfaccia a controllo di interruzione.
 Vediamo ad esempio il seguente programma, che gestisce la tastiera a controllo di interruzione, di cui la parte C++:
@@ -264,7 +264,7 @@ Bisogna infatti:
 
 Abbiamo quindi realizzato pienamente quanto ci eravamo posti di fare quando abbiamo iniziato a parlare di interruzione: la CPU è lasciata libera (nell'esempio specifico, esegue un loop infinito), e viene \textit{interrotta} dalla periferica tastiera quando questa ha un nuovo dato disponibile.
 
-\par\medskip
+\subsubsection{Timer a controllo interruzione}
 
 Forniamo un altro esempio correggendo il codice dell'esempio presentato nella sezione 3.2.1.
 Qui l'intenzione era di scorrere a intervalli regolari un vettore, e avevamo usato un approccio piuttosto inelegante per farlo: 

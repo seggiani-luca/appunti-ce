@@ -310,7 +310,7 @@ Per noi le \lstinline|new| non si tradurranno in altro che chiamate di funzione,
 Di contro, la \lstinline|delete| si occuperà di deallocare lo stesso dato.
 
 Una domanda che potremmo porci è dove si trova questa memoria.
-Per quanto riguarda il \textbf{sistema}, una porzione dedicata viene inizializzta all'avvio e resta tale durante l'esecuzione dello stesso.
+Per quanto riguarda il \textbf{sistema}, una porzione dedicata viene inizializzata all'avvio e resta tale durante l'esecuzione dello stesso.
 Le allocazioni e deallocazioni si fanno quindi con le \lstinline|alloc()| e \lstinline|dealloc()| (che ridefiniscono gli operatori corrispondenti, \lstinline|new| e \lstinline|delete|), definite all'interno di \lstinline|libce.h|.
 
 Per quanto riguarda l'\textbf{utente}, invece, si dedica un altra porzione di memoria, condivisa fra i processi.

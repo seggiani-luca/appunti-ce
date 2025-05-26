@@ -301,7 +301,7 @@ Vediamo quindi l'implementazione effettiva delle primitive relative a creazione 
 Queste chiaramente vengono chiamate da un handler scritto in assembly, che si occupa di salvare e caricare il contesto correttamente, in modo da non intaccare i registri in uso dal processo in \lstinline|esecuzione|.
 
 \begin{itemize}
-	\item \lstinline|activate_p|: questa sfrutta una funzione, \lstinline|crea_processo| (per adesso non significativa), che si occupa di creare effettivamente il descrittore di processo.
+	\item \lstinline|activate_p|: questa sfrutta una funzione, \lstinline|crea_processo| (per adesso non significativa, implementa quanto discusso in 10.2.2), che si occupa di creare effettivamente il descrittore di processo.
 		Il suo compito è quindi solo quello di controllare che i parametri siano validi, chiamare \lstinline|crea_processo()|, inserire il descrittore in lista pronti e restituire l'id del processo creato.
 \begin{lstlisting}[language=C++, style=codestyle]	
 // crea un nuovo processo
@@ -313,7 +313,7 @@ extern "C" void c_activate_p(void f(natq), natq a, natl prio, natl liv)
 	// seguono controlli di sicurezza sul livello
 	[...]
 
-	// crea effettivamente il descrittore di processo
+	// crea effettivamente il descrittore di processo e le sue pile
 	p = crea_processo(f, a, prio, liv);
 
 	if (p != nullptr) {
@@ -327,13 +327,14 @@ extern "C" void c_activate_p(void f(natq), natq a, natl prio, natl liv)
 }
 \end{lstlisting}
 \item \lstinline|terminate_p|: questa viene chiamata direttamente dal processo in \lstinline|esecuzione|, quando questo desidera essere terminato. 
-	In questo, sfrutta una funzione, \lstinline|distruggi_processo()| (anche questa al momento non significativa), che si occupa di ripulire il descrittore del processo (e quindi la sua pila, ecc...).
+	In questo, sfrutta una funzione, \lstinline|distruggi_processo()| (anche questa al momento non significativa, si comporta come la \lstinline|crea_processo()| al contrario), che si occupa di ripulire il descrittore del processo (e quindi la sua pila, ecc...).
 \begin{lstlisting}[language=C++, style=codestyle]	
 // termina il processo attuale 
 extern "C" void c_terminate_p()
 {
 	des_proc* p = esecuzione;
 
+	// dealloca il descrittore di processo e le sue pile
 	distruggi_processo(p);
 	processi--;
 	schedulatore();
@@ -346,14 +347,14 @@ Per gestire l'accesso condiviso ad una risorsa, nel nostro kernel adotteremo il 
 
 Introdotti da Dijsktra nel 1962, questi si possono meglio modellizzare come una scatola piena di gettoni: ogni utente può mettere un gettone o prelevare un gettone dalla scatola, con la condizione che questa operazione sia atomica: se si tenta di prendere un gettone che non esiste, si resta in attesa finché quel gettone non viene effettivamente immesso nella scatola.
 
-I problemi che vogliamo risolvere sfruttando i semafori sono effettivamente die due categorie:
+I problemi che vogliamo risolvere sfruttando i semafori sono effettivamente di due categorie:
 \begin{itemize}
 	\item Problemi di \textbf{mutua esclusione:} assicurarsi che solo un processo possa accedere ad una risorsa in un dato momento.
 
 		In questo caso si associa un gettone alla risorsa: accedere alle risorsa significa prendere il gettone, restituire la risorsa significa reinserire il gettone. L'esistenza di un singolo gettone assicura che solo un processo abbia accesso alla risorsa in un dato momento.
 		Al momento della reimmissione del gettone, il processo che ne vince l'accesso sarà nel nostro kernel quello a priorità più alta.
 
-		Notiamo inoltre che un processo che cerca di estrarre un gettone da una scatola vuota (tenta l'accesso ad una risorsa occupata o comunque non disponible) dovrà aspettare che questa risorsa si renda disponibile: rappresenterà quindi il caso perfetto di \textbf{blocco} del processo, che può essere realizzato con \textbf{preemption} nei sistemi che la supportoìano;
+		Notiamo inoltre che un processo che cerca di estrarre un gettone da una scatola vuota (tenta l'accesso ad una risorsa occupata o comunque non disponible) dovrà aspettare che questa risorsa si renda disponibile: rappresenterà quindi il caso perfetto di \textbf{blocco} del processo, che può essere realizzato con \textbf{preemption} nei sistemi che la supportano;
 
 	\item Problemi di \textbf{sincronizzazione:} esistono più attività, e ci interessa che alcune attività vengano fatte prime di altre (ordinamento \textit{parziale}).
 
