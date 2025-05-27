@@ -240,7 +240,7 @@ Decidiamo quindi di dotare la CPU di due registri, \textbf{BASE} e \textbf{LIMIT
 
 Chiaramente potrebbero esserci problematiche rispetto a quali indirizzi i singoli programmi vogliono usare: questi non potranno chiaramente usare salti a posizioni arbitrarie in memoria.
 
-Una prima soluzione può essere quella di rendere il \textbf{PIC} (\textit{Position Indipendent Code}), cioè codice indipendente dalla posizione (dove ad esempio le \lstinline|CALL| e le \lstinline|JUMP| saltano ad \textit{offset}, e non ad indirizzi assoluti).
+Una prima soluzione può essere quella di usare il \textbf{PIC} (\textit{Position Indipendent Code}), cioè codice indipendente dalla posizione (dove ad esempio le \lstinline|CALL| e le \lstinline|JUMP| saltano ad \textit{offset}, e non ad indirizzi assoluti).
 Un primo problema di questo approccio è che costringe i programmi di stare all'intero di una zona di $\sim 4 \text{GB}$, in quanto gli offset sono su 32 bit (e non è nemmeno detto che il kernel dedicherà ad ogni processo la stessa quantità di memoria).
 
 Un altro approccio può essere quello di realizzare un \textit{caricatore rilocante} (ad esempio impementato in MS-DOS): si fa in modo che il collegatore lasci gli indirizzi non completamente specificati, e si definiscono una volta nota la posizione al partire da cui il processo verrà caricato (semplicemente incrementando gli indirizzi a partire da 0 in modo che puntino alla stessa posizione relativa al nuovo punto di inizio del programma).
@@ -291,7 +291,7 @@ Decidere che tutti gli indirizzi generati dalla CPU sono virtuali solleva una qu
 Prendiamo quindi la sua memoria come in testa allo spazio di memoria, con le regioni successive dedicate ai frame di pagina dei processi.
 
 Potremmo allora avere una tabella dedicata al solo kernel, che tiene conto di tutto lo spazio indirizzabile.
-Inoltre, potremmo prendere la tabella del kernel come \textit{identiva}, cioè dare al kernel la visione della sua memoria \textit{così com'è}.
+Inoltre, potremmo prendere la tabella del kernel come \textit{identità}, cioè dare al kernel la visione della sua memoria \textit{così com'è}.
 
 Corrediamo allora la tabella di pagina introducendo:
 \begin{itemize}

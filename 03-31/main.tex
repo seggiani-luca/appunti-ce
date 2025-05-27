@@ -340,9 +340,7 @@ Resta comunque il fatto che quale nome decidiamo di assegnare alle tabelle di og
 Il procedimento che ci porta dai bit di pagina all'indirizzo del frame si chiama \textbf{table walk}, o \textit{cammino della tabella}.
 Ogni entrata delle tabelle di trie sarà grande 8 byte (almeno 7 bit per i flag, più $\sim 48$ bit di indirizzo, ricordando che lo spazio indirizzabile nell'x86\_64 non corrisponde al massimo di 64 bit), per cui $2^9 \cdot 2^3 = 2^{12} = 4\text{ KiB}$ di memoria ciascuna.
 
-\noindent
-\begin{minipage}{\textwidth}
-La memoria massima \textit{raggiunta ad} ogni livello e il numero di entrate \textit{raggiunta ad} ogni livello sono quindi:
+La memoria massima \textit{raggiunta ad} ogni livello e il numero di entrate \textit{raggiunte ad} ogni livello sono quindi:
 
 \begin{table}[H]
 	\center \rowcolors{2}{white}{black!10}
@@ -355,10 +353,8 @@ La memoria massima \textit{raggiunta ad} ogni livello e il numero di entrate \te
 		1 & $2^9 \cdot 2^9 \cdot 2^9 \cdot 2^9 \cdot 2^3 = 2^{39} = 512 \text{ GiB}$ & $2^9 \cdot 2^9 \cdot 2^9 \cdot 2^9 = 2^{36} = 64 \text{ Gi}$
 	\end{tabular}
 \end{table}
-\end{minipage}
-\par\bigskip
 
-Per cottenere l'informazione inversa, cioè la memoria massima \textit{raggiungibile da} ogni livello e il numero di entrate \textit{raggiungibili da} ogni livelo basterà invertire l'ordine verticale delle ultime 2 colonne. 
+Per contenere l'informazione inversa, cioè la memoria massima \textit{raggiungibile da} ogni livello e il numero di entrate \textit{raggiungibili da} ogni livelo basterà invertire l'ordine verticale delle ultime 2 colonne. 
 
 Potremmo allora chiederci dov'è il guadagno di un sistema di questo tipo, in quanto a memoria l'ultimo livello di trie necessiterà degli stessi 512 GiB, più lo spazio necessario ai livelli precedenti.
 Il vantaggio sarà però quello di poter tagliare arbitrariamente rami dall'albero che abbiamo formato, cioè non tenere conto di pagine di cui non abbiamo attualmente bisogno. 
