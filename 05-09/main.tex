@@ -244,25 +244,37 @@ Da qui i poi le istruzioni passano per le stazioni di prenotazione, che poi le i
 In fine, in fondo a questo meccanismo si trova il Reorder Buffer, \textbf{ROB}, che contiene le istruzioni terminate ma non ancora scritte e permette l'esecuzione speculativa.
 Il significato del Reorder Buffer è sostanzialmente quello di realizzare un'ulteriore smistamento delle istruzioni a termine della loro esecuzione, che permette o meno il loro write back nei registri (che sappiamo coi registri ridenominati significa semplicemente aggiornare i registri logici) solo sotto le condizioni dell'esecuzione speculativa.
 
-\subsubsection{Istruzioni LOAD e STORE}
-L'esecuzione speculativa vista presenta problemi per quanto riguarda le istruzioni \lstinline|LOAD| e \lstinline|STORE|.
+\subsection{Ritiro di istruzioni operative}
+Quanto appena detto, riguardo alle istruzioni operative, viene eseguito memorizzando 2 registri fisici per registro logico:
+\begin{itemize}
+	\item Il registro fisico \textbf{speculativo}, contenente il registro fisico associato dall'ultima istruzione emessa ma non ritirata;
+	\item Il registro fisico \textbf{non speculativo}, contenente il registro fisico associato dall'ultima istruzione ritirata.
+\end{itemize}
+Si ha quindi che in caso di ritiro corretto di un istruzione, si aggiorna il registro destinazione con il registro speculativo, mentre se l'istruzione non viene ritirata si mantiene il registro non speculativo.
 
-Prendiamo ad esempio il framento di codice:
-\begin{lstlisting}	
-	cmp $1000, %rbx
-	jae fine
-	mov off(%rbx), %rax
+\subsection{Ritiro di istruzioni di accesso in memoria}
+Per quanto riguarda le istruzioni di accesso in memoria, vorremo evitare innanzitutto le dipendenze, come quelle viste riguardo ai registri.
 
-fine:
-\end{lstlisting}
+Per fare ciò possiamo fornirci di un buffer dedicato alle istruzioni di scrittura in memoria (\textbf{store}), detto \textbf{Store Buffer}. L'unicità di tale buffer basterà da sola a evitare le dipendenze in uscita.  
 
-Qui la scrittura va eseguita solo se \lstinline|%rbx| contiene un valore inferiore a mille.
-Per le regole dei salti in avanti, il salto in \lstinline|jae fine| si da per non fatto, e quindi il BTB fornisce l'istruzione successiva, cioè quella di accesso in memoria (che verrebbe tradotta in una \lstinline|load|). # capito 0, per le store come fa?
+Per le istruzioni di lettura in memoria (\textbf{load}) potremo invece usare più \textbf{Load Buffer}, in quanto non ci sono dipendenze sulle letture parallele.
 
-\subsubsection{Istruzioni IN e OUT}
-Infine, una nota va fatta sulle istruzioni di I/O \lstinline|in| e \lstinline|out|: queste infatti hanno conseguenze su dispositivi esterni al processore per cui non ne si può fare l'esecuzione parallela o speculativa.
 
-In fase di emissione di istruzioni di I/o, quindi, il processore si aspetta che tutte le istruzioni attualmente in esecuzione siano state eseguite, e solo dopo procede con l'emissione. # e poi?
+Nei buffer Store e Load manteniamo due campi: l'indirizzo del dato e il valore a tale indirizzo. Questo può essere precalcolato per le letture (si possono anticipare le LOAD, ed è questo che velocizza di molto le prestazioni, ad esempio anticipando cacheline non caricate), mentre per le scritture bisogna calcolare il risultato da scrivere e aspettare fino al ritiro per effettuare la scrittura effettiva.
+
+Abbiamo quindi che:
+\begin{itemize}
+	\item Le dipendenze in uscita possono essere risolte controllando, al momento della lettura, che tutte le scritture precedenti sugli stessi indirizzi siano state completate (nel caso l'ultimo valore sia già stato calcolato, si può inoltre inoltrare il risultato direttamente alla load, attraverso il cosiddetto \textit{Store Forwarding});
+	\item Le antidipendenze possono essere risolte con la metodologia opposta, cioè controllando, al momento della scrittura, che tutte le letture precedenti sugli stessi indirizzi siano state completate.
+\end{itemize}
+
+A questo punto le alee date dall'esecuzione speculativa si risolvono semplicemente ritardando le scritture fino alla fase di ritiro dal ROB (come già facevamo), e svuotando il ROB in caso di predizioni sbagliate (come già facevamo), effettivamente annullando le letture.
+Questo approccio, per quanto funzionale dal punto di vista delle prestazioni, presenterà però delle falle di sicurezza che vedremo nei prossimi paragrafi.
+
+\subsubsection{Ritiro delle istruzioni di accesso allo spazio di I/O}
+Per quanto riguarda le istruzioni che comunicano con lo spazio di I/O, e quindi con le interfacce, non possiamo sfruttare l'esecuzione speculativa. Questo per via del fatto che le interfacce mantengono il loro stato, e non si comportano come la memoria tradizionale: le letture stesse potrebbero essere distruttive. 
+
+L'unica soluzione che abbiamo è quindi quella di fornire una sola unità di esecuzione alle operazioni sullo spazio di I/O, e assicurarci che queste vengano eseguite in ordine strettamente sequenziale. 
 
 \subsection{Vulnerabilità Meltdown e Spectre}
 \textbf{Meltdown} e \textbf{Spectre} sono state vulnerabilità dell'architettura Intel x86, scoperte nel 2017, che permettevano di superare le limitazioni normalmente imposte al codice in esecuzione in modalità utente.
